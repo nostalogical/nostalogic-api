@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS service_config (
+  id SERIAL PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  setting VARCHAR(255) NOT NULL,
+  last_set TIMESTAMP NOT NULL DEFAULT now()
+);

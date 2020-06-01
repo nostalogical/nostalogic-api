@@ -1,0 +1,28 @@
+security:
+  jwt:
+    key: ZqHPJkeRMjYRpNKFfFtUNZZPGnHzclYFpwnISiabFCddietCFUeiKBTNyMaLOsgQ
+    duration-minutes: 525600
+
+spring:
+  application:
+    name: base-service
+  datasource:
+    username: postgres
+    password: solice
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/nostalogic?currentSchema=nostalogic_base
+    platform: postgres
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        temp:
+          use_jdbc_metadata_defaults: false
+    open-in-view: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  liquibase:
+    default-schema: nostalogic_base
+
+
+server:
+  port: 3600
