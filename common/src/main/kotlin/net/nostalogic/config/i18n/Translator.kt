@@ -12,13 +12,13 @@ class Translator(messageSource: MessageSource) {
         private lateinit var messageSource: MessageSource
 
         fun translate(msgCode: String): String {
-            if (Config.isTest()) return msgCode
+            if (Config.isUnitTest()) return msgCode
             val locale = LocaleContextHolder.getLocale()
             return messageSource.getMessage(msgCode, null, locale)
         }
 
         fun translate(msgCode: String, vararg args: String): String {
-            if (Config.isTest()) return msgCode
+            if (Config.isUnitTest()) return msgCode
             val locale = LocaleContextHolder.getLocale()
             return messageSource.getMessage(msgCode, args, locale)
         }

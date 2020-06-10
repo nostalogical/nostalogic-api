@@ -29,6 +29,34 @@ subprojects {
         }
     }
 
+    // Define default source sets
+    sourceSets.getByName("main") {
+        java.srcDir("src/main/kotlin")
+    }
+    sourceSets.getByName("test") {
+        java.srcDir("src/main/kotlin")
+    }
+    sourceSets.create("integration-test") {
+        java.srcDir("src/main/kotlin")
+        compileClasspath += sourceSets.main.get().output
+        runtimeClasspath += sourceSets.main.get().output
+    }
+
+    // Define integration test tasks and dependencies (inherited from test)
+    val integrationTest = task<Test>("integration-test") {
+        description = "Runs integration tests."
+        group = "verification"
+
+        testClassesDirs = sourceSets["integration-test"].output.classesDirs
+        classpath = sourceSets["integration-test"].runtimeClasspath
+        shouldRunAfter("test")
+    }
+    val `integration-testImplementation` by configurations.getting {
+        extendsFrom(configurations.implementation.get())
+        extendsFrom(configurations.testImplementation.get())
+    }
+    tasks.check { dependsOn(integrationTest) }
+
     dependencies {
         implementation("org.springframework.boot:spring-boot-starter-data-jpa")
         implementation("org.springframework.boot:spring-boot-starter-web")
@@ -44,8 +72,7 @@ subprojects {
             exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
         }
         testImplementation("io.mockk:mockk:1.10.0")
-
-
+        `integration-testImplementation`("org.apache.httpcomponents:httpclient:4.5.12")
     }
     tasks.withType<Test> {
         useJUnitPlatform()
@@ -55,15 +82,5 @@ subprojects {
             freeCompilerArgs = listOf("-Xjsr305=strict")
             jvmTarget = "1.8"
         }
-    }
-
-    sourceSets.getByName("main") {
-        java.srcDir("src/main/kotlin")
-    }
-    sourceSets.getByName("test") {
-        java.srcDir("src/main/kotlin")
-    }
-    sourceSets.create("integration-test") {
-        java.srcDir("src/main/kotlin")
     }
 }

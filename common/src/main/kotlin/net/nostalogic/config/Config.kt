@@ -36,6 +36,10 @@ class Config(private val context: ApplicationContext,
             return RunEnvironment.valueOf(cache[ENVIRONMENT]?.value ?: RunEnvironment.TEST.name)
         }
 
+        fun isUnitTest(): Boolean {
+            return getEnvironment() == RunEnvironment.TEST
+        }
+
         fun isTest(): Boolean {
             return getEnvironment() == RunEnvironment.TEST || getEnvironment() == RunEnvironment.INTEGRATION_TEST
         }

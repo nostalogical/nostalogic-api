@@ -48,11 +48,7 @@ class DatabaseLoader(
         runResourceScripts(getStartupScripts())
     }
 
-    /**
-     * Run on spring application start, creates test schema and tables
-     */
-    @EventListener(ContextRefreshedEvent::class)
-    fun runSchemaBuildScripts() {
+    fun runDbCleanSetup() {
         runSchemaDropScripts()
         runResourceScripts(getStartupScripts())
     }
@@ -88,7 +84,7 @@ class DatabaseLoader(
             if (standard.url.file.contains("schema") && standardScripts.indexOf(standard) > 0)
                 continue
             for (override in overrideScripts) {
-                if (standard.url.file.startsWith(override.url.file.substring(0, 3))) {
+                if (standard.url.file.substringAfterLast("/").startsWith(override.url.file.substringAfterLast("/").substring(0, 3))) {
                     scriptsToRun.add(override)
                     continue@standard
                 }

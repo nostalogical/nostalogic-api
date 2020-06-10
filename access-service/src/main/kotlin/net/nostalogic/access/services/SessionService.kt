@@ -58,7 +58,7 @@ class SessionService(
     }
 
     fun updateUserSessions(userId: String, groups: Set<String>) {
-        val userSessions = sessionRepo.findAllByUserId(userId)
+        val userSessions = sessionRepo.findAllByUserIdAndEndDateTimeIsAfter(userId, Timestamp.from(Instant.now()))
         for (session in userSessions) {
             session.additional = groups.joinToString(",")
             sessionRepo.save(session)
@@ -112,7 +112,7 @@ class SessionService(
 
     private fun loginTokenFromSession(entity: ServerSessionEntity): String {
         val grant = LoginGrant(
-                entity.sessionId,
+                entity.userId,
                 entity.additional?.split(",")!!.toSet(),
                 NoDate(entity.endDateTime),
                 entity.sessionId,

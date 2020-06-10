@@ -27,7 +27,6 @@ open class AccessTestConfig {
     private val databaseLoader = mockk<DatabaseLoader>()
 
     init {
-        every { databaseLoader.runSchemaBuildScripts() } just runs
         every { configRepo.findAll() } returns ArrayList<ConfigEntity>()
     }
 

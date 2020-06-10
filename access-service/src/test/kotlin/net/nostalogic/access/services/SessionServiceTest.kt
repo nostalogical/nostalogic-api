@@ -157,7 +157,7 @@ class SessionServiceTest(
     @Test
     fun `Update a user's session`() {
         sessionService.createSession(SessionPrompt(testId, additional, AuthenticationType.USERNAME))
-        every { sessionRepo.findAllByUserId(testId) } answers { setOf(savedSession.captured) }
+        every { sessionRepo.findAllByUserIdAndEndDateTimeIsAfter(testId, any()) } answers { setOf(savedSession.captured) }
         sessionService.updateUserSessions(testId, Collections.emptySet())
         Assertions.assertEquals(SessionEvent.GROUPS_CHANGE.name, savedEvent.captured.event)
         Assertions.assertEquals("", savedSession.captured.additional)
@@ -165,7 +165,7 @@ class SessionServiceTest(
 
     @Test
     fun `Update a non-existing user's session`() {
-        every { sessionRepo.findAllByUserId(testId) } answers { Collections.emptySet() }
+        every { sessionRepo.findAllByUserIdAndEndDateTimeIsAfter(testId, any()) } answers { Collections.emptySet() }
         sessionService.updateUserSessions(testId, additional)
         verify(exactly = 0) { sessionRepo.save(ofType(ServerSessionEntity::class)) }
         verify(exactly = 0) { sessionEventRepo.save(ofType(ServerSessionEventEntity::class)) }

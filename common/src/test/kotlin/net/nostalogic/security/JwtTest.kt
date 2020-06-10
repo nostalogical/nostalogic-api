@@ -3,7 +3,7 @@ package net.nostalogic.security
 import net.nostalogic.BaseApplication
 import net.nostalogic.constants.AuthenticationType
 import net.nostalogic.datamodel.NoDate
-import net.nostalogic.exceptions.NoAccessException
+import net.nostalogic.exceptions.NoAuthException
 import net.nostalogic.security.grants.LoginGrant
 import net.nostalogic.security.utils.JwtUtil
 import net.nostalogic.security.utils.TokenDecoder
@@ -64,7 +64,7 @@ class JwtTest {
     @Test
     fun `Attempt to decode an invalid JWT token`() {
         val invalidToken = "invalidToken"
-        Assertions.assertThrows(NoAccessException::class.java) {
+        Assertions.assertThrows(NoAuthException::class.java) {
             TokenDecoder.decodeToken(invalidToken)
         }
     }
@@ -75,7 +75,7 @@ class JwtTest {
                 NoDate.plus(-1L, ChronoUnit.DAYS), sessionId, AuthenticationType.EMAIL)
         val token = TokenEncoder.encodeLoginGrant(grant)
         Assertions.assertTrue(StringUtils.isNoneBlank(token))
-        Assertions.assertThrows(NoAccessException::class.java) {
+        Assertions.assertThrows(NoAuthException::class.java) {
             TokenDecoder.decodeToken(token)
         }
     }
