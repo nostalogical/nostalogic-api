@@ -1,8 +1,6 @@
 package net.nostalogic.access.controllers
 
 import net.nostalogic.access.AccessApplication
-import net.nostalogic.access.persistence.repositories.ServerSessionEventRepository
-import net.nostalogic.access.persistence.repositories.ServerSessionRepository
 import net.nostalogic.config.DatabaseLoader
 import net.nostalogic.constants.AuthenticationType
 import net.nostalogic.constants.NoStrings
@@ -12,76 +10,69 @@ import net.nostalogic.security.models.SessionPrompt
 import net.nostalogic.security.models.SessionSummary
 import net.nostalogic.security.utils.TokenDecoder
 import org.apache.commons.lang3.StringUtils
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.core.ParameterizedTypeReference
-import org.springframework.http.*
-import org.springframework.http.client.ClientHttpResponse
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory
+import org.springframework.http.HttpEntity
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpMethod
+import org.springframework.http.ResponseEntity
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
-import org.springframework.web.client.DefaultResponseErrorHandler
-import org.springframework.web.client.RestTemplate
-import java.io.IOException
 import java.util.*
 
 @Suppress("FunctionName")
 @ActiveProfiles(profiles = ["integration-test"])
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [AccessApplication::class])
-class SessionControllerTest(
-        @Autowired val dbLoader: DatabaseLoader
-) {
+class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTest(dbLoader) {
 
-    private val localhost = "http://localhost:"
+//    private val localhost = "http://localhost:"
 
-    @Value("\${local.server.port}")
-    private var port: Int? = null
-    private var baseApiUrl = localhost
+//    @Value("\${local.server.port}")
+//    private var port: Int? = null
+//    private var baseApiUrl = localhost
 
     private val userId = "TestUserId"
     private val group1 = "group1"
     private val group2 = "group2"
     private val additional = setOf(group1, group2)
 
-    @BeforeEach
-    fun setup() {
-        baseApiUrl = localhost + port
-        dbLoader.runDbCleanSetup()
-    }
+//    @BeforeEach
+//    fun setup() {
+//        baseApiUrl = localhost + port
+//        dbLoader.runDbCleanSetup()
+//    }
 
-    @AfterEach
-    fun teardown() {
-        dbLoader.runDataWipeScripts()
-        dbLoader.runSchemaDropScripts()
-    }
+//    @AfterEach
+//    fun teardown() {
+//        dbLoader.runDataWipeScripts()
+//        dbLoader.runSchemaDropScripts()
+//    }
 
     private fun sessionsUrl(): String {
         return baseApiUrl + SessionController.SESSIONS_ENDPOINT
     }
 
-    private fun createTemplate(): RestTemplate {
-        val template = RestTemplate()
-        template.requestFactory = HttpComponentsClientHttpRequestFactory()
-        template.errorHandler = object : DefaultResponseErrorHandler() {
-            @Throws(IOException::class)
-            override fun hasError(response: ClientHttpResponse): Boolean {
-                val status = response.statusCode
-                return status.series() == HttpStatus.Series.SERVER_ERROR
-            }
-        }
-        return template
-    }
+//    private fun createTemplate(): RestTemplate {
+//        val template = RestTemplate()
+//        template.requestFactory = HttpComponentsClientHttpRequestFactory()
+//        template.errorHandler = object : DefaultResponseErrorHandler() {
+//            @Throws(IOException::class)
+//            override fun hasError(response: ClientHttpResponse): Boolean {
+//                val status = response.statusCode
+//                return status.series() == HttpStatus.Series.SERVER_ERROR
+//            }
+//        }
+//        return template
+//    }
 
-    private fun <T> exchange(entity: HttpEntity<*>, responseType: ParameterizedTypeReference<T>, method: HttpMethod, url: String): ResponseEntity<T> {
-        return createTemplate().exchange(url, method, entity, responseType)
-    }
+//    private fun <T> exchange(entity: HttpEntity<*>, responseType: ParameterizedTypeReference<T>, method: HttpMethod, url: String): ResponseEntity<T> {
+//        return createTemplate().exchange(url, method, entity, responseType)
+//    }
 
     private fun createSession(entity: HttpEntity<*>, method: HttpMethod): ResponseEntity<SessionSummary> {
         return exchange(

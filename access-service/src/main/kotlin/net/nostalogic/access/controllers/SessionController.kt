@@ -1,5 +1,6 @@
 package net.nostalogic.access.controllers
 
+import net.nostalogic.access.AccessApplication
 import net.nostalogic.access.controllers.SessionController.Companion.SESSIONS_ENDPOINT
 import net.nostalogic.access.services.SessionService
 import net.nostalogic.security.models.SessionPrompt
@@ -11,7 +12,7 @@ import org.springframework.web.bind.annotation.*
 class SessionController(private val sessionService: SessionService) {
 
     companion object {
-        const val SESSIONS_ENDPOINT = "/sessions"
+        const val SESSIONS_ENDPOINT = "/v${AccessApplication.MAJOR}/sessions"
     }
 
     @RequestMapping(method = [RequestMethod.POST], produces = ["application/json"])

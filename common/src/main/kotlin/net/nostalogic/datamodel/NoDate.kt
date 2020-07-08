@@ -3,13 +3,9 @@ package net.nostalogic.datamodel
 import com.fasterxml.jackson.annotation.JsonValue
 import net.nostalogic.constants.ErrorStrings
 import net.nostalogic.exceptions.NoValidationException
-import java.lang.Exception
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.time.Instant
-import java.time.ZoneId
-import java.time.ZonedDateTime
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.*
 import kotlin.math.abs
@@ -62,7 +58,7 @@ class NoDate {
         if (formatTime != null) {
             this.instant = formatTime
         } else
-            throw NoValidationException(106001, "date", ErrorStrings.dateFormat(dateString), null)
+            throw NoValidationException(107002, "date", ErrorStrings.dateFormat(dateString))
     }
 
     override fun equals(other: Any?): Boolean {

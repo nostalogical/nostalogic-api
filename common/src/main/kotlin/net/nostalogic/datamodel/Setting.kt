@@ -1,7 +1,6 @@
 package net.nostalogic.datamodel
 
 import com.fasterxml.jackson.annotation.JsonIgnore
-import org.apache.commons.lang3.StringUtils
 import org.apache.commons.lang3.math.NumberUtils
 
 data class Setting(@JsonIgnore val key: String, @JsonIgnore val initValue: Any, val source: Source) {
@@ -11,7 +10,8 @@ data class Setting(@JsonIgnore val key: String, @JsonIgnore val initValue: Any, 
 
     enum class Source {
         RESOURCE,
-        DATABASE
+        DATABASE,
+        SERVICE
     }
 
 }

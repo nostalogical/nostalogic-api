@@ -11,7 +11,7 @@ object SHAEncoder : PasswordEncoder() {
 
     override fun encodePassword(password: String): String {
         if (StringUtils.isEmpty(password))
-            throw NoValidationException(106001, "net.nostalogic.security.password", "Password cannot be empty", null)
+            throw NoValidationException(107001, "net.nostalogic.security.password", "Password cannot be empty")
 
         val salt = getSalt()
         val passwordBytes = createHash(password, salt)

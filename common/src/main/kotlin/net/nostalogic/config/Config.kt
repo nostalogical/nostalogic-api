@@ -5,7 +5,6 @@ import net.nostalogic.exceptions.NoRetrieveException
 import net.nostalogic.persistence.entities.ConfigEntity
 import net.nostalogic.persistence.repositories.ConfigRepository
 import net.nostalogic.security.utils.JwtUtil
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.env.YamlPropertySourceLoader
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.DependsOn
@@ -25,6 +24,16 @@ class Config(private val context: ApplicationContext,
                 JwtUtil.KEY_PROPERTY,
                 "spring.datasource.security.password")
         private const val CENSORED = "*****"
+        private const val SERVICE = "service"
+        private const val API = "apiversion"
+
+        private var service = "unknown"
+        private var apiVersion = ApiVersion(0, 0, 0)
+
+        fun initService(service: String, apiVersion: ApiVersion) {
+            this.service = service
+            this.apiVersion = apiVersion
+        }
 
         fun addSetting(setting: Setting) {
             cache[setting.key.toLowerCase()] = setting
@@ -46,6 +55,14 @@ class Config(private val context: ApplicationContext,
 
         fun isProd(): Boolean {
             return getEnvironment() == RunEnvironment.PRODUCTION
+        }
+
+        fun apiVersion(): String {
+            return getSetting(API)
+        }
+
+        fun service(): String {
+            return getSetting(SERVICE)
         }
 
         fun getSetting(key: String): String {
@@ -100,6 +117,12 @@ class Config(private val context: ApplicationContext,
         cache.clear()
         loadResourceSettings(springKeys)
         loadDatabaseSettings()
+        loadServiceSettings()
+    }
+
+    private fun loadServiceSettings() {
+        addSetting(Setting(SERVICE, service, Setting.Source.SERVICE))
+        addSetting(Setting(API, apiVersion.toString(), Setting.Source.SERVICE))
     }
 
     private fun loadDatabaseSettings() {

@@ -1,6 +1,5 @@
 package net.nostalogic.access.services
 
-import net.nostalogic.Utils.EntityUtils
 import net.nostalogic.access.persistence.entities.ServerSessionEntity
 import net.nostalogic.access.persistence.entities.ServerSessionEventEntity
 import net.nostalogic.access.persistence.repositories.ServerSessionEventRepository
@@ -15,6 +14,7 @@ import net.nostalogic.security.models.SessionPrompt
 import net.nostalogic.security.models.SessionSummary
 import net.nostalogic.security.utils.TokenDecoder
 import net.nostalogic.security.utils.TokenEncoder
+import net.nostalogic.utils.EntityUtils
 import org.apache.commons.lang3.StringUtils
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
@@ -37,9 +37,9 @@ class SessionService(
         val grant = LoginGrant(prompt.userId, prompt.additional, end,
                 EntityUtils.uuid(), prompt.type, created = start)
         val entity = ServerSessionEntity(grant.sessionId, grant.subject, grant.additional.joinToString(","),
-                grant.created.getTimestamp(), grant.expiration.getTimestamp(), grant.type, grant.description)
+                grant.created.getTimestamp(), grant.expiration.getTimestamp(), grant.type, grant.description, creatorId = prompt.userId)
         val persisted = sessionRepo.save(entity)
-        addSessionEvent(ServerSessionEventEntity(persisted.sessionId, SessionEvent.LOGIN))
+        addSessionEvent(ServerSessionEventEntity(persisted.id, SessionEvent.LOGIN))
         return summaryFromSession(persisted)
     }
 
@@ -53,7 +53,7 @@ class SessionService(
             throw NoAuthException(201005, "Session has already expired and cannot be refreshed")
         session.endDateTime = standardExpiration().getTimestamp()
         val updated = sessionRepo.save(session)
-        addSessionEvent(ServerSessionEventEntity(updated.sessionId, SessionEvent.REFRESH))
+        addSessionEvent(ServerSessionEventEntity(updated.id, SessionEvent.REFRESH))
         return summaryFromSession(updated)
     }
 
@@ -62,7 +62,7 @@ class SessionService(
         for (session in userSessions) {
             session.additional = groups.joinToString(",")
             sessionRepo.save(session)
-            addSessionEvent(ServerSessionEventEntity(session.sessionId, SessionEvent.GROUPS_CHANGE))
+            addSessionEvent(ServerSessionEventEntity(session.id, SessionEvent.GROUPS_CHANGE))
         }
     }
 
@@ -72,7 +72,7 @@ class SessionService(
             throw NoAuthException(201006, "Session has already ended")
         session.endDateTime = Timestamp.from(Instant.now().minusSeconds(5))
         val updated = sessionRepo.save(session)
-        addSessionEvent(ServerSessionEventEntity(updated.sessionId, SessionEvent.LOGOUT))
+        addSessionEvent(ServerSessionEventEntity(updated.id, SessionEvent.LOGOUT))
         return summaryFromSession(updated, requiredValid = false)
     }
 
@@ -99,7 +99,7 @@ class SessionService(
     private fun summaryFromSession(entity: ServerSessionEntity, requiredValid: Boolean = true): SessionSummary {
         if (requiredValid && isExpired(entity.endDateTime))
             throw NoAuthException(201004, "Server session has expired")
-        return SessionSummary(entity.sessionId, entity.userId, entity.type,
+        return SessionSummary(entity.id, entity.userId, entity.type,
                 NoDate(entity.startDateTime), NoDate(entity.endDateTime), entity.details, tokenFromSession(entity))
     }
 
@@ -115,7 +115,7 @@ class SessionService(
                 entity.userId,
                 entity.additional?.split(",")!!.toSet(),
                 NoDate(entity.endDateTime),
-                entity.sessionId,
+                entity.id,
                 entity.type,
                 NoDate(entity.startDateTime))
         return TokenEncoder.encodeLoginGrant(grant)

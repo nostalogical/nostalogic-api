@@ -1,6 +1,7 @@
 package net.nostalogic.datamodel
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import net.nostalogic.config.Config
 import net.nostalogic.config.i18n.Translator
 import net.nostalogic.persistence.entities.ConfigEntity
 import net.nostalogic.persistence.repositories.ConfigRepository
@@ -13,6 +14,8 @@ class StatusCheck(configRepo: ConfigRepository) : Serializable {
     var persistedTime: NoDate? = null
     var persistTimeStatus : String? = "Time persistence FAILED"
     var translation = "Translation FAILED"
+    val apiVersion = Config.apiVersion()
+    val service = Config.service()
 
     init {
         try {
@@ -23,7 +26,9 @@ class StatusCheck(configRepo: ConfigRepository) : Serializable {
             persistedTime = NoDate(persistedDateEntity.lastSet)
             configRepo.delete(persistedDateEntity)
             persistTimeStatus = null
-        } catch (e: Exception) {}
+        } catch (e: Exception) {
+            persistTimeStatus += String.format(" (%s)", e.message)
+        }
     }
 
 }

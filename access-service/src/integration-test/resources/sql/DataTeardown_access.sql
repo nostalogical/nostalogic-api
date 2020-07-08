@@ -1,6 +1,6 @@
 DELETE FROM policy_action;
-DELETE FROM policy_application;
-DELETE FROM policy_usage;
+DELETE FROM policy_subject;
+DELETE FROM policy_resource;
 DELETE FROM policy;
 
 DELETE FROM terms_acceptance;

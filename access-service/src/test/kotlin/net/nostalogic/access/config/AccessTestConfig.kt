@@ -1,11 +1,10 @@
 package net.nostalogic.access.config
 
 import io.mockk.every
-import io.mockk.just
 import io.mockk.mockk
-import io.mockk.runs
-import net.nostalogic.access.persistence.repositories.ServerSessionEventRepository
-import net.nostalogic.access.persistence.repositories.ServerSessionRepository
+import net.nostalogic.access.persistence.repositories.*
+import net.nostalogic.access.services.AccessQueryService
+import net.nostalogic.access.services.AccessService
 import net.nostalogic.access.services.SessionService
 import net.nostalogic.config.Config
 import net.nostalogic.config.DatabaseLoader
@@ -24,7 +23,12 @@ open class AccessTestConfig {
 
     private val sessionRepo = mockk<ServerSessionRepository>()
     private val sessionEventRepo = mockk<ServerSessionEventRepository>()
+    private val policyRepo = mockk<PolicyRepository>()
+    private val actionRepo = mockk<PolicyActionRepository>()
+    private val resourceRepo = mockk<PolicyResourceRepository>()
+    private val subjectRepo = mockk<PolicySubjectRepository>()
     private val databaseLoader = mockk<DatabaseLoader>()
+    private val accessQueryService = mockk<AccessQueryService>()
 
     init {
         every { configRepo.findAll() } returns ArrayList<ConfigEntity>()
@@ -51,7 +55,37 @@ open class AccessTestConfig {
     }
 
     @Bean
+    open fun policyRepository(): PolicyRepository {
+        return policyRepo
+    }
+
+    @Bean
+    open fun policyActionRepository(): PolicyActionRepository {
+        return actionRepo
+    }
+
+    @Bean
+    open fun policyResourceRepository(): PolicyResourceRepository {
+        return resourceRepo
+    }
+
+    @Bean
+    open fun policySubjectRepository(): PolicySubjectRepository {
+        return subjectRepo
+    }
+
+    @Bean
     open fun sessionService(): SessionService {
         return SessionService(sessionRepo, sessionEventRepo)
+    }
+
+    @Bean
+    open fun accessQueryService(): AccessQueryService {
+        return AccessQueryService(policyRepo, subjectRepo, resourceRepo, actionRepo)
+    }
+
+    @Bean
+    open fun accessService(): AccessService {
+        return AccessService(policyRepo, subjectRepo, resourceRepo, actionRepo, accessQueryService)
     }
 }

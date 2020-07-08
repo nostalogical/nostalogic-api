@@ -14,7 +14,7 @@ object PBKDF2Encoder : PasswordEncoder() {
 
     override fun encodePassword(password: String): String {
         if (StringUtils.isEmpty(password))
-            throw NoValidationException(106002, "net.nostalogic.security.password", "Password cannot be empty", null)
+            throw NoValidationException(107003, "net.nostalogic.security.password", "Password cannot be empty")
 
         val salt = SHAEncoder.getSalt()
         val passwordBytes = createHash(password, salt, HASH_LENGTH)

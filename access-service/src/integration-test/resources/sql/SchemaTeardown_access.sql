@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS policy_action;
-DROP TABLE IF EXISTS policy_application;
-DROP TABLE IF EXISTS policy_usage;
+DROP TABLE IF EXISTS policy_subject;
+DROP TABLE IF EXISTS policy_resource;
 DROP TABLE IF EXISTS policy;
 
 DROP TABLE IF EXISTS terms_acceptance;
