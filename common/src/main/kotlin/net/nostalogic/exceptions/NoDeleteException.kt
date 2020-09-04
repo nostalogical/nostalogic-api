@@ -6,5 +6,5 @@ import org.springframework.http.HttpStatus
 /**
  * Error code prefix: 3_000
  */
-class NoDeleteException(code: Int, objectName: String, debugMessage: String?, status: HttpStatus?, cause: Exception?)
+class NoDeleteException(code: Int, objectName: String, debugMessage: String?, status: HttpStatus? = HttpStatus.NOT_FOUND, cause: Exception? = null)
     : NoException(code, cause, status, debugMessage, ErrorStrings.cannotDelete(objectName))

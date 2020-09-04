@@ -2,7 +2,11 @@ package net.nostalogic.access.controllers
 
 import net.nostalogic.access.AccessApplication
 import net.nostalogic.config.DatabaseLoader
+import net.nostalogic.entities.EntityReference
+import net.nostalogic.entities.NoEntity
+import net.nostalogic.utils.EntityUtils
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -45,7 +49,7 @@ abstract class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader) {
         dbLoader.runSchemaDropScripts()
     }
 
-    fun createTemplate(): RestTemplate {
+    protected fun createTemplate(): RestTemplate {
         val template = RestTemplate()
         template.requestFactory = HttpComponentsClientHttpRequestFactory()
         template.errorHandler = object : DefaultResponseErrorHandler() {
@@ -59,7 +63,34 @@ abstract class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader) {
     }
 
     fun <T> exchange(entity: HttpEntity<*>, responseType: ParameterizedTypeReference<T>, method: HttpMethod, url: String): ResponseEntity<T> {
-        return createTemplate().exchange(url, method, entity, responseType)
+        try {
+            return createTemplate().exchange(url, method, entity, responseType)
+        } catch (e: Exception) {
+            val unknownResponse = createTemplate().exchange(url, method, entity, object : ParameterizedTypeReference<Any>() {})
+            println("\nUnknown request response, expected:")
+            println(responseType.type.typeName)
+            println("Actual response:")
+            Assertions.fail<Any>(unknownResponse.body.toString())
+            throw e
+        }
+    }
+
+    fun rndResource(): String {
+        val entities = hashSetOf(
+                NoEntity.ARTICLE,
+                NoEntity.CONTAINER,
+                NoEntity.EMAIL,
+                NoEntity.GROUP,
+                NoEntity.USER,
+                NoEntity.NAV,
+                NoEntity.POLICY,
+                NoEntity.SESSION)
+        return EntityReference(EntityUtils.uuid(), entities.random()).toFullId()
+    }
+
+    fun rndSubject(): String {
+        val entities = hashSetOf(NoEntity.USER, NoEntity.GROUP)
+        return EntityReference(EntityUtils.uuid(), entities.random()).toFullId()
     }
 
 }

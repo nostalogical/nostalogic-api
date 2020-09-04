@@ -5,7 +5,6 @@ import net.nostalogic.access.persistence.repositories.PolicyActionRepository
 import net.nostalogic.access.persistence.repositories.PolicyRepository
 import net.nostalogic.access.persistence.repositories.PolicyResourceRepository
 import net.nostalogic.access.persistence.repositories.PolicySubjectRepository
-import net.nostalogic.datamodel.NoPageable
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.entities.EntityReference
 import net.nostalogic.entities.EntityStatus
@@ -35,9 +34,9 @@ open class AccessQueryService(
 //    }
 
     fun getPolicy(policyId: String): Policy {
-        val policies = searchPolicies(PolicySearchCriteria(policyIds = setOf(policyId)))
+        val policies = searchPolicies(PolicySearchCriteria(policyIds = setOf(policyId), status = setOf(*EntityStatus.values())))
         if (policies.isEmpty())
-            throw NoRetrieveException(204001, "policy", "Policy ${policyId} not found in database")
+            throw NoRetrieveException(204001, "Policy", "Policy ${policyId} not found in database")
         return policies[0]
     }
 
@@ -47,31 +46,31 @@ open class AccessQueryService(
      * resources are returned.
      */
     fun searchPolicies(criteria: PolicySearchCriteria): ArrayList<Policy> {
-        val resultPolicies = HashSet<String>()
+        val filteredPolicyIds = HashSet<String>()
 
-        resultPolicies.addAll(criteria.policyIds)
+        filteredPolicyIds.addAll(criteria.policyIds)
 
         if (criteria.subjectIds.isNotEmpty()) {
-            resultPolicies.addAll(policySubjectRepository.findAllBySubjectIdIn(filterOnlyUuid(criteria.subjectIds)).map { s -> s.policyId })
+            filteredPolicyIds.addAll(policySubjectRepository.findAllBySubjectIdIn(filterOnlyUuid(criteria.subjectIds)).map { s -> s.policyId })
             if (criteria.subjectIds.contains(NoEntity.ALL.name))
-                resultPolicies.addAll(policySubjectRepository.findAllBySubjectIdIsNull().map { s -> s.policyId })
+                filteredPolicyIds.addAll(policySubjectRepository.findAllBySubjectIdIsNull().map { s -> s.policyId })
         }
 
         if (criteria.resourceIds.isNotEmpty()) {
-            resultPolicies.addAll(policyResourceRepository.findAllByResourceIdIn(filterOnlyUuid(criteria.resourceIds)).map { r -> r.policyId })
-            resultPolicies.addAll(policyResourceRepository.findAllByEntityIn(filterOnlyEntity(criteria.resourceIds)).map { r -> r.policyId })
+            filteredPolicyIds.addAll(policyResourceRepository.findAllByResourceIdIn(filterOnlyUuid(criteria.resourceIds)).map { r -> r.policyId })
+            filteredPolicyIds.addAll(policyResourceRepository.findAllByEntityIn(filterOnlyEntity(criteria.resourceIds)).map { r -> r.policyId })
         }
 
-        if (resultPolicies.isEmpty())
-            resultPolicies.addAll(policyRepository.findAll().map { p -> p.id })
+        if (filteredPolicyIds.isEmpty())
+            filteredPolicyIds.addAll(policyRepository.findAll().map { p -> p.id })
 
-        return retrievePolicies(resultPolicies, criteria.page)
+        return retrievePolicies(filteredPolicyIds, criteria)
 
     }
 
-    private fun retrievePolicies(policyIds: Set<String>, page: NoPageable<Policy>): ArrayList<Policy> {
-        val policyEntities = policyRepository.findAllByIdInAndStatusIn(policyIds, setOf(EntityStatus.ACTIVE), page.toQuery())
-        page.hasNext = policyEntities.hasNext()
+    private fun retrievePolicies(policyIds: Set<String>, criteria: PolicySearchCriteria): ArrayList<Policy> {
+        val policyEntities = policyRepository.findAllByIdInAndStatusIn(policyIds, criteria.status, criteria.page.toQuery())
+        criteria.page.hasNext = policyEntities.hasNext()
         val policiesById = HashMap<String, Policy>()
         val orderedPolicies = ArrayList<Policy>()
         for (policy in policyEntities) {

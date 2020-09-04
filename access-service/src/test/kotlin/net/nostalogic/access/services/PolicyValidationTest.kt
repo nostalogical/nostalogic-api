@@ -6,6 +6,7 @@ import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.datamodel.access.PolicyPriority
 import net.nostalogic.entities.NoEntity
 import net.nostalogic.exceptions.NoValidationException
+import net.nostalogic.utils.CollUtils
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -31,7 +32,7 @@ class PolicyValidationTest(
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(resource.toFullId()),
                 subjects = hashSetOf(subject.toFullId()),
-                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         accessService.validatePolicy(policy)
     }
 
@@ -40,7 +41,7 @@ class PolicyValidationTest(
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(NoEntity.ARTICLE.name),
                 subjects = hashSetOf(subject.toFullId()),
-                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         accessService.validatePolicy(policy)
     }
 
@@ -49,7 +50,7 @@ class PolicyValidationTest(
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(""),
                 subjects = hashSetOf(subject.toFullId()),
-                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
     }
 
@@ -58,7 +59,7 @@ class PolicyValidationTest(
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(NoEntity.ARTICLE.name),
                 subjects = hashSetOf(NoEntity.USER.name),
-                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
     }
 
@@ -67,26 +68,30 @@ class PolicyValidationTest(
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(NoEntity.ARTICLE.name),
                 subjects = hashSetOf(NoEntity.ALL.name),
-                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         accessService.validatePolicy(policy)
     }
 
     @Test
-    fun `Empty resource list should be invalid`() {
+    fun `Empty resource list should be valid`() {
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = HashSet(),
                 subjects = hashSetOf(NoEntity.ALL.name),
-                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
-        assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
+        accessService.validatePolicy(policy)
+        policy.resources = null
+        accessService.validatePolicy(policy)
     }
 
     @Test
-    fun `Empty subject list should be invalid`() {
+    fun `Empty or null subject list should be valid`() {
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(NoEntity.ARTICLE.name),
                 subjects = HashSet(),
-                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
-        assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
+        accessService.validatePolicy(policy)
+        policy.subjects = null
+        accessService.validatePolicy(policy)
     }
 
     @Test
@@ -94,7 +99,7 @@ class PolicyValidationTest(
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf("not-a-uuid::" + NoEntity.ARTICLE),
                 subjects = hashSetOf(NoEntity.ALL.name),
-                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
     }
 
@@ -103,7 +108,7 @@ class PolicyValidationTest(
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(NoEntity.ARTICLE.name),
                 subjects = hashSetOf("not-a-uuid::" + NoEntity.GROUP),
-                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
     }
 
@@ -112,7 +117,7 @@ class PolicyValidationTest(
         val policy = Policy(name = "", priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(resource.toFullId()),
                 subjects = hashSetOf(NoEntity.ALL.name),
-                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
     }
 
@@ -122,15 +127,17 @@ class PolicyValidationTest(
                 priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(resource.toFullId()),
                 subjects = hashSetOf(subject.toFullId()),
-                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
     }
 
     @Test
-    fun `An empty permissions map should be invalid`() {
+    fun `An empty permissions map should be valid`() {
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(resource.toFullId()),
                 subjects = hashSetOf(subject.toFullId()))
-        assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
+        accessService.validatePolicy(policy)
+        policy.resources = null
+        accessService.validatePolicy(policy)
     }
 }

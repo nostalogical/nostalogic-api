@@ -28,7 +28,7 @@ open class AccessTestConfig {
     private val resourceRepo = mockk<PolicyResourceRepository>()
     private val subjectRepo = mockk<PolicySubjectRepository>()
     private val databaseLoader = mockk<DatabaseLoader>()
-    private val accessQueryService = mockk<AccessQueryService>()
+    private val accessQueryService = accessQueryService()
 
     init {
         every { configRepo.findAll() } returns ArrayList<ConfigEntity>()

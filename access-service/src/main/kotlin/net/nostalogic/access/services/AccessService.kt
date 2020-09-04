@@ -16,6 +16,7 @@ import net.nostalogic.entities.EntityReference
 import net.nostalogic.entities.EntityStatus
 import net.nostalogic.entities.NoEntity
 import net.nostalogic.exceptions.NoAccessException
+import net.nostalogic.exceptions.NoDeleteException
 import net.nostalogic.exceptions.NoSaveException
 import net.nostalogic.exceptions.NoValidationException
 import net.nostalogic.security.contexts.SessionContext
@@ -50,6 +51,10 @@ open class AccessService(
         return queryService.searchPolicies(criteria)
     }
 
+    open fun getPolicy(policyId: String): Policy {
+        return queryService.getPolicy(policyId)
+    }
+
     open fun createPolicy(policy: Policy): Policy {
         // TODO: user SessionContext to confirm user can create sessions
         validatePolicy(policy)
@@ -62,20 +67,24 @@ open class AccessService(
 
     open fun editPolicy(policyEdit: Policy, policyId: String): Policy {
         val existingPolicy = queryService.getPolicy(policyId)
-        validatePolicy(policyEdit)
-        existingPolicy.name = policyEdit.name
-        existingPolicy.status = policyEdit.status
-        existingPolicy.priority = policyEdit.priority
+        if (StringUtils.isNotBlank(policyEdit.name))
+            existingPolicy.name = policyEdit.name
+        policyEdit.status?.let { existingPolicy.status = policyEdit.status }
+        policyEdit.priority?.let {existingPolicy.priority = policyEdit.priority }
+        validatePolicy(existingPolicy, false)
 
         try {
-            removeDeletedApplications(policyId, existingPolicy, policyEdit)
-            return savePolicy(policyEdit, policyId)
+            matchPolicyApplicationChanges(policyId, existingPolicy, policyEdit)
+            return savePolicy(existingPolicy, policyId)
         } catch (e: Exception) {
             throw NoSaveException(205002, "policy", null, e)
         }
     }
 
     fun deletePolicy(policyId: String) {
+        val policies = searchPolicies(PolicySearchCriteria(policyIds = setOf(policyId), status = setOf(*EntityStatus.values())))
+        if (policies.isEmpty())
+            throw NoDeleteException(203001, "Policy", "Policy not found for deletion: ${policyId}")
         changePolicyStatuses(setOf(policyId), EntityStatus.DELETED)
     }
 
@@ -84,20 +93,27 @@ open class AccessService(
         policyRepository.changePoliciesToStatus(policyIds, status)
     }
 
+    /**
+     * If subjects, resources, or permissions in an update to a policy are not null, this removes any persisted records
+     * not present in the edit and sets the edited values to the current policy.
+     */
     @Transactional
-    open fun removeDeletedApplications(policyId: String, currentPolicy: Policy, editedPolicy: Policy) {
-        currentPolicy.subjects.removeAll(editedPolicy.subjects)
-        currentPolicy.resources.removeAll(editedPolicy.resources)
-        val actions = currentPolicy.permissions.keys
-        actions.removeAll(editedPolicy.permissions.keys)
-        if (currentPolicy.subjects.isNotEmpty())
-            policySubjectRepository.deleteAllByIdIn(currentPolicy.subjects
+    open fun matchPolicyApplicationChanges(policyId: String, currentPolicy: Policy, editedPolicy: Policy) {
+        editedPolicy.subjects?.let { currentPolicy.subjects!!.removeAll(editedPolicy.subjects!!) }
+        editedPolicy.resources?.let { currentPolicy.resources!!.removeAll(editedPolicy.resources!!) }
+        val actions = currentPolicy.permissions!!.keys
+        editedPolicy.permissions?.let { actions.removeAll(editedPolicy.permissions!!.keys) }
+        if (currentPolicy.subjects!!.isNotEmpty())
+            policySubjectRepository.deleteAllByIdIn(currentPolicy.subjects!!
                     .map { s -> compositePolicyId(policyId, EntityUtils.toEntityRef(s)) }.toSet())
-        if (currentPolicy.resources.isNotEmpty())
-            policyResourceRepository.deleteAllByIdIn(currentPolicy.resources
+        if (currentPolicy.resources!!.isNotEmpty())
+            policyResourceRepository.deleteAllByIdIn(currentPolicy.resources!!
                     .map { r -> compositePolicyId(policyId, EntityUtils.toEntityRef(r)) }.toSet())
         if (actions.isNotEmpty())
             policyActionRepository.deleteAllByIdIn(actions.map { a -> compositeActionId(policyId, a) }.toSet())
+        editedPolicy.subjects?.let { currentPolicy.subjects = editedPolicy.subjects!! }
+        editedPolicy.resources?.let { currentPolicy.resources = editedPolicy.resources!! }
+        editedPolicy.permissions?.let { currentPolicy.permissions = editedPolicy.permissions!! }
     }
 
     @Transactional
@@ -105,53 +121,54 @@ open class AccessService(
         val policyEntity: PolicyEntity
         if (policyId != null) {
             policyEntity = policyRepository.getOne(policyId)
-            policyEntity.name = policy.name
-            policyEntity.priority = policy.priority
-            policyEntity.status = policy.status
+            policyEntity.name = policy.name!!
+            policyEntity.priority = policy.priority!!
+            policyEntity.status = policy.status!!
         } else
-            policyEntity = PolicyEntity(policy.name, policy.priority, SessionContext.getUserId())
+            policyEntity = PolicyEntity(policy.name!!, policy.priority!!, SessionContext.getUserId())
         policyRepository.save(policyEntity)
 
-        for (action in policy.permissions)
-            policyActionRepository.save(PolicyActionEntity(policyEntity.id, action.key, action.value))
-        for (subject in policy.subjects) {
-            val ref = EntityUtils.toEntityRef(subject)
+        policy.permissions?.let { policy.permissions!!.forEach { (k, v) -> policyActionRepository.save(PolicyActionEntity(policyEntity.id, k, v)) } }
+        policy.subjects?.let { policy.subjects!!.forEach {
+            val ref = EntityUtils.toEntityRef(it)
             policySubjectRepository.save(PolicySubjectEntity(policyEntity.id, ref.id, ref.entity))
-        }
-        for (resource in policy.resources) {
-            val ref = EntityUtils.toEntityRef(resource)
+        } }
+        policy.resources?.let { policy.resources!!.forEach {
+            val ref = EntityUtils.toEntityRef(it)
             policyResourceRepository.save(PolicyResourceEntity(policyEntity.id, ref.id, ref.entity))
-        }
+        } }
         policy.id = policyEntity.id
         return policy
     }
 
-    fun validatePolicy(policy: Policy) {
+    fun validatePolicy(policy: Policy, create: Boolean = true) {
         val invalidFields = StringJoiner(",")
-        if (StringUtils.isBlank(policy.name) || policy.name.length > 50)
+        if ((create && StringUtils.isBlank(policy.name)) || (policy.name != null && policy.name!!.length > 50))
             invalidFields.add("name")
-        if (policy.permissions.isEmpty())
-            invalidFields.add("permissions")
-        if (policy.resources.isEmpty())
-            invalidFields.add("resources")
-        if (policy.subjects.isEmpty())
-            invalidFields.add("subjects")
+        if (create && policy.priority == null)
+            invalidFields.add("priority")
 
-        for (id in policy.resources) {
-            if (!EntityUtils.isFullId(id)) {
-                invalidFields.add("resources")
-                break
+        policy.resources?.let {
+            for (id in policy.resources!!) {
+                if (!EntityUtils.isFullId(id)) {
+                    invalidFields.add("resources")
+                    break
+                }
             }
         }
-        for (id in policy.subjects) {
-            val ref = EntityUtils.toEntityRef(id)
-            if (!(ref.isSignature() && ALLOWED_SUBJECTS.contains(ref.entity)) && NoEntity.ALL != ref.entity) {
-                invalidFields.add("subjects")
-                break
+
+        policy.subjects?.let {
+            for (id in policy.subjects!!) {
+                val ref = EntityUtils.toEntityRef(id)
+                if (!(ref.isSignature() && ALLOWED_SUBJECTS.contains(ref.entity)) && NoEntity.ALL != ref.entity) {
+                    invalidFields.add("subjects")
+                    break
+                }
             }
         }
+
         if (invalidFields.length() > 0)
-            throw NoValidationException(207002, invalidFields.toString(), "Specified fields are empty or invalid")
+            throw NoValidationException(207002, invalidFields.toString())
     }
 
     fun verifyAccess(allowGuest: Boolean) {

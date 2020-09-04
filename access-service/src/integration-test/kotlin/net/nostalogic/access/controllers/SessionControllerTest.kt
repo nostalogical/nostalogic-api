@@ -74,11 +74,11 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 //        return createTemplate().exchange(url, method, entity, responseType)
 //    }
 
-    private fun createSession(entity: HttpEntity<*>, method: HttpMethod): ResponseEntity<SessionSummary> {
+    private fun createSession(entity: HttpEntity<*>): ResponseEntity<SessionSummary> {
         return exchange(
                 entity = entity,
                 responseType = object : ParameterizedTypeReference<SessionSummary>() {},
-                method = method,
+                method = HttpMethod.POST,
                 url = sessionsUrl()
         )
     }
@@ -120,7 +120,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Create session from username login`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)), HttpMethod.POST)
+        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)))
         Assertions.assertNotNull(result)
         Assertions.assertEquals(200, result.statusCodeValue)
         val summary = result.body as SessionSummary
@@ -136,7 +136,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Create session from email login`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.EMAIL)), HttpMethod.POST)
+        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.EMAIL)))
         Assertions.assertNotNull(result)
         Assertions.assertEquals(200, result.statusCodeValue)
         Assertions.assertEquals(AuthenticationType.EMAIL, (result.body as SessionSummary).type)
@@ -157,7 +157,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Verify an existing session`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)), HttpMethod.POST)
+        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)))
         val token = result.body!!.token!!
         val authResult = authenticateSession(token)
         Assertions.assertEquals(200, authResult.statusCodeValue)
@@ -167,7 +167,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Verify a non-existing session`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)), HttpMethod.POST)
+        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)))
         val summary = result.body as SessionSummary
         val token = summary.token!!
         dbLoader.runDataWipeScripts()
@@ -183,7 +183,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Refresh an existing session`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)), HttpMethod.POST)
+        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)))
         val refresh = exchange(
                 entity = tokenHeader(result.body!!.token!!),
                 responseType = object : ParameterizedTypeReference<SessionSummary>() {},
@@ -196,7 +196,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Refresh an expired session`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)), HttpMethod.POST)
+        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)))
         val token = result.body!!.token!!
         expireSession(token)
         val refreshFailure = expectFailure(token, HttpMethod.PUT)
@@ -211,7 +211,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Expire a valid session`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)), HttpMethod.POST)
+        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)))
         val token = result.body!!.token!!
         expireSession(token)
         val loginFail = expectFailure(token, HttpMethod.GET)
@@ -220,7 +220,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Expire an expired session`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)), HttpMethod.POST)
+        val result = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)))
         val token = result.body!!.token!!
         expireSession(token)
         val secondExpire = expectFailure(token, HttpMethod.DELETE)
@@ -236,8 +236,8 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
     @Test
     fun `Update a user's session`() {
         val newGroups = setOf("new_one", "new_two", "new_three")
-        val usernameSession = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)), HttpMethod.POST)
-        val emailSession = createSession(HttpEntity(SessionPrompt(userId, Collections.emptySet(), AuthenticationType.EMAIL)), HttpMethod.POST)
+        val usernameSession = createSession(HttpEntity(SessionPrompt(userId, additional, AuthenticationType.USERNAME)))
+        val emailSession = createSession(HttpEntity(SessionPrompt(userId, Collections.emptySet(), AuthenticationType.EMAIL)))
         exchange(entity = HttpEntity(newGroups),
                 responseType = object : ParameterizedTypeReference<Any>() {},
                 method = HttpMethod.PUT,

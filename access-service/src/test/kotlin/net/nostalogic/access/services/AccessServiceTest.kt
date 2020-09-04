@@ -7,14 +7,11 @@ import net.nostalogic.access.persistence.entities.PolicyActionEntity
 import net.nostalogic.access.persistence.entities.PolicyEntity
 import net.nostalogic.access.persistence.entities.PolicyResourceEntity
 import net.nostalogic.access.persistence.entities.PolicySubjectEntity
-import net.nostalogic.access.persistence.repositories.PolicyActionRepository
-import net.nostalogic.access.persistence.repositories.PolicyRepository
-import net.nostalogic.access.persistence.repositories.PolicyResourceRepository
-import net.nostalogic.access.persistence.repositories.PolicySubjectRepository
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.datamodel.access.PolicyPriority
 import net.nostalogic.exceptions.NoValidationException
+import net.nostalogic.utils.CollUtils
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -45,9 +42,9 @@ class AccessServiceTest(
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(resource.toFullId()),
                 subjects = hashSetOf(subject.toFullId()),
-                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         val result = accessService.createPolicy(policy)
-        Assertions.assertTrue(isPoliciesEqual(policy, result, id = false))
+        assertPoliciesEqual(policy, result, false)
     }
 
     @Test
@@ -55,7 +52,25 @@ class AccessServiceTest(
         val policy = Policy(name = "", priority = PolicyPriority.LEVEL_TWO,
                 resources = HashSet(),
                 subjects = HashSet(),
-                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         Assertions.assertThrows(NoValidationException::class.java) { accessService.createPolicy(policy) }
     }
+
+//    @Test
+//    fun `Edit a policy`() {
+//        val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
+//                resources = hashSetOf(resource.toFullId()),
+//                subjects = hashSetOf(subject.toFullId()),
+//                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
+//        val result = accessService.editPolicy(policy, EntityUtils.uuid())
+//    }
+
+//    private fun <T> mockPageResponse(entities: Collection<T>, callback: FunctionalInterface) {
+//        val response = mockk<Page<T>>()
+
+//        every { policyRepository.findAllByIdInAndStatusIn(any(), any(), any()) } answers {response}
+//        every { policyRepository.findAllByIdInAndStatusIn(any(), any(), any()) } answers {response}
+//    }
+
+    // delete
 }

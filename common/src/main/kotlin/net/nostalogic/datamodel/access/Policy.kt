@@ -4,12 +4,12 @@ import net.nostalogic.entities.EntityStatus
 import java.util.*
 import kotlin.collections.HashSet
 
-class Policy(
+data class Policy(
         var id: String? = null,
-        var status: EntityStatus = EntityStatus.ACTIVE,
-        var name: String,
-        var priority: PolicyPriority,
-        val resources: HashSet<String> = HashSet(),
-        val subjects: HashSet<String> = HashSet(),
-        val permissions: EnumMap<PolicyAction, Boolean> = EnumMap(PolicyAction::class.java)
+        var status: EntityStatus? = EntityStatus.ACTIVE,
+        var name: String? = null,
+        var priority: PolicyPriority? = null,
+        var resources: HashSet<String>? = HashSet(),
+        var subjects: HashSet<String>? = HashSet(),
+        var permissions: EnumMap<PolicyAction, Boolean>? = EnumMap(PolicyAction::class.java)
 )
