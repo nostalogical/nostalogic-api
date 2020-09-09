@@ -124,8 +124,10 @@ open class AccessService(
             policyEntity.name = policy.name!!
             policyEntity.priority = policy.priority!!
             policyEntity.status = policy.status!!
-        } else
+        } else {
             policyEntity = PolicyEntity(policy.name!!, policy.priority!!, SessionContext.getUserId())
+            policy.status?.let { policyEntity.status = policy.status!! }
+        }
         policyRepository.save(policyEntity)
 
         policy.permissions?.let { policy.permissions!!.forEach { (k, v) -> policyActionRepository.save(PolicyActionEntity(policyEntity.id, k, v)) } }

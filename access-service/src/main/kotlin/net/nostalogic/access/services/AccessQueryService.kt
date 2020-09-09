@@ -29,8 +29,27 @@ open class AccessQueryService(
         // resource level queries
 //    }
 
-//    fun filterPolicies(policyIds: Collection<String>, subjectIds: Collection<String>, resourceIds: Collection<String>): Set<Policy> {
-
+//    fun filterPolicies(criteria: PolicySearchCriteria): ArrayList<Policy> {
+//        val filteredPolicyIds = HashSet<String>()
+//
+//        val filtered = criteria.policyIds.isNotEmpty()
+//        filteredPolicyIds.addAll(criteria.policyIds)
+//
+//        if (criteria.subjectIds.isNotEmpty()) {
+//            filteredPolicyIds.addAll(policySubjectRepository.findAllBySubjectIdIn(filterOnlyUuid(criteria.subjectIds)).map { s -> s.policyId })
+//            if (criteria.subjectIds.contains(NoEntity.ALL.name))
+//                filteredPolicyIds.addAll(policySubjectRepository.findAllBySubjectIdIsNull().map { s -> s.policyId })
+//        }
+//
+//        if (criteria.resourceIds.isNotEmpty()) {
+//            filteredPolicyIds.addAll(policyResourceRepository.findAllByResourceIdIn(filterOnlyUuid(criteria.resourceIds)).map { r -> r.policyId })
+//            filteredPolicyIds.addAll(policyResourceRepository.findAllByEntityIn(filterOnlyEntity(criteria.resourceIds)).map { r -> r.policyId })
+//        }
+//
+//        if (criteria.policyIds.isEmpty() && criteria.subjectIds.isEmpty() && criteria.resourceIds.isEmpty())
+//            filteredPolicyIds.addAll(policyRepository.findAll().map { p -> p.id })
+//
+//        return retrievePolicies(filteredPolicyIds, criteria)
 //    }
 
     fun getPolicy(policyId: String): Policy {
@@ -61,7 +80,7 @@ open class AccessQueryService(
             filteredPolicyIds.addAll(policyResourceRepository.findAllByEntityIn(filterOnlyEntity(criteria.resourceIds)).map { r -> r.policyId })
         }
 
-        if (filteredPolicyIds.isEmpty())
+        if (criteria.policyIds.isEmpty() && criteria.subjectIds.isEmpty() && criteria.resourceIds.isEmpty())
             filteredPolicyIds.addAll(policyRepository.findAll().map { p -> p.id })
 
         return retrievePolicies(filteredPolicyIds, criteria)

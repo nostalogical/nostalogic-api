@@ -2,7 +2,7 @@
 /gradle.properties
 *.log*
 *.class*
-*/build*
+*/build/*
 */out*
 */.gradle
 /.gradle/
