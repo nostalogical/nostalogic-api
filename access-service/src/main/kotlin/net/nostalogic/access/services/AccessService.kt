@@ -1,6 +1,6 @@
 package net.nostalogic.access.services
 
-import net.nostalogic.access.models.PolicySearchCriteria
+import net.nostalogic.access.datamodel.PolicySearchCriteria
 import net.nostalogic.access.persistence.entities.PolicyActionEntity
 import net.nostalogic.access.persistence.entities.PolicyEntity
 import net.nostalogic.access.persistence.entities.PolicyResourceEntity
@@ -9,6 +9,7 @@ import net.nostalogic.access.persistence.repositories.PolicyActionRepository
 import net.nostalogic.access.persistence.repositories.PolicyRepository
 import net.nostalogic.access.persistence.repositories.PolicyResourceRepository
 import net.nostalogic.access.persistence.repositories.PolicySubjectRepository
+import net.nostalogic.access.validation.PolicyValidator
 import net.nostalogic.constants.AuthenticationType
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.datamodel.access.PolicyAction
@@ -18,7 +19,6 @@ import net.nostalogic.entities.NoEntity
 import net.nostalogic.exceptions.NoAccessException
 import net.nostalogic.exceptions.NoDeleteException
 import net.nostalogic.exceptions.NoSaveException
-import net.nostalogic.exceptions.NoValidationException
 import net.nostalogic.security.contexts.SessionContext
 import net.nostalogic.utils.EntityUtils
 import org.apache.commons.lang3.StringUtils
@@ -39,7 +39,7 @@ open class AccessService(
         val ALLOWED_SUBJECTS = setOf(NoEntity.USER, NoEntity.GROUP)
 
         fun compositePolicyId(policyId: String, ref: EntityReference): String {
-            return "${policyId}::${ref.toShortId()}"
+            return "${policyId}::${ref.toLocalReference()}"
         }
 
         fun compositeActionId(policyId: String, action: PolicyAction): String {
@@ -55,9 +55,13 @@ open class AccessService(
         return queryService.getPolicy(policyId)
     }
 
+    open fun getPolicies(criteria: PolicySearchCriteria): ArrayList<Policy> {
+        return queryService.filterPolicies(criteria)
+    }
+
     open fun createPolicy(policy: Policy): Policy {
         // TODO: user SessionContext to confirm user can create sessions
-        validatePolicy(policy)
+        PolicyValidator.validate(policy)
         try {
             return savePolicy(policy)
         } catch (e: Exception) {
@@ -71,7 +75,7 @@ open class AccessService(
             existingPolicy.name = policyEdit.name
         policyEdit.status?.let { existingPolicy.status = policyEdit.status }
         policyEdit.priority?.let {existingPolicy.priority = policyEdit.priority }
-        validatePolicy(existingPolicy, false)
+        PolicyValidator.validate(existingPolicy, false)
 
         try {
             matchPolicyApplicationChanges(policyId, existingPolicy, policyEdit)
@@ -141,36 +145,6 @@ open class AccessService(
         } }
         policy.id = policyEntity.id
         return policy
-    }
-
-    fun validatePolicy(policy: Policy, create: Boolean = true) {
-        val invalidFields = StringJoiner(",")
-        if ((create && StringUtils.isBlank(policy.name)) || (policy.name != null && policy.name!!.length > 50))
-            invalidFields.add("name")
-        if (create && policy.priority == null)
-            invalidFields.add("priority")
-
-        policy.resources?.let {
-            for (id in policy.resources!!) {
-                if (!EntityUtils.isFullId(id)) {
-                    invalidFields.add("resources")
-                    break
-                }
-            }
-        }
-
-        policy.subjects?.let {
-            for (id in policy.subjects!!) {
-                val ref = EntityUtils.toEntityRef(id)
-                if (!(ref.isSignature() && ALLOWED_SUBJECTS.contains(ref.entity)) && NoEntity.ALL != ref.entity) {
-                    invalidFields.add("subjects")
-                    break
-                }
-            }
-        }
-
-        if (invalidFields.length() > 0)
-            throw NoValidationException(207002, invalidFields.toString())
     }
 
     fun verifyAccess(allowGuest: Boolean) {

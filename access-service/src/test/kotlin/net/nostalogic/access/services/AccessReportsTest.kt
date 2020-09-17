@@ -26,7 +26,7 @@ class AccessReportsTest {
     @Test
     fun `Resource level permission in the report works`() {
         val report = AccessReport(subject,
-                Collections.singletonMap(testOne.toFullId(),
+                Collections.singletonMap(testOne.toEntityReference(),
                         Collections.singletonMap(PolicyAction.READ, true)),
                 Collections.singletonMap(testOne.entity,
                         Collections.singletonMap(PolicyAction.READ, true)))
@@ -40,7 +40,7 @@ class AccessReportsTest {
         entityActions[testTwo.entity] = Collections.singletonMap(PolicyAction.DELETE, false)
 
         val report = AccessReport(subject,
-                Collections.singletonMap(testOne.toFullId(),
+                Collections.singletonMap(testOne.toEntityReference(),
                         Collections.singletonMap(PolicyAction.EDIT, true)),
                 entityActions)
         Assertions.assertTrue(report.hasPermission(testOne, PolicyAction.CREATE))
@@ -54,7 +54,7 @@ class AccessReportsTest {
         entityActions[testTwo.entity] = Collections.singletonMap(PolicyAction.DELETE, false)
 
         val report = AccessReport(subject,
-                Collections.singletonMap(testOne.toFullId(),
+                Collections.singletonMap(testOne.toEntityReference(),
                         Collections.singletonMap(PolicyAction.EDIT, true)),
                 entityActions)
         assertThrows<NoAccessException> { report.hasPermission(testTwo, PolicyAction.EDIT) }

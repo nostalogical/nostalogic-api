@@ -3,10 +3,10 @@ package net.nostalogic.utils
 import net.nostalogic.entities.EntityReference
 import net.nostalogic.entities.NoEntity
 import net.nostalogic.exceptions.NoValidationException
-import net.nostalogic.utils.EntityUtils.fullEntityId
+import net.nostalogic.utils.EntityUtils.entityReference
 import net.nostalogic.utils.EntityUtils.isEntity
-import net.nostalogic.utils.EntityUtils.isFullId
-import net.nostalogic.utils.EntityUtils.isShortId
+import net.nostalogic.utils.EntityUtils.isEntityReference
+import net.nostalogic.utils.EntityUtils.isLocalReference
 import net.nostalogic.utils.EntityUtils.isUuid
 import net.nostalogic.utils.EntityUtils.toEntity
 import net.nostalogic.utils.EntityUtils.toEntityRef
@@ -21,24 +21,24 @@ import org.springframework.test.context.ActiveProfiles
 class EntityUtilsTest {
 
     @Test
-    fun `Entity from lowercase name`() {
-        val entity = toEntity("nav")
+    fun `An entity from a lowercase name is valid`() {
+        val entity = toEntity(NoEntity.NAV.name.toLowerCase())
         Assertions.assertEquals(NoEntity.NAV, entity)
     }
 
     @Test
-    fun `Entity from uppercase name`() {
-        val entity = toEntity("ARTICLE")
+    fun `An entity from an uppercase name is valid`() {
+        val entity = toEntity(NoEntity.ARTICLE.name.toUpperCase())
         Assertions.assertEquals(NoEntity.ARTICLE, entity)
     }
 
     @Test
-    fun `Entity from nonexistent name should throw an error`() {
+    fun `An entity from a nonexistent name should throw an error`() {
         assertThrows<NoValidationException> { toEntity("something invalid") }
     }
 
     @Test
-    fun `Full ID to entity reference`() {
+    fun `An entity reference is parsed as valid`() {
         val uuid = uuid()
         val expectedRef = EntityReference(uuid, NoEntity.CONTAINER)
         val ref = toEntityRef(NoEntity.CONTAINER.name.toLowerCase() + "_" + uuid)
@@ -46,7 +46,7 @@ class EntityUtilsTest {
     }
 
     @Test
-    fun `Full ID with capital entity to entity reference`() {
+    fun `An entity reference with a capitalised entity name is valid`() {
         val uuid = uuid()
         val expectedRef = EntityReference(uuid, NoEntity.CONTAINER)
         val ref = toEntityRef(NoEntity.CONTAINER.name + "_" + uuid)
@@ -55,7 +55,7 @@ class EntityUtilsTest {
     }
 
     @Test
-    fun `Entity to entity reference`() {
+    fun `An entity is a valid entity reference`() {
         val expectedRef = EntityReference(null, NoEntity.CONTAINER)
         val ref = toEntityRef(NoEntity.CONTAINER.name)
         Assertions.assertEquals(expectedRef, ref)
@@ -63,74 +63,74 @@ class EntityUtilsTest {
     }
 
     @Test
-    fun `Invalid entity to entity reference`() {
+    fun `An invalid entity as an entity reference will throw an error`() {
         assertThrows<NoValidationException> { toEntityRef("NotEntity") }
         Assertions.assertNull(toMaybeEntityRef("NotEntity"))
     }
 
     @Test
-    fun `Invalid full ID to entity reference`() {
+    fun `An invalid entity reference will throw an error`() {
         assertThrows<NoValidationException> { toEntityRef("NotEntity_" + uuid()) }
         Assertions.assertNull(toMaybeEntityRef("NotEntity_" + uuid()))
     }
 
     @Test
-    fun `Valid UUID`() {
+    fun `A UUID is parsed as a valid UUID`() {
         Assertions.assertTrue(isUuid(uuid()))
     }
 
     @Test
-    fun `Invalid UUID`() {
+    fun `A random string is no a valid UUID`() {
         Assertions.assertFalse(isUuid("Not_A_UUID"))
     }
 
     @Test
-    fun `Valid uppercase entity`() {
+    fun `An entity name is a valid entity`() {
         Assertions.assertTrue(isEntity(NoEntity.ARTICLE.name))
     }
 
     @Test
-    fun `Valid lowercase entity`() {
+    fun `A lowercase entity name is a valid entity`() {
         Assertions.assertTrue(isEntity(NoEntity.SESSION.name.toLowerCase()))
     }
 
     @Test
-    fun `Invalid entity`() {
+    fun `A random word is not a valid entity`() {
         Assertions.assertFalse(isEntity("something"))
     }
 
     @Test
-    fun `Specific short ID recognised`() {
-        Assertions.assertTrue(isShortId(uuid()))
+    fun `A UUID is a local reference`() {
+        Assertions.assertTrue(isLocalReference(uuid()))
     }
 
     @Test
-    fun `Entity short ID recognised`() {
-        Assertions.assertTrue(isShortId(NoEntity.EMAIL.name))
+    fun `An entity name is a local reference`() {
+        Assertions.assertTrue(isLocalReference(NoEntity.EMAIL.name))
     }
 
     @Test
-    fun `Lowercase entity short ID recognised`() {
-        Assertions.assertTrue(isShortId(NoEntity.EMAIL.name.toLowerCase()))
+    fun `A lowercase entity name is a local reference`() {
+        Assertions.assertTrue(isLocalReference(NoEntity.EMAIL.name.toLowerCase()))
     }
 
     @Test
-    fun `Full ID is not an short ID`() {
-        Assertions.assertFalse(isShortId(fullEntityId(uuid(), NoEntity.SESSION)))
+    fun `An entity signature is not a local reference`() {
+        Assertions.assertFalse(isLocalReference(entityReference(uuid(), NoEntity.SESSION)))
     }
 
     @Test
-    fun `A UUID is not a full ID`() {
-        Assertions.assertFalse(isFullId(uuid()))
+    fun `A UUID is not an entity reference`() {
+        Assertions.assertFalse(isEntityReference(uuid()))
     }
 
     @Test
-    fun `An entity is a valid full ID`() {
-        Assertions.assertTrue(isFullId(NoEntity.CONTAINER.name))
+    fun `An entity name is a valid entity reference`() {
+        Assertions.assertTrue(isEntityReference(NoEntity.CONTAINER.name))
     }
 
     @Test
-    fun `A full ID is recognised`() {
-        Assertions.assertTrue(isFullId(NoEntity.ARTICLE.name.toLowerCase() + "_" + uuid()))
+    fun `An entity signature is recognised`() {
+        Assertions.assertTrue(isEntityReference(NoEntity.ARTICLE.name.toLowerCase() + "_" + uuid()))
     }
 }

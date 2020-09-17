@@ -4,12 +4,12 @@ import net.nostalogic.utils.EntityUtils
 
 data class EntityReference(val id: String?, val entity: NoEntity) {
 
-    fun toShortId(): String {
-        return EntityUtils.shortEntityId(id, entity)
+    fun toLocalReference(): String {
+        return EntityUtils.localReference(id, entity)
     }
 
-    fun toFullId(): String {
-        return EntityUtils.fullEntityId(id, entity)
+    fun toEntityReference(): String {
+        return EntityUtils.entityReference(id, entity)
     }
 
     fun isSignature(): Boolean {

@@ -7,15 +7,32 @@ object ErrorStrings {
     const val GENERIC_ACCESS = "permissionError"
     const val TOKEN_INVALID = "tokenInvalid"
 
-    private const val FIELDS_INVALID = "fieldsInvalid"
     private const val DATE_FORMAT = "dateFormatInvalid"
     private const val IN_USE_VIOLATION = "duplicateKey"
     private const val RETRIEVE_ERROR = "retrieveError"
     private const val SAVE_ERROR = "saveError"
     private const val DELETE_ERROR = "deleteError"
 
+    private const val FIELDS_INVALID = "fieldsInvalid"
+    const val FIELD_MISSING = "fieldMissing"
+    private const val FIELD_TOO_SHORT = "fieldTooShort"
+    private const val FIELD_TOO_LONG = "fieldTooLong"
+    private const val INVALID_ENTITY = "invalidEntity"
+
     fun fieldsInvalid(fields: String): String {
         return Translator.translate(FIELDS_INVALID, fields)
+    }
+
+    fun fieldTooShort(limit: Int): String {
+        return Translator.translate(FIELD_TOO_SHORT, limit.toString())
+    }
+
+    fun fieldTooLong(limit: Int): String {
+        return Translator.translate(FIELD_TOO_LONG, limit.toString())
+    }
+
+    fun invalidEntity(value: String): String {
+        return Translator.translate(INVALID_ENTITY, value)
     }
 
     fun dateFormat(date: String): String {

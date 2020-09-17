@@ -5,6 +5,13 @@ import net.nostalogic.entities.NoEntity
 import net.nostalogic.exceptions.NoValidationException
 import java.util.*
 
+/**
+ * UUID: A 36 character mixed case alphanumeric string, including 4 hyphens
+ * Entity: The name of a persisted set of data, e.g. a user
+ * Entity Signature: A UUID prefixed with the entity type, e.g. user_fb59f072-1adf-4097-8a85-c0502ce49b7e
+ * Entity Reference: Either an entity signature or an entity
+ * Local Reference: Either a UUID or an entity
+ */
 object EntityUtils {
 
     private const val DELIMITER = "_"
@@ -14,25 +21,25 @@ object EntityUtils {
         return UUID.randomUUID().toString()
     }
 
-    fun shortEntityId(id: String?, entity: NoEntity): String {
+    fun localReference(id: String?, entity: NoEntity): String {
         if (id != null)
             return id
         return entity.name
     }
 
-    fun fullEntityId(id: String?, entity: NoEntity): String {
+    fun entityReference(id: String?, entity: NoEntity): String {
         if (id == null)
             return entity.name
         return entity.name.toLowerCase() + DELIMITER + id
     }
 
-    fun isShortId(entityId: String): Boolean {
+    fun isLocalReference(entityId: String): Boolean {
         if (isEntity(entityId))
             return true
         return isUuid(entityId)
     }
 
-    fun isFullId(entityId: String): Boolean {
+    fun isEntityReference(entityId: String): Boolean {
         try {
             toEntityRef(entityId)
         } catch (e: Exception) {

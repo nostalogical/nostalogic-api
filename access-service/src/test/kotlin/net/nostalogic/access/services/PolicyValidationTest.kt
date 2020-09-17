@@ -1,6 +1,7 @@
 package net.nostalogic.access.services
 
 import net.nostalogic.access.config.AccessTestConfig
+import net.nostalogic.access.validation.PolicyValidator
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.datamodel.access.PolicyPriority
@@ -30,28 +31,28 @@ class PolicyValidationTest(
     @Test
     fun `Validate a standard policy`() {
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
-                resources = hashSetOf(resource.toFullId()),
-                subjects = hashSetOf(subject.toFullId()),
+                resources = hashSetOf(resource.toEntityReference()),
+                subjects = hashSetOf(subject.toEntityReference()),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
-        accessService.validatePolicy(policy)
+        PolicyValidator.validate(policy)
     }
 
     @Test
     fun `Validate an entity resource level policy`() {
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(NoEntity.ARTICLE.name),
-                subjects = hashSetOf(subject.toFullId()),
+                subjects = hashSetOf(subject.toEntityReference()),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
-        accessService.validatePolicy(policy)
+        PolicyValidator.validate(policy)
     }
 
     @Test
     fun `Empty resource policy should be invalid`() {
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(""),
-                subjects = hashSetOf(subject.toFullId()),
+                subjects = hashSetOf(subject.toEntityReference()),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
-        assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
+        assertThrows<NoValidationException> { PolicyValidator.validate(policy) }
     }
 
     @Test
@@ -60,7 +61,7 @@ class PolicyValidationTest(
                 resources = hashSetOf(NoEntity.ARTICLE.name),
                 subjects = hashSetOf(NoEntity.USER.name),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
-        assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
+        assertThrows<NoValidationException> { PolicyValidator.validate(policy) }
     }
 
     @Test
@@ -69,7 +70,7 @@ class PolicyValidationTest(
                 resources = hashSetOf(NoEntity.ARTICLE.name),
                 subjects = hashSetOf(NoEntity.ALL.name),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
-        accessService.validatePolicy(policy)
+        PolicyValidator.validate(policy)
     }
 
     @Test
@@ -78,9 +79,9 @@ class PolicyValidationTest(
                 resources = HashSet(),
                 subjects = hashSetOf(NoEntity.ALL.name),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
-        accessService.validatePolicy(policy)
+        PolicyValidator.validate(policy)
         policy.resources = null
-        accessService.validatePolicy(policy)
+        PolicyValidator.validate(policy)
     }
 
     @Test
@@ -89,9 +90,9 @@ class PolicyValidationTest(
                 resources = hashSetOf(NoEntity.ARTICLE.name),
                 subjects = HashSet(),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
-        accessService.validatePolicy(policy)
+        PolicyValidator.validate(policy)
         policy.subjects = null
-        accessService.validatePolicy(policy)
+        PolicyValidator.validate(policy)
     }
 
     @Test
@@ -100,7 +101,7 @@ class PolicyValidationTest(
                 resources = hashSetOf("not-a-uuid::" + NoEntity.ARTICLE),
                 subjects = hashSetOf(NoEntity.ALL.name),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
-        assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
+        assertThrows<NoValidationException> { PolicyValidator.validate(policy) }
     }
 
     @Test
@@ -109,35 +110,53 @@ class PolicyValidationTest(
                 resources = hashSetOf(NoEntity.ARTICLE.name),
                 subjects = hashSetOf("not-a-uuid::" + NoEntity.GROUP),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
-        assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
+        assertThrows<NoValidationException> { PolicyValidator.validate(policy) }
     }
 
     @Test
     fun `An empty name should be invalid`() {
         val policy = Policy(name = "", priority = PolicyPriority.LEVEL_TWO,
-                resources = hashSetOf(resource.toFullId()),
+                resources = hashSetOf(resource.toEntityReference()),
                 subjects = hashSetOf(NoEntity.ALL.name),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
-        assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
+        assertThrows<NoValidationException> { PolicyValidator.validate(policy) }
+    }
+
+    @Test
+    fun `An empty name should be valid for an existing policy`() {
+        val policy = Policy(name = "", priority = PolicyPriority.LEVEL_TWO,
+                resources = hashSetOf(resource.toEntityReference()),
+                subjects = hashSetOf(NoEntity.ALL.name),
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
+        PolicyValidator.validate(policy, false)
+    }
+
+    @Test
+    fun `An null priority should be valid for an existing policy`() {
+        val policy = Policy(name = name, priority = null,
+                resources = hashSetOf(resource.toEntityReference()),
+                subjects = hashSetOf(NoEntity.ALL.name),
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
+        PolicyValidator.validate(policy, false)
     }
 
     @Test
     fun `A long name should be invalid`() {
         val policy = Policy(name = "A name over the fifty character limit that the database would not accept",
                 priority = PolicyPriority.LEVEL_TWO,
-                resources = hashSetOf(resource.toFullId()),
-                subjects = hashSetOf(subject.toFullId()),
+                resources = hashSetOf(resource.toEntityReference()),
+                subjects = hashSetOf(subject.toEntityReference()),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
-        assertThrows<NoValidationException> { accessService.validatePolicy(policy) }
+        assertThrows<NoValidationException> { PolicyValidator.validate(policy) }
     }
 
     @Test
     fun `An empty permissions map should be valid`() {
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
-                resources = hashSetOf(resource.toFullId()),
-                subjects = hashSetOf(subject.toFullId()))
-        accessService.validatePolicy(policy)
+                resources = hashSetOf(resource.toEntityReference()),
+                subjects = hashSetOf(subject.toEntityReference()))
+        PolicyValidator.validate(policy)
         policy.resources = null
-        accessService.validatePolicy(policy)
+        PolicyValidator.validate(policy)
     }
 }

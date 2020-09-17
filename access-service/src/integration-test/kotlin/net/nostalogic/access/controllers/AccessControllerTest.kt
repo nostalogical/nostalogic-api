@@ -204,6 +204,64 @@ class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseController
         return response.body!!
     }
 
+    private fun doFilter(params: String): NoPageResponse<Policy> {
+        val response = createTemplate().exchange(policyUrl() + "/${params}", HttpMethod.GET, null,
+                object: ParameterizedTypeReference<NoPageResponse<Policy>>() {})
+        Assertions.assertEquals(HttpStatus.OK, response.statusCode)
+        Assertions.assertNotNull(response.body)
+        return response.body!!
+    }
+
+    @Test
+    fun `Filter all policies`() {
+        createPolicies(5)
+        val pages = doFilter("")
+        Assertions.assertTrue(pages.size > 5, "Expected more than 5 policies to exist by default")
+        Assertions.assertEquals(pages.size, pages.content.size, "The page size should be the content size")
+    }
+
+    @Test
+    fun `Filter for resources`() {
+        val policies = createPolicies(2).map{ it.id to it }.toMap()
+        val ids = policies.values.map { it.resources!!.iterator().next() }.toHashSet()
+        ids.add(rndResource())
+        val pages = doFilter("?resources=${ids.joinToString(",")}")
+        Assertions.assertEquals(policies.size, pages.content.size)
+        for (policy in pages.content) {
+            Assertions.assertTrue(policies.containsKey(policy.id))
+            assertPoliciesEqual(policy, policies[policy.id] ?: error("Policy missing"))
+        }
+    }
+
+    @Test
+    fun `Filter for subjects`() {
+        val policies = createPolicies(2).map{ it.id to it }.toMap()
+        val ids = policies.values.map { it.subjects!!.iterator().next() }.toHashSet()
+        ids.add(rndSubject())
+        val pages = doFilter("?subjects=${ids.joinToString(",")}")
+        Assertions.assertEquals(policies.size, pages.content.size)
+        for (policy in pages.content) {
+            Assertions.assertTrue(policies.containsKey(policy.id))
+            assertPoliciesEqual(policy, policies[policy.id] ?: error("Policy missing"))
+        }
+    }
+
+    @Test
+    fun `Confirm resource-subject filter overlap`() {
+        val p1 = createPolicy(testPolicy())
+        val pages = doFilter("?subjects=${p1.subjects!!.iterator().next()}&resources=${p1.resources!!.iterator().next()}")
+        Assertions.assertEquals(1, pages.content.size)
+        assertPoliciesEqual(p1, pages.content[0])
+    }
+
+    @Test
+    fun `Confirm resource-subject exclusive filter overlap`() {
+        val p1 = createPolicy(testPolicy())
+        val p2 = createPolicy(testPolicy())
+        val pages = doFilter("?subjects=${p1.subjects!!.iterator().next()}&resources=${p2.resources!!.iterator().next()}")
+        Assertions.assertEquals(0, pages.content.size)
+    }
+
     @Test
     fun `Open policy search`() {
         createPolicies(5)
@@ -220,11 +278,6 @@ class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseController
         Assertions.assertEquals(2, pages.size, "This page should (probably) be full")
         Assertions.assertTrue(pages.hasNext!!, "Expected more than 4 policies")
     }
-
-    // Do a bunch of searches with different criteria
-    // Status, id, name, priority, resources, subjects, permissions
-    // Policies, subjects, resources, and status can be searched by
-    // For IDs, can search by a few and single IDs -
 
     @Test
     fun `Search for policies`() {

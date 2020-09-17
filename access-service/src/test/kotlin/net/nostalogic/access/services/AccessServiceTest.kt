@@ -40,8 +40,8 @@ class AccessServiceTest(
     @Test
     fun `Create a policy`() {
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
-                resources = hashSetOf(resource.toFullId()),
-                subjects = hashSetOf(subject.toFullId()),
+                resources = hashSetOf(resource.toEntityReference()),
+                subjects = hashSetOf(subject.toEntityReference()),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         val result = accessService.createPolicy(policy)
         assertPoliciesEqual(policy, result, false)
@@ -61,13 +61,17 @@ class AccessServiceTest(
 //        val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
 //                resources = hashSetOf(resource.toFullId()),
 //                subjects = hashSetOf(subject.toFullId()),
-//                permissions = enumMapOf(Pair(PolicyAction.READ, true)))
+//                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
+//        val mock = mockk<Page<PolicyEntity>>()
+//        every { policyRepository.findAllByIdInAndStatusIn(any(), any(), any()) } answers {mock}
+//        every { mock.hasNext() } answers { false }
+//        every { mock.iterator() } answers { hashSetOf(policy).iterator() }
 //        val result = accessService.editPolicy(policy, EntityUtils.uuid())
 //    }
 
 //    private fun <T> mockPageResponse(entities: Collection<T>, callback: FunctionalInterface) {
 //        val response = mockk<Page<T>>()
-
+//
 //        every { policyRepository.findAllByIdInAndStatusIn(any(), any(), any()) } answers {response}
 //        every { policyRepository.findAllByIdInAndStatusIn(any(), any(), any()) } answers {response}
 //    }

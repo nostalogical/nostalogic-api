@@ -85,12 +85,12 @@ abstract class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader) {
                 NoEntity.NAV,
                 NoEntity.POLICY,
                 NoEntity.SESSION)
-        return EntityReference(EntityUtils.uuid(), entities.random()).toFullId()
+        return EntityReference(EntityUtils.uuid(), entities.random()).toEntityReference()
     }
 
     fun rndSubject(): String {
         val entities = hashSetOf(NoEntity.USER, NoEntity.GROUP)
-        return EntityReference(EntityUtils.uuid(), entities.random()).toFullId()
+        return EntityReference(EntityUtils.uuid(), entities.random()).toEntityReference()
     }
 
 }

@@ -1,4 +1,4 @@
-package net.nostalogic.access.models
+package net.nostalogic.access.datamodel
 
 import net.nostalogic.access.services.AccessQueryService
 import net.nostalogic.datamodel.NoPageable
