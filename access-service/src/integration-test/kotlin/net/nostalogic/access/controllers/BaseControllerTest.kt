@@ -31,7 +31,7 @@ import java.io.IOException
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [AccessApplication::class])
 abstract class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader) {
 
-    val localhost = "http://localhost:"
+    private val localhost = "http://localhost:"
 
     @Value("\${local.server.port}")
     var port: Int? = null

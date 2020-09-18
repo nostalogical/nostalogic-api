@@ -1,10 +1,7 @@
 package net.nostalogic.access.services
 
 import net.nostalogic.access.datamodel.PolicySearchCriteria
-import net.nostalogic.access.persistence.entities.PolicyActionEntity
-import net.nostalogic.access.persistence.entities.PolicyEntity
-import net.nostalogic.access.persistence.entities.PolicyResourceEntity
-import net.nostalogic.access.persistence.entities.PolicySubjectEntity
+import net.nostalogic.access.mappers.PolicyMapper
 import net.nostalogic.access.persistence.repositories.PolicyActionRepository
 import net.nostalogic.access.persistence.repositories.PolicyRepository
 import net.nostalogic.access.persistence.repositories.PolicyResourceRepository
@@ -122,28 +119,14 @@ open class AccessService(
 
     @Transactional
     open fun savePolicy(policy: Policy, policyId: String? = null): Policy {
-        val policyEntity: PolicyEntity
-        if (policyId != null) {
-            policyEntity = policyRepository.getOne(policyId)
-            policyEntity.name = policy.name!!
-            policyEntity.priority = policy.priority!!
-            policyEntity.status = policy.status!!
-        } else {
-            policyEntity = PolicyEntity(policy.name!!, policy.priority!!, SessionContext.getUserId())
-            policy.status?.let { policyEntity.status = policy.status!! }
-        }
-        policyRepository.save(policyEntity)
+        val entities = PolicyMapper.dtoToEntities(policy,
+                if (policyId == null) null else policyRepository.getOne(policyId))
 
-        policy.permissions?.let { policy.permissions!!.forEach { (k, v) -> policyActionRepository.save(PolicyActionEntity(policyEntity.id, k, v)) } }
-        policy.subjects?.let { policy.subjects!!.forEach {
-            val ref = EntityUtils.toEntityRef(it)
-            policySubjectRepository.save(PolicySubjectEntity(policyEntity.id, ref.id, ref.entity))
-        } }
-        policy.resources?.let { policy.resources!!.forEach {
-            val ref = EntityUtils.toEntityRef(it)
-            policyResourceRepository.save(PolicyResourceEntity(policyEntity.id, ref.id, ref.entity))
-        } }
-        policy.id = policyEntity.id
+        policyRepository.save(entities.policy)
+        entities.actions.forEach{ policyActionRepository.save(it) }
+        entities.subjects.forEach{ policySubjectRepository.save(it) }
+        entities.resources.forEach{ policyResourceRepository.save(it) }
+
         return policy
     }
 

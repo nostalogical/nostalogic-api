@@ -140,7 +140,7 @@ class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseController
                 responseType = object: ParameterizedTypeReference<ErrorResponse> () {},
                 method = HttpMethod.PUT, url = policyUrl() + "/${policy.id}")
         Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
-        Assertions.assertTrue(response.body!!.debugMessage.contains("missing or invalid:\nname"))
+        Assertions.assertEquals(response.body!!.errorCode, 207002)
     }
 
     private fun assertPolicyUpdate(policy: Policy) {
