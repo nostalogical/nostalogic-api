@@ -5,6 +5,7 @@ import net.nostalogic.access.persistence.repositories.PolicyActionRepository
 import net.nostalogic.access.persistence.repositories.PolicyRepository
 import net.nostalogic.access.persistence.repositories.PolicyResourceRepository
 import net.nostalogic.access.persistence.repositories.PolicySubjectRepository
+import net.nostalogic.datamodel.access.AccessQuery
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.entities.EntityReference
 import net.nostalogic.entities.EntityStatus
@@ -21,13 +22,16 @@ open class AccessQueryService(
         private val policyActionRepository: PolicyActionRepository) {
 
     companion object {
-        val SEARCH_PROPS = arrayOf("created", "id")
+        val SORT_FIELDS = arrayOf("created", "id")
     }
 
-//    fun evaluateAccessQuery(accessQuery: AccessQuery): AccessReport {
-        // entity queries only requires searching for entity level resources
-        // resource level queries
-//    }
+    fun evaluateAccessQuery(accessQuery: AccessQuery) {
+//         entity queries only requires searching for entity level resources
+//         resource level queries
+
+        // Two endpoints - one returns a single access report
+        // Another returns a list of permission contexts, each cover
+    }
 
     /**
      * Exclusive search that returns all policies matching each and every one of the supplied criteria, or all policies
@@ -100,10 +104,10 @@ open class AccessQueryService(
         }
         val resourceEntities = policyResourceRepository.findAllByPolicyIdIn(policyIds)
         for (resource in resourceEntities)
-            policiesById[resource.policyId]?.resources?.add(EntityReference(resource.resourceId, resource.entity).toEntityReference())
+            policiesById[resource.policyId]?.resources?.add(EntityReference(resource.resourceId, resource.entity).toString())
         val subjectEntities = policySubjectRepository.findAllByPolicyIdIn(policyIds)
         for (subject in subjectEntities)
-            policiesById[subject.policyId]?.subjects?.add(EntityReference(subject.subjectId, subject.entity).toEntityReference())
+            policiesById[subject.policyId]?.subjects?.add(EntityReference(subject.subjectId, subject.entity).toString())
         val actionEntities = policyActionRepository.findAllByPolicyIdIn(policyIds)
         for (action in actionEntities)
             policiesById[action.policyId]?.permissions?.set(action.action, action.allow)

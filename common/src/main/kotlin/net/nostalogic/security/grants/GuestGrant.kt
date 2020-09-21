@@ -8,8 +8,8 @@ import net.nostalogic.datamodel.NoDate
  * A guest grant represents any anonymous user or bot not currently logged in.
  */
 class GuestGrant : NoGrant(
-        NoStrings.AUTH_GUEST,
-        NoDate(),
-        AuthenticationType.GUEST,
+        subject = NoStrings.AUTH_GUEST,
+        expiration = NoDate(),
+        type = AuthenticationType.GUEST,
         created = NoDate()
 )

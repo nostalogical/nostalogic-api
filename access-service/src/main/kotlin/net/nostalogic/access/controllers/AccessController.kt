@@ -7,6 +7,7 @@ import net.nostalogic.access.services.AccessQueryService
 import net.nostalogic.access.services.AccessService
 import net.nostalogic.datamodel.NoPageResponse
 import net.nostalogic.datamodel.NoPageable
+import net.nostalogic.datamodel.access.AccessQuery
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.entities.EntityStatus
 import org.springframework.http.HttpStatus
@@ -21,6 +22,13 @@ class AccessController(
     companion object {
         const val ACCESS_ENDPOINT = "/v${AccessApplication.MAJOR}/access"
         const val POLICIES_URI = "/policies"
+    }
+
+    @RequestMapping(method = [RequestMethod.GET], produces = ["application/json"])
+    fun queryAccess(@RequestBody query: AccessQuery): AccessQuery {
+//        accessService.accessReport(query)
+        return query
+//        return AccessQuery().addQuery("ertyer", NoEntity.ARTICLE, hashSetOf(PolicyAction.READ)).addSubject(EntityReference("omsd", NoEntity.USER))
     }
 
     @RequestMapping(method = [RequestMethod.POST], produces = ["application/json"], path = [POLICIES_URI])
@@ -50,7 +58,7 @@ class AccessController(
                     @RequestParam subjects: Set<String>?,
                     @RequestParam resources: Set<String>?,
                     @RequestParam status: Set<EntityStatus>?): NoPageResponse<Policy> {
-        val pageable = NoPageable<Policy>(page, size, *AccessQueryService.SEARCH_PROPS)
+        val pageable = NoPageable<Policy>(page, size, *AccessQueryService.SORT_FIELDS)
         val result = accessService.getPolicies(PolicySearchCriteria(
                 subjectIds = subjects, resourceIds =  resources, status = status, page = pageable))
         return pageable.toResponse(result)
@@ -62,7 +70,7 @@ class AccessController(
                        @RequestParam subjects: Set<String>?,
                        @RequestParam resources: Set<String>?,
                        @RequestParam status: Set<EntityStatus>?): NoPageResponse<Policy> {
-        val pageable = NoPageable<Policy>(page, size, *AccessQueryService.SEARCH_PROPS)
+        val pageable = NoPageable<Policy>(page, size, *AccessQueryService.SORT_FIELDS)
         val result = accessService.searchPolicies(PolicySearchCriteria(
                 policies, subjects, resources, status, pageable))
         return pageable.toResponse(result)

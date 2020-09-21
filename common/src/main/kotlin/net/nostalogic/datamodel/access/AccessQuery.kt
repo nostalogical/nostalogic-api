@@ -2,17 +2,41 @@ package net.nostalogic.datamodel.access
 
 import net.nostalogic.entities.EntityReference
 import net.nostalogic.entities.NoEntity
+import net.nostalogic.security.grants.ImpersonationGrant
+import net.nostalogic.security.grants.LoginGrant
+import net.nostalogic.security.grants.NoGrant
 
-class AccessQuery(val token: String) {
+data class AccessQuery(val subjects: HashSet<String> = HashSet(),
+                       val resourceQueries:HashMap<String, HashSet<PolicyAction>> = HashMap()) {
 
-    val resourceQueries = HashMap<EntityReference, HashSet<PolicyAction>>()
-    val entityQueries = HashMap<NoEntity, HashSet<PolicyAction>>()
+    fun addSubject(subject: EntityReference): AccessQuery {
+        this.subjects.add(subject.toString())
+        return this
+    }
 
-    fun addQuery(resource: String?, entity: NoEntity, actions: HashSet<PolicyAction>) {
-        val reference = EntityReference(resource, entity)
-        if (!resourceQueries.containsKey(reference))
-            resourceQueries[reference] = HashSet()
-        resourceQueries[reference]!!.addAll(actions)
+    fun addSubjects(subjects: Collection<EntityReference>): AccessQuery {
+        subjects.forEach { addSubject(it) }
+        return this
+    }
+
+    fun addSubjects(grant: NoGrant): AccessQuery {
+        if (grant is LoginGrant) {
+            addSubject(EntityReference(grant.subject, NoEntity.USER))
+            addSubjects(grant.additional.map { EntityReference(it, NoEntity.USER) })
+        } else if (grant is ImpersonationGrant) {
+            addSubject(EntityReference(grant.subject, NoEntity.USER))
+            addSubjects(grant.additional.map { EntityReference(it, NoEntity.USER) })
+        }
+        return this
+    }
+
+
+    fun addQuery(resourceId: String?, entity: NoEntity, actions: HashSet<PolicyAction>): AccessQuery {
+        val reference = EntityReference(resourceId, entity)
+        if (!resourceQueries.containsKey(reference.toString()))
+            resourceQueries[reference.toString()] = HashSet()
+        resourceQueries[reference.toString()]!!.addAll(actions)
+        return this
     }
 
 }

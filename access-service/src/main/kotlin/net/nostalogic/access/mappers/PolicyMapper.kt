@@ -19,9 +19,9 @@ object PolicyMapper {
         val policy = Policy(id = policyEntity.id, name = policyEntity.name,
                 priority = policyEntity.priority, status = policyEntity.status)
         for (resource in resourceEntities)
-            policy.resources?.add(EntityReference(resource.resourceId, resource.entity).toEntityReference())
+            policy.resources?.add(EntityReference(resource.resourceId, resource.entity).toString())
         for (subject in subjectEntities)
-            policy.subjects?.add(EntityReference(subject.subjectId, subject.entity).toEntityReference())
+            policy.subjects?.add(EntityReference(subject.subjectId, subject.entity).toString())
         for (action in actionEntities)
             policy.permissions?.set(action.action, action.allow)
         return policy

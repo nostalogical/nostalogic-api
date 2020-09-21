@@ -13,5 +13,5 @@ class PolicySearchCriteria(policyIds: Collection<String>? = null, subjectIds: Co
     val subjectIds: Collection<String> = subjectIds ?: Collections.emptySet()
     val resourceIds: Collection<String> = resourceIds ?: Collections.emptySet()
     val status: Collection<EntityStatus> = status ?: setOf(EntityStatus.ACTIVE)
-    val page: NoPageable<Policy> = page ?: NoPageable(1, 20, *AccessQueryService.SEARCH_PROPS)
+    val page: NoPageable<Policy> = page ?: NoPageable(1, 20, *AccessQueryService.SORT_FIELDS)
 }

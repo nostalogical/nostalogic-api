@@ -116,7 +116,7 @@ class EntityUtilsTest {
 
     @Test
     fun `An entity signature is not a local reference`() {
-        Assertions.assertFalse(isLocalReference(entityReference(uuid(), NoEntity.SESSION)))
+        Assertions.assertFalse(isLocalReference(entityReference(uuid(), NoEntity.SESSION).toString()))
     }
 
     @Test

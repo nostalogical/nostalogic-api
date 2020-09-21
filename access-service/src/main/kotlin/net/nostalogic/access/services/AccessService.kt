@@ -8,6 +8,7 @@ import net.nostalogic.access.persistence.repositories.PolicyResourceRepository
 import net.nostalogic.access.persistence.repositories.PolicySubjectRepository
 import net.nostalogic.access.validation.PolicyValidator
 import net.nostalogic.constants.AuthenticationType
+import net.nostalogic.datamodel.access.AccessQuery
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.entities.EntityReference
@@ -42,6 +43,10 @@ open class AccessService(
         fun compositeActionId(policyId: String, action: PolicyAction): String {
             return "${policyId}::${action.name}"
         }
+    }
+
+    fun accessReport(accessQuery: AccessQuery) {
+        queryService.evaluateAccessQuery(accessQuery)
     }
 
     open fun searchPolicies(criteria: PolicySearchCriteria): ArrayList<Policy> {

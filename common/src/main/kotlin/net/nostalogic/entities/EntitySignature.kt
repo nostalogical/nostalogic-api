@@ -8,7 +8,7 @@ data class EntitySignature(val id: String, val entity: NoEntity) {
         return EntityUtils.localReference(id, entity)
     }
 
-    fun toEntityReference(): String {
+    fun toEntityReference(): EntityReference {
         return EntityUtils.entityReference(id, entity)
     }
 }

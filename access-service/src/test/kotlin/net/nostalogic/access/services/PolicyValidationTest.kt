@@ -31,8 +31,8 @@ class PolicyValidationTest(
     @Test
     fun `Validate a standard policy`() {
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
-                resources = hashSetOf(resource.toEntityReference()),
-                subjects = hashSetOf(subject.toEntityReference()),
+                resources = hashSetOf(resource.toEntityReference().toString()),
+                subjects = hashSetOf(subject.toEntityReference().toString()),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         PolicyValidator.validate(policy)
     }
@@ -41,7 +41,7 @@ class PolicyValidationTest(
     fun `Validate an entity resource level policy`() {
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(NoEntity.ARTICLE.name),
-                subjects = hashSetOf(subject.toEntityReference()),
+                subjects = hashSetOf(subject.toEntityReference().toString()),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         PolicyValidator.validate(policy)
     }
@@ -50,7 +50,7 @@ class PolicyValidationTest(
     fun `Empty resource policy should be invalid`() {
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
                 resources = hashSetOf(""),
-                subjects = hashSetOf(subject.toEntityReference()),
+                subjects = hashSetOf(subject.toEntityReference().toString()),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         assertThrows<NoValidationException> { PolicyValidator.validate(policy) }
     }
@@ -116,7 +116,7 @@ class PolicyValidationTest(
     @Test
     fun `An empty name should be invalid`() {
         val policy = Policy(name = "", priority = PolicyPriority.LEVEL_TWO,
-                resources = hashSetOf(resource.toEntityReference()),
+                resources = hashSetOf(resource.toEntityReference().toString()),
                 subjects = hashSetOf(NoEntity.ALL.name),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         assertThrows<NoValidationException> { PolicyValidator.validate(policy) }
@@ -125,7 +125,7 @@ class PolicyValidationTest(
     @Test
     fun `An empty name should be valid for an existing policy`() {
         val policy = Policy(name = "", priority = PolicyPriority.LEVEL_TWO,
-                resources = hashSetOf(resource.toEntityReference()),
+                resources = hashSetOf(resource.toEntityReference().toString()),
                 subjects = hashSetOf(NoEntity.ALL.name),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         PolicyValidator.validate(policy, false)
@@ -134,7 +134,7 @@ class PolicyValidationTest(
     @Test
     fun `An null priority should be valid for an existing policy`() {
         val policy = Policy(name = name, priority = null,
-                resources = hashSetOf(resource.toEntityReference()),
+                resources = hashSetOf(resource.toEntityReference().toString()),
                 subjects = hashSetOf(NoEntity.ALL.name),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         PolicyValidator.validate(policy, false)
@@ -144,8 +144,8 @@ class PolicyValidationTest(
     fun `A long name should be invalid`() {
         val policy = Policy(name = "A name over the fifty character limit that the database would not accept",
                 priority = PolicyPriority.LEVEL_TWO,
-                resources = hashSetOf(resource.toEntityReference()),
-                subjects = hashSetOf(subject.toEntityReference()),
+                resources = hashSetOf(resource.toEntityReference().toString()),
+                subjects = hashSetOf(subject.toEntityReference().toString()),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         assertThrows<NoValidationException> { PolicyValidator.validate(policy) }
     }
@@ -153,8 +153,8 @@ class PolicyValidationTest(
     @Test
     fun `An empty permissions map should be valid`() {
         val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
-                resources = hashSetOf(resource.toEntityReference()),
-                subjects = hashSetOf(subject.toEntityReference()))
+                resources = hashSetOf(resource.toEntityReference().toString()),
+                subjects = hashSetOf(subject.toEntityReference().toString()))
         PolicyValidator.validate(policy)
         policy.resources = null
         PolicyValidator.validate(policy)

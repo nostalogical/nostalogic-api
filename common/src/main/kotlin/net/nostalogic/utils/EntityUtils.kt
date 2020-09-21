@@ -14,7 +14,7 @@ import java.util.*
  */
 object EntityUtils {
 
-    private const val DELIMITER = "_"
+    const val DELIMITER = "_"
     const val SYSTEM_ID = "SYSTEM_GENERATED_RECORD_____________"
 
     fun uuid(): String {
@@ -27,10 +27,10 @@ object EntityUtils {
         return entity.name
     }
 
-    fun entityReference(id: String?, entity: NoEntity): String {
+    fun entityReference(id: String?, entity: NoEntity): EntityReference {
         if (id == null)
-            return entity.name
-        return entity.name.toLowerCase() + DELIMITER + id
+            return EntityReference(entity = entity)
+        return EntityReference(id, entity)
     }
 
     fun isLocalReference(entityId: String): Boolean {
