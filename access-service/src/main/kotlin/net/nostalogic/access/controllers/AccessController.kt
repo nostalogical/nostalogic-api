@@ -26,9 +26,8 @@ class AccessController(
 
     @RequestMapping(method = [RequestMethod.GET], produces = ["application/json"])
     fun queryAccess(@RequestBody query: AccessQuery): AccessQuery {
-//        accessService.accessReport(query)
+        accessService.accessReport(query)
         return query
-//        return AccessQuery().addQuery("ertyer", NoEntity.ARTICLE, hashSetOf(PolicyAction.READ)).addSubject(EntityReference("omsd", NoEntity.USER))
     }
 
     @RequestMapping(method = [RequestMethod.POST], produces = ["application/json"], path = [POLICIES_URI])
