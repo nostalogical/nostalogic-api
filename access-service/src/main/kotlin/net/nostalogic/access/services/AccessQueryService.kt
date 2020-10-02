@@ -1,11 +1,13 @@
 package net.nostalogic.access.services
 
 import net.nostalogic.access.datamodel.PolicySearchCriteria
+import net.nostalogic.access.datamodel.ResourcePermissionContext
 import net.nostalogic.access.persistence.repositories.PolicyActionRepository
 import net.nostalogic.access.persistence.repositories.PolicyRepository
 import net.nostalogic.access.persistence.repositories.PolicyResourceRepository
 import net.nostalogic.access.persistence.repositories.PolicySubjectRepository
 import net.nostalogic.datamodel.access.AccessQuery
+import net.nostalogic.datamodel.access.AccessReport
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.entities.EntityReference
 import net.nostalogic.entities.EntityStatus
@@ -14,7 +16,7 @@ import net.nostalogic.exceptions.NoRetrieveException
 import net.nostalogic.utils.EntityUtils
 import org.springframework.stereotype.Service
 
-@Service(value = "AccessQueryService")
+@Service
 open class AccessQueryService(
         private val policyRepository: PolicyRepository,
         private val policySubjectRepository: PolicySubjectRepository,
@@ -25,12 +27,37 @@ open class AccessQueryService(
         val SORT_FIELDS = arrayOf("created", "id")
     }
 
-    fun evaluateAccessQuery(accessQuery: AccessQuery) {
+    fun evaluateAccessQuery(accessQuery: AccessQuery): AccessReport {
+        val contexts = analyseAccessQuery(accessQuery)
+        // TODO: finish
+        return AccessReport(accessQuery.subjects, emptyMap(), emptyMap())
+    }
+
+    fun analyseAccessQuery(accessQuery: AccessQuery): Collection<ResourcePermissionContext> {
+//        policyRepository.findPolicyIdsForSubjectsAndResources(NoEntity.ALL, setOf(NoEntity.NAV), emptySet(), emptySet())
 //         entity queries only requires searching for entity level resources
 //         resource level queries
 
+        val subjects = accessQuery.subjects.map { EntityUtils.toEntityRef(it) }
+        val subjectIds = subjects.map { it.toString() }.toHashSet()
+
+        val resources = accessQuery.resourceQueries.keys.map { EntityUtils.toEntityRef(it) }
+        val resourceIds = resources.map { it.id }.toHashSet()
+        val resourceEntities = resources.map { it.entity }.toHashSet()
+
         // Two endpoints - one returns a single access report
         // Another returns a list of permission contexts, each cover
+
+        val contexts = ArrayList<ResourcePermissionContext>()
+
+        for (query in accessQuery.resourceQueries) {
+            policyRepository.findPolicyIdsForSubjectsAndResources(allEntity = NoEntity.ALL,
+                    resourceEntities = setOf(NoEntity.NAV), resourceIds = emptySet(), subjectIds = subjectIds)
+            // A key is an entity reference
+            // A value is an action requested
+        }
+
+        return contexts
     }
 
     /**

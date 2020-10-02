@@ -8,7 +8,6 @@ import net.nostalogic.access.persistence.repositories.PolicyResourceRepository
 import net.nostalogic.access.persistence.repositories.PolicySubjectRepository
 import net.nostalogic.access.validation.PolicyValidator
 import net.nostalogic.constants.AuthenticationType
-import net.nostalogic.datamodel.access.AccessQuery
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.entities.EntityReference
@@ -22,7 +21,6 @@ import net.nostalogic.utils.EntityUtils
 import org.apache.commons.lang3.StringUtils
 import org.springframework.stereotype.Service
 import java.util.*
-import javax.transaction.Transactional
 
 @Service
 open class AccessService(
@@ -45,9 +43,13 @@ open class AccessService(
         }
     }
 
-    fun accessReport(accessQuery: AccessQuery) {
-        queryService.evaluateAccessQuery(accessQuery)
-    }
+//    fun accessReport(accessQuery: AccessQuery): AccessReport {
+//        return queryService.evaluateAccessQuery(accessQuery)
+//    }
+//
+//    fun accessAnalysis(accessQuery: AccessQuery): Collection<ResourcePermissionContext> {
+//        return queryService.analyseAccessQuery(accessQuery)
+//    }
 
     open fun searchPolicies(criteria: PolicySearchCriteria): ArrayList<Policy> {
         return queryService.searchPolicies(criteria)
@@ -94,7 +96,6 @@ open class AccessService(
         changePolicyStatuses(setOf(policyId), EntityStatus.DELETED)
     }
 
-    @Transactional
     open fun changePolicyStatuses(policyIds: Collection<String>, status: EntityStatus) {
         policyRepository.changePoliciesToStatus(policyIds, status)
     }
@@ -103,7 +104,6 @@ open class AccessService(
      * If subjects, resources, or permissions in an update to a policy are not null, this removes any persisted records
      * not present in the edit and sets the edited values to the current policy.
      */
-    @Transactional
     open fun matchPolicyApplicationChanges(policyId: String, currentPolicy: Policy, editedPolicy: Policy) {
         editedPolicy.subjects?.let { currentPolicy.subjects!!.removeAll(editedPolicy.subjects!!) }
         editedPolicy.resources?.let { currentPolicy.resources!!.removeAll(editedPolicy.resources!!) }
@@ -122,7 +122,6 @@ open class AccessService(
         editedPolicy.permissions?.let { currentPolicy.permissions = editedPolicy.permissions!! }
     }
 
-    @Transactional
     open fun savePolicy(policy: Policy, policyId: String? = null): Policy {
         val entities = PolicyMapper.dtoToEntities(policy,
                 if (policyId == null) null else policyRepository.getOne(policyId))
