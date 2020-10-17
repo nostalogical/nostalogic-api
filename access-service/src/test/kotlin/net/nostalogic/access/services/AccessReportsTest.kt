@@ -19,9 +19,9 @@ import kotlin.collections.HashMap
 @ExtendWith(SpringExtension::class)
 class AccessReportsTest {
 
-    val subject = EntityUtils.uuid()
-    val testOne = EntityReference(EntityUtils.uuid(), NoEntity.ARTICLE)
-    val testTwo = EntityReference(EntityUtils.uuid(), NoEntity.GROUP)
+    private val subject = EntityUtils.uuid()
+    private val testOne = EntityReference(EntityUtils.uuid(), NoEntity.ARTICLE)
+    private val testTwo = EntityReference(EntityUtils.uuid(), NoEntity.GROUP)
 
     @Test
     fun `Resource level permission in the report works`() {

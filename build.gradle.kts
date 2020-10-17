@@ -14,6 +14,7 @@ allprojects {
 
     repositories {
         mavenCentral()
+        jcenter()
     }
 }
 
@@ -66,6 +67,7 @@ subprojects {
         implementation("org.apache.commons:commons-lang3:3.10")
         implementation("org.postgresql:postgresql:42.2.12")
         implementation("com.auth0:java-jwt:3.10.3")
+        implementation("khttp:khttp:1.0.0")
         runtimeOnly("com.h2database:h2")
         runtimeOnly("org.springframework.boot:spring-boot-devtools")
         testImplementation("org.springframework.boot:spring-boot-starter-test") {

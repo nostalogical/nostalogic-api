@@ -19,7 +19,7 @@ data class AccessReport(
             return permission
         else
             throw NoAccessException(101001,
-                    "Action '${action}' not specified for '${reference.toString()}'",
+                    "Action '${action}' not specified for '${reference}'",
                     Translator.translate("permissionMissing"))
     }
 }

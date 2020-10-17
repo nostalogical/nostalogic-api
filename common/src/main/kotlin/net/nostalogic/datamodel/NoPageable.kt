@@ -12,7 +12,7 @@ import kotlin.math.min
 class NoPageable<T>(private val page: Int = 1, private val size: Int = MAX_PAGE_SIZE, private vararg val sortFields: String) {
 
     companion object {
-        private const val MAX_PAGE_SIZE = 1000
+        private const val MAX_PAGE_SIZE = 1_000
     }
 
     var hasNext: Boolean? = null

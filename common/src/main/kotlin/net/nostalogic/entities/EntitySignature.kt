@@ -11,4 +11,8 @@ data class EntitySignature(val id: String, val entity: NoEntity) {
     fun toEntityReference(): EntityReference {
         return EntityUtils.entityReference(id, entity)
     }
+
+    override fun toString(): String {
+        return entity.name + EntityUtils.DELIMITER + id
+    }
 }

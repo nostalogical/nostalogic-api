@@ -2,9 +2,14 @@ package net.nostalogic.access.controllers
 
 import net.nostalogic.access.AccessApplication
 import net.nostalogic.config.DatabaseLoader
+import net.nostalogic.datamodel.access.Policy
+import net.nostalogic.datamodel.access.PolicyAction
+import net.nostalogic.datamodel.access.PolicyPriority
 import net.nostalogic.entities.EntityReference
 import net.nostalogic.entities.NoEntity
+import net.nostalogic.utils.CollUtils
 import net.nostalogic.utils.EntityUtils
+import org.apache.commons.lang3.RandomUtils
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -47,6 +52,36 @@ abstract class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader) {
     fun teardown() {
         dbLoader.runDataWipeScripts()
         dbLoader.runSchemaDropScripts()
+    }
+
+    fun accessUrl(): String {
+        return baseApiUrl + AccessController.ACCESS_ENDPOINT
+    }
+
+    fun policyUrl(): String {
+        return accessUrl() + AccessController.POLICIES_URI
+    }
+
+    fun testPolicy(): Policy {
+        return Policy(
+                name = "Test Policy " + RandomUtils.nextInt(0, 10000),
+                priority = PolicyPriority.LEVEL_TWO,
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true), Pair(PolicyAction.EDIT_OWN, true)),
+                resources = hashSetOf(rndResource()),
+                subjects = hashSetOf(rndSubject())
+        )
+    }
+
+    fun createPolicy(policy: Policy): Policy {
+        val exchange = exchange(
+                entity = HttpEntity(policy),
+                responseType = object : ParameterizedTypeReference<Policy>() {},
+                method = HttpMethod.POST,
+                url = policyUrl()
+        )
+        Assertions.assertEquals(HttpStatus.CREATED, exchange.statusCode)
+        Assertions.assertNotNull(exchange.body)
+        return exchange.body!!
     }
 
     protected fun createTemplate(): RestTemplate {

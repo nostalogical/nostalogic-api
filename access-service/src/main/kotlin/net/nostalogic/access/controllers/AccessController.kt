@@ -32,12 +32,12 @@ class AccessController(
         print("load")
     }
 
-    @RequestMapping(method = [RequestMethod.GET], produces = ["application/json"])
+    @RequestMapping(method = [RequestMethod.POST], produces = ["application/json"])
     fun queryAccess(@RequestBody query: AccessQuery): AccessReport {
         return queryService.evaluateAccessQuery(query)
     }
 
-    @RequestMapping(method = [RequestMethod.GET], produces = ["application/json"], path = [ANALYSE_URI])
+    @RequestMapping(method = [RequestMethod.POST], produces = ["application/json"], path = [ANALYSE_URI])
     fun analyseAccess(@RequestBody query: AccessQuery): Collection<ResourcePermissionContext> {
         return queryService.analyseAccessQuery(query)
     }

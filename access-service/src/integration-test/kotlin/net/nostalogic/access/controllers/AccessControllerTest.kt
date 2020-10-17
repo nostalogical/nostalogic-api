@@ -10,7 +10,6 @@ import net.nostalogic.datamodel.access.PolicyPriority
 import net.nostalogic.entities.EntityStatus
 import net.nostalogic.utils.CollUtils
 import net.nostalogic.utils.EntityUtils
-import org.apache.commons.lang3.RandomUtils
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -30,37 +29,7 @@ import kotlin.collections.HashSet
 @ActiveProfiles(profiles = ["integration-test"])
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [AccessApplication::class])
-class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseControllerTest(dbLoader) {
-
-    private fun accessUrl(): String {
-        return baseApiUrl + AccessController.ACCESS_ENDPOINT
-    }
-
-    private fun policyUrl(): String {
-        return accessUrl() + AccessController.POLICIES_URI
-    }
-
-    private fun testPolicy(): Policy {
-        return Policy(
-                name = "Test Policy " + RandomUtils.nextInt(0, 10000),
-                priority = PolicyPriority.LEVEL_TWO,
-                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true), Pair(PolicyAction.EDIT_OWN, true)),
-                resources = hashSetOf(rndResource()),
-                subjects = hashSetOf(rndSubject())
-        )
-    }
-
-    private fun createPolicy(policy: Policy): Policy {
-        val exchange = exchange(
-                entity = HttpEntity(policy),
-                responseType = object : ParameterizedTypeReference<Policy>() {},
-                method = HttpMethod.POST,
-                url = policyUrl()
-        )
-        Assertions.assertEquals(HttpStatus.CREATED, exchange.statusCode)
-        Assertions.assertNotNull(exchange.body)
-        return exchange.body!!
-    }
+open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseControllerTest(dbLoader) {
 
     private fun assertPoliciesEqual(p1: Policy, p2:Policy, includeIds: Boolean = true) {
         if (includeIds)

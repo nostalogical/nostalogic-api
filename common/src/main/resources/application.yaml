@@ -6,6 +6,8 @@ security:
 spring:
   application:
     name: base-service
+  banner:
+    location: classpath:/banner.txt
   datasource:
     username: postgres
     password: solice

@@ -76,6 +76,8 @@ class DatabaseLoader(
         val scriptsToRun = ArrayList<Resource>()
 
         isolateSchema(standardScripts)
+        standardScripts.sortBy { it.filename?.substringAfterLast("/") }
+
 
         standard@
         for (standard in standardScripts) {

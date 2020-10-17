@@ -30,49 +30,14 @@ import java.util.*
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [AccessApplication::class])
 class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTest(dbLoader) {
 
-//    private val localhost = "http://localhost:"
-
-//    @Value("\${local.server.port}")
-//    private var port: Int? = null
-//    private var baseApiUrl = localhost
-
     private val userId = "TestUserId"
     private val group1 = "group1"
     private val group2 = "group2"
     private val additional = setOf(group1, group2)
 
-//    @BeforeEach
-//    fun setup() {
-//        baseApiUrl = localhost + port
-//        dbLoader.runDbCleanSetup()
-//    }
-
-//    @AfterEach
-//    fun teardown() {
-//        dbLoader.runDataWipeScripts()
-//        dbLoader.runSchemaDropScripts()
-//    }
-
     private fun sessionsUrl(): String {
         return baseApiUrl + SessionController.SESSIONS_ENDPOINT
     }
-
-//    private fun createTemplate(): RestTemplate {
-//        val template = RestTemplate()
-//        template.requestFactory = HttpComponentsClientHttpRequestFactory()
-//        template.errorHandler = object : DefaultResponseErrorHandler() {
-//            @Throws(IOException::class)
-//            override fun hasError(response: ClientHttpResponse): Boolean {
-//                val status = response.statusCode
-//                return status.series() == HttpStatus.Series.SERVER_ERROR
-//            }
-//        }
-//        return template
-//    }
-
-//    private fun <T> exchange(entity: HttpEntity<*>, responseType: ParameterizedTypeReference<T>, method: HttpMethod, url: String): ResponseEntity<T> {
-//        return createTemplate().exchange(url, method, entity, responseType)
-//    }
 
     private fun createSession(entity: HttpEntity<*>): ResponseEntity<SessionSummary> {
         return exchange(
