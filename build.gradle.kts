@@ -68,6 +68,7 @@ subprojects {
         implementation("org.postgresql:postgresql:42.2.12")
         implementation("com.auth0:java-jwt:3.10.3")
         implementation("khttp:khttp:1.0.0")
+        implementation("com.google.code.gson:gson:2.8.6")
         runtimeOnly("com.h2database:h2")
         runtimeOnly("org.springframework.boot:spring-boot-devtools")
         testImplementation("org.springframework.boot:spring-boot-starter-test") {

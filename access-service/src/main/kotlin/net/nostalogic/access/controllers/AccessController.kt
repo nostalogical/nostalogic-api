@@ -16,7 +16,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping(ACCESS_ENDPOINT)
+@RequestMapping(ACCESS_ENDPOINT, produces = ["application/json"])
 class AccessController(
         private val accessService: AccessService,
         private val queryService: AccessQueryService

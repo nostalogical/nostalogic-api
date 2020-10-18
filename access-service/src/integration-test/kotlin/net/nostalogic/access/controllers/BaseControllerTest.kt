@@ -1,7 +1,9 @@
 package net.nostalogic.access.controllers
 
 import net.nostalogic.access.AccessApplication
+import net.nostalogic.config.Config
 import net.nostalogic.config.DatabaseLoader
+import net.nostalogic.datamodel.Setting
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.datamodel.access.PolicyPriority
@@ -46,6 +48,7 @@ abstract class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader) {
     fun setup() {
         baseApiUrl = localhost + port
         dbLoader.runDbCleanSetup()
+        Config.addSetting(Setting("microservices.access.base-url", "http://localhost:$port", Setting.Source.SERVICE))
     }
 
     @AfterEach

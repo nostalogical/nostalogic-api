@@ -2,6 +2,7 @@ package net.nostalogic.access.controllers
 
 import net.nostalogic.access.AccessApplication
 import net.nostalogic.access.datamodel.ResourcePermissionContext
+import net.nostalogic.comms.AccessComms
 import net.nostalogic.config.DatabaseLoader
 import net.nostalogic.datamodel.access.AccessQuery
 import net.nostalogic.datamodel.access.AccessReport
@@ -117,6 +118,12 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
 
         val report = query(AccessQuery(hashSetOf(TEST_USER.toString()), hashMapOf(Pair(NoEntity.NAV.name, hashSetOf(PolicyAction.READ)))))
         assertReport(report, hashSetOf(TEST_USER.toString()), null, hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.READ, true)))))
+    }
+
+    @Test
+    fun `Internal access comms works properly`() {
+        val report = AccessComms.query(AccessQuery(hashSetOf(TEST_USER.toString()), hashMapOf(Pair(NoEntity.NAV.name, hashSetOf(PolicyAction.READ)))))
+        assertReport(report as AccessReport, hashSetOf(TEST_USER.toString()), null, hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.READ, true)))))
     }
 
     @Test

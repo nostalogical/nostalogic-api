@@ -26,3 +26,7 @@ spring:
 
 server:
   port: 3601
+
+microservices:
+  access:
+    base-url: http://localhost:3601

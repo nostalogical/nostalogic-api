@@ -26,6 +26,7 @@ class Config(private val context: ApplicationContext,
         private const val CENSORED = "*****"
         private const val SERVICE = "service"
         private const val API = "apiversion"
+        private const val BASE_URL = "microservices.access.base-url"
 
         private var service = "unknown"
         private var apiVersion = ApiVersion(0, 0, 0)
@@ -63,6 +64,10 @@ class Config(private val context: ApplicationContext,
 
         fun service(): String {
             return getSetting(SERVICE)
+        }
+
+        fun baseUrl(): String {
+            return getSetting(BASE_URL)
         }
 
         fun getSetting(key: String): String {
@@ -110,6 +115,7 @@ class Config(private val context: ApplicationContext,
         springKeys.add("spring.jpa.database-platform")
         springKeys.add("spring.liquibase.default-schema")
         springKeys.add("server.port")
+        springKeys.add("microservices.access.base-url")
         reloadSettings()
     }
 

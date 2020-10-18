@@ -6,9 +6,9 @@ import net.nostalogic.entities.NoEntity
 import net.nostalogic.exceptions.NoAccessException
 
 data class AccessReport(
-        val subjectIds: Set<String>,
-        val resourcePermissions: Map<String, Map<PolicyAction, Boolean>>,
-        val entityPermissions: Map<NoEntity, Map<PolicyAction, Boolean>>
+        val subjectIds: Set<String> = emptySet(),
+        val resourcePermissions: Map<String, Map<PolicyAction, Boolean>> = emptyMap(),
+        val entityPermissions: Map<NoEntity, Map<PolicyAction, Boolean>> = emptyMap()
 ) {
 
     fun hasPermission(reference: EntityReference, action: PolicyAction): Boolean {
