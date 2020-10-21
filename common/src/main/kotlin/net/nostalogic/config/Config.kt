@@ -30,6 +30,7 @@ class Config(private val context: ApplicationContext,
         private const val API = "apiversion"
         private const val BASE_URL = "microservices.base-url"
         private const val ACCESS_PORT = "microservices.access-port"
+        private const val EXCOMM_PORT = "microservices.excomm-port"
         private const val CLIENT_BASE_URL = "client.base-url"
         private const val CLIENT_PORT = "client.port"
 
@@ -73,6 +74,10 @@ class Config(private val context: ApplicationContext,
 
         fun accessUrl(): String {
             return getSetting(BASE_URL) + getSetting(ACCESS_PORT)
+        }
+
+        fun excommUrl(): String {
+            return getSetting(BASE_URL) + getSetting(EXCOMM_PORT)
         }
 
         fun frontendUrl(): String {

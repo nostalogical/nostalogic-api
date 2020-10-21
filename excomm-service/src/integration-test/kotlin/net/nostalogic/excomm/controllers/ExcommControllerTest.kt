@@ -1,5 +1,6 @@
 package net.nostalogic.excomm.controllers
 
+import net.nostalogic.comms.ExcommComms
 import net.nostalogic.config.Config
 import net.nostalogic.config.DatabaseLoader
 import net.nostalogic.constants.MessageType
@@ -53,7 +54,7 @@ class ExcommControllerTest(@Autowired val dbLoader: DatabaseLoader, @Autowired v
     fun setup() {
         baseApiUrl = localhost + port
         dbLoader.runDbCleanSetup()
-        Config.addSetting(Setting("microservices.access-port", ":$port", Setting.Source.SERVICE))
+        Config.addSetting(Setting("microservices.excomm-port", ":$port", Setting.Source.SERVICE))
     }
 
     @AfterEach
@@ -113,6 +114,18 @@ class ExcommControllerTest(@Autowired val dbLoader: DatabaseLoader, @Autowired v
         Assertions.assertEquals(entityId.toString(), dbId.toString())
         Assertions.assertTrue(email.bodyHtml.contains("<a href=\"http://localhost:3331/regconfirm?code=test-code\">"))
         Assertions.assertTrue(email.bodyPlain.contains("http://localhost:3331/regconfirm?code=test-code"))
+    }
+
+    @Test
+    fun `Internal excomm comms works properly`() {
+        val id = ExcommComms.send(MessageOutline(
+                recipientId = recipientId,
+                recipientEmailAddress = recipientEmail,
+                type = MessageType.REGISTRATION_CONFIRM,
+                locale = NoLocale.en_GB))
+        Assertions.assertNotNull(id)
+        val entityId = EntityReference(id!!)
+        Assertions.assertEquals(NoEntity.EMAIL, entityId.entity)
     }
 
 }

@@ -9,15 +9,14 @@ import org.slf4j.LoggerFactory
 object AccessComms {
 
     private val logger = LoggerFactory.getLogger(AccessComms::class.java)
-    private val ACCESS_ENDPOINT = "/v0/access"
+    private const val ACCESS_ENDPOINT = "/v0/access"
 
     fun query(accessQuery: AccessQuery): AccessReport {
-        val serialisedRequest = Serialiser.toJson(accessQuery)
-        if (serialisedRequest == null) {
-            logger.error("Failed to serialise access request")
+        val response = khttp.post(url = Config.accessUrl() + ACCESS_ENDPOINT, json = Serialiser.toJson(accessQuery), headers = BaseComms.HEADERS)
+        if (response.statusCode != 200) {
+            logger.error("Access request returned non-OK response (${response.statusCode}): ${String(response.content)}")
             return AccessReport()
         }
-        val response = khttp.post(url = Config.accessUrl() + ACCESS_ENDPOINT, json = Serialiser.toJson(accessQuery), headers = BaseComms.HEADERS)
         return Serialiser.fromJson(response.jsonObject, AccessReport::class.java) ?: AccessReport()
     }
 
