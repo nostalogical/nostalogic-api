@@ -1,7 +1,7 @@
 package net.nostalogic.access.services
 
 import net.nostalogic.access.config.AccessTestConfig
-import net.nostalogic.access.validation.PolicyValidator
+import net.nostalogic.access.validators.PolicyValidator
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.datamodel.access.PolicyPriority

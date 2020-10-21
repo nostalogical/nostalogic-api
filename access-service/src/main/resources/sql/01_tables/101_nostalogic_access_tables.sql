@@ -1,7 +1,7 @@
 
 CREATE TABLE IF NOT EXISTS policy (
     tenant VARCHAR(10) NOT NULL DEFAULT 'nostalogic',
-    id VARCHAR(36) UNIQUE PRIMARY KEY NOT NULL,
+    id VARCHAR(36) PRIMARY KEY,
     created TIMESTAMP NOT NULL DEFAULT now(),
     creator_id varchar(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
     name VARCHAR(50) NOT NULL UNIQUE,
@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS policy_action (
 );
 
 CREATE TABLE IF NOT EXISTS policy_resource (
-    id VARCHAR(74) NOT NULL PRIMARY KEY,
+    id VARCHAR(74) PRIMARY KEY,
     policy_id VARCHAR(36) NOT NULL REFERENCES policy(id),
     resource_id VARCHAR(36),
     entity VARCHAR(16),
@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS policy_resource (
 );
 
 CREATE TABLE IF NOT EXISTS policy_subject (
-    id VARCHAR(74) NOT NULL PRIMARY KEY,
+    id VARCHAR(74) PRIMARY KEY,
     policy_id VARCHAR(36) NOT NULL REFERENCES policy(id),
     subject_id VARCHAR(36),
     entity VARCHAR(16),
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS policy_subject (
 );
 
 CREATE TABLE IF NOT EXISTS terms_of_use (
-	id VARCHAR(36) NOT NULL UNIQUE PRIMARY KEY,
+	id VARCHAR(36) PRIMARY KEY,
 	scope VARCHAR(50),
 	version VARCHAR(50),
 	change_log TEXT,

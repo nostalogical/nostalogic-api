@@ -28,5 +28,9 @@ server:
   port: 3601
 
 microservices:
-  access:
-    base-url: http://localhost:3601
+  base-url: http://localhost
+  access-port: :3601
+
+client:
+  base-url: http://localhost
+  port: :3331

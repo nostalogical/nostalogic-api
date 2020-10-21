@@ -28,10 +28,6 @@ class AccessController(
         const val ANALYSE_URI = "/analyse"
     }
 
-    init {
-        print("load")
-    }
-
     @RequestMapping(method = [RequestMethod.POST], produces = ["application/json"])
     fun queryAccess(@RequestBody query: AccessQuery): AccessReport {
         return queryService.evaluateAccessQuery(query)

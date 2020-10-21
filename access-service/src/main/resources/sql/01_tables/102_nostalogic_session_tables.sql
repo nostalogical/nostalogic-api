@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS server_session (
   tenant VARCHAR(10) NOT NULL DEFAULT 'nostalogic',
-  id VARCHAR(36) UNIQUE PRIMARY KEY NOT NULL,
+  id VARCHAR(36) PRIMARY KEY,
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id varchar(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   user_id VARCHAR(36) NOT NULL,

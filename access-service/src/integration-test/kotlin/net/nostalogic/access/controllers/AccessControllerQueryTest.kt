@@ -123,7 +123,7 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
     @Test
     fun `Internal access comms works properly`() {
         val report = AccessComms.query(AccessQuery(hashSetOf(TEST_USER.toString()), hashMapOf(Pair(NoEntity.NAV.name, hashSetOf(PolicyAction.READ)))))
-        assertReport(report as AccessReport, hashSetOf(TEST_USER.toString()), null, hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.READ, true)))))
+        assertReport(report, hashSetOf(TEST_USER.toString()), null, hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.READ, true)))))
     }
 
     @Test

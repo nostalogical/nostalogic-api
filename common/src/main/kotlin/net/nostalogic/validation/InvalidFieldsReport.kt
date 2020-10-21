@@ -28,6 +28,9 @@ class InvalidFieldsReport {
         this.invalidReasons[fieldName] = ErrorStrings.invalidEntity(badEntity)
     }
 
+    /**
+     * Throws a validation exception with the supplied error code if any validation has failed, otherwise does nothing.
+     */
     fun validate(errorCode: Int) {
         if (fieldNames.isNotEmpty()) {
             val invalids = ArrayList<String>()

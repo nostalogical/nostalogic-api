@@ -11,7 +11,7 @@ import org.springframework.context.annotation.DependsOn
 import org.springframework.core.env.Environment
 import org.springframework.stereotype.Component
 
-@Component
+@Component(value = "Config")
 @DependsOn(value = ["DatabaseLoader"])
 class Config(private val context: ApplicationContext,
              private val environment: Environment,
@@ -22,11 +22,16 @@ class Config(private val context: ApplicationContext,
         private const val ENVIRONMENT = "environment"
         private val censorList = setOf(
                 JwtUtil.KEY_PROPERTY,
-                "spring.datasource.security.password")
+                "spring.datasource.security.password",
+                "email.ses.secret-key"
+        )
         private const val CENSORED = "*****"
         private const val SERVICE = "service"
         private const val API = "apiversion"
-        private const val BASE_URL = "microservices.access.base-url"
+        private const val BASE_URL = "microservices.base-url"
+        private const val ACCESS_PORT = "microservices.access-port"
+        private const val CLIENT_BASE_URL = "client.base-url"
+        private const val CLIENT_PORT = "client.port"
 
         private var service = "unknown"
         private var apiVersion = ApiVersion(0, 0, 0)
@@ -66,8 +71,12 @@ class Config(private val context: ApplicationContext,
             return getSetting(SERVICE)
         }
 
-        fun baseUrl(): String {
-            return getSetting(BASE_URL)
+        fun accessUrl(): String {
+            return getSetting(BASE_URL) + getSetting(ACCESS_PORT)
+        }
+
+        fun frontendUrl(): String {
+            return getSetting(CLIENT_BASE_URL) + getSetting(CLIENT_PORT)
         }
 
         fun getSetting(key: String): String {
@@ -75,6 +84,11 @@ class Config(private val context: ApplicationContext,
             if (setting.isNullOrBlank())
                 throw NoRetrieveException(103001, "Setting", "Setting $key not found in cache", null)
             return setting
+        }
+
+        fun getBoolean(key: String): Boolean {
+            val setting = cache[key.toLowerCase()]?.value
+            return !setting.isNullOrBlank() && setting.equals("true", true)
         }
 
         fun getNumberSetting(key: String): Int {
@@ -98,30 +112,13 @@ class Config(private val context: ApplicationContext,
         }
     }
 
-    private val springKeys: HashSet<String> = HashSet()
-
     init {
-        springKeys.add("security.jwt.key")
-        springKeys.add("security.jwt.duration-minutes")
-        springKeys.add("spring.application.name")
-        springKeys.add("spring.datasource.username")
-        springKeys.add("spring.datasource.security.password")
-        springKeys.add("spring.datasource.driverClassName")
-        springKeys.add("spring.datasource.url")
-        springKeys.add("spring.datasource.platform")
-        springKeys.add("spring.jpa.show-sql")
-        springKeys.add("spring.jpa.properties.hibernate.temp.use_jdbc_metadata_defaults")
-        springKeys.add("spring.jpa.open-in-view")
-        springKeys.add("spring.jpa.database-platform")
-        springKeys.add("spring.liquibase.default-schema")
-        springKeys.add("server.port")
-        springKeys.add("microservices.access.base-url")
         reloadSettings()
     }
 
     fun reloadSettings() {
         cache.clear()
-        loadResourceSettings(springKeys)
+        loadResourceSettings()
         loadDatabaseSettings()
         loadServiceSettings()
     }
@@ -138,7 +135,7 @@ class Config(private val context: ApplicationContext,
         }
     }
 
-    private fun loadResourceSettings(keys: Collection<String>) {
+    private fun loadResourceSettings() {
         val loader = YamlPropertySourceLoader()
         for (runEnv in listOf(
                 RunEnvironment.DEFAULT,
@@ -152,10 +149,13 @@ class Config(private val context: ApplicationContext,
                 addSetting(Setting(ENVIRONMENT, runEnv, Setting.Source.RESOURCE))
             if (resource.isFile && isActive) {
                 val load = loader.load(null, resource)[0]
-                for (key in keys) {
-                    val value = load.getProperty(key)
-                    if (value != null)
-                        addSetting(Setting(key, value, Setting.Source.RESOURCE))
+                val source = load.source
+                if (source is Map<*,*>) {
+                    for (key in source.keys) {
+                        val value = load.getProperty(key as String)
+                        if (value != null)
+                            addSetting(Setting(key, value, Setting.Source.RESOURCE))
+                    }
                 }
             }
         }

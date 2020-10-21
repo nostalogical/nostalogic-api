@@ -17,7 +17,7 @@ object AccessComms {
             logger.error("Failed to serialise access request")
             return AccessReport()
         }
-        val response = khttp.post(url = Config.baseUrl() + ACCESS_ENDPOINT, json = Serialiser.toJson(accessQuery), headers = BaseComms.HEADERS)
+        val response = khttp.post(url = Config.accessUrl() + ACCESS_ENDPOINT, json = Serialiser.toJson(accessQuery), headers = BaseComms.HEADERS)
         return Serialiser.fromJson(response.jsonObject, AccessReport::class.java) ?: AccessReport()
     }
 

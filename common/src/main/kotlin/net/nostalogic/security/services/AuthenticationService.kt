@@ -2,12 +2,10 @@ package net.nostalogic.security.services
 
 import net.nostalogic.config.i18n.Translator
 import net.nostalogic.constants.AuthenticationType
-import net.nostalogic.constants.SessionEvent
 import net.nostalogic.crypto.encoders.PBKDF2Encoder
-import net.nostalogic.dtos.requests.LoginRequest
-import net.nostalogic.dtos.responses.AuthenticationResponse
+import net.nostalogic.datamodel.authentication.LoginRequest
+import net.nostalogic.datamodel.authentication.AuthenticationResponse
 import net.nostalogic.security.contexts.AuthenticationContext
-import net.nostalogic.security.models.SessionPrompt
 import java.util.regex.Pattern
 
 object AuthenticationService {

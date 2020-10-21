@@ -48,7 +48,7 @@ abstract class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader) {
     fun setup() {
         baseApiUrl = localhost + port
         dbLoader.runDbCleanSetup()
-        Config.addSetting(Setting("microservices.access.base-url", "http://localhost:$port", Setting.Source.SERVICE))
+        Config.addSetting(Setting("microservices.access-port", ":$port", Setting.Source.SERVICE))
     }
 
     @AfterEach
