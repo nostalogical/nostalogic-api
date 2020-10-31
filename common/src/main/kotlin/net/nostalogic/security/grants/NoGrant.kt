@@ -11,7 +11,7 @@ import java.io.Serializable
  */
 abstract class NoGrant(
         val subject: String,
-        val expiration: NoDate,
+        val expiration: NoDate? = null,
         val type: AuthenticationType,
         val description: String? = null,
         val created: NoDate

@@ -52,6 +52,7 @@ open class AccessQueryService(
         val resources = accessQuery.resourceQueries.keys.map { EntityUtils.toEntityRef(it) }
         val resourceIds = resources.filter { it.isSignature() }.map { it.id!! }.toHashSet()
         val resourceEntities = resources.map { it.entity }.toHashSet()
+        resourceEntities.add(NoEntity.ALL)
         val policyIds = policyRepository.findPolicyIdsForSubjectsAndResources(allEntity = NoEntity.ALL,
                 resourceEntities = resourceEntities, resourceIds = resourceIds, subjectIds = subjectIds)
         val policies = ArrayList<Policy>()
@@ -75,7 +76,7 @@ open class AccessQueryService(
             relevantSubjects.retainAll(querySubjects)
             for (policyResource in policy.resources!!) {
                 for (queryResource in resources) {
-                    if (queryResource.toString() == policyResource || queryResource.entity.name == policyResource) {
+                    if (queryResource.toString() == policyResource || queryResource.entity.name == policyResource || policyResource == NoEntity.ALL.name) {
                         for (policyAction in policy.permissions!!.keys) {
                             if (resourceContexts[queryResource]!!.keys.contains(policyAction))
                                 resourceContexts[queryResource]!![policyAction]!!.updatePolicies(policy, relevantSubjects, policyResource, policyAction)

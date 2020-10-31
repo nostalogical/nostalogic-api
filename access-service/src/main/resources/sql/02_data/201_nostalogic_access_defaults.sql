@@ -1,7 +1,7 @@
 
 -- This policy allows read access to all content for all users by default
 INSERT INTO policy (id, name, priority)
-VALUES ('6aac60f8-1b4d-430e-911f-a86caa8ec1ba', 'Default Read', 0) ON CONFLICT DO NOTHING;
+VALUES ('6aac60f8-1b4d-430e-911f-a86caa8ec1ba', 'Default Read', 'ONE_AUTO') ON CONFLICT DO NOTHING;
 
 INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('6aac60f8-1b4d-430e-911f-a86caa8ec1ba', '6aac60f8-1b4d-430e-911f-a86caa8ec1ba', 'READ', true) ON CONFLICT DO NOTHING;
@@ -16,7 +16,7 @@ VALUES ('6aac60f8-1b4d-430e-911f-a86caa8ec1ba::ALL', '6aac60f8-1b4d-430e-911f-a8
 
 -- This policy allows edit own and delete own access to all users by default
 INSERT INTO policy (id, name, priority)
-VALUES ('b7ce50e3-9460-4004-b6ba-1ee1d1a355e3', 'Default Edit/Delete Own', 0) ON CONFLICT DO NOTHING;
+VALUES ('b7ce50e3-9460-4004-b6ba-1ee1d1a355e3', 'Default Edit/Delete Own', 'ONE_AUTO') ON CONFLICT DO NOTHING;
 
 INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('b7ce50e3-9460-4004-b6ba-1ee1d1a355e3::EDIT_OWN', 'b7ce50e3-9460-4004-b6ba-1ee1d1a355e3', 'EDIT_OWN', true) ON CONFLICT DO NOTHING;
@@ -33,7 +33,7 @@ VALUES ('b7ce50e3-9460-4004-b6ba-1ee1d1a355e3::ALL', 'b7ce50e3-9460-4004-b6ba-1e
 
 -- This policy allows all actions for site owners at highest priority
 INSERT INTO policy (id, name, priority)
-VALUES ('8cec724c-63db-4154-b261-de0ca48abfb8', 'Default Site Owner', 4) ON CONFLICT DO NOTHING;
+VALUES ('8cec724c-63db-4154-b261-de0ca48abfb8', 'Default Site Owner', 'FIVE_SUPER') ON CONFLICT DO NOTHING;
 
 INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('8cec724c-63db-4154-b261-de0ca48abfb8::READ', '8cec724c-63db-4154-b261-de0ca48abfb8', 'READ', true) ON CONFLICT DO NOTHING;
@@ -59,7 +59,7 @@ VALUES ('8cec724c-63db-4154-b261-de0ca48abfb8::309e6617-2e5a-4d77-b51d-180973832
 
 -- This policy allows all actions for admins at admin priority
 INSERT INTO policy (id, name, priority)
-VALUES ('0c8bc815-c64d-4959-be6b-de83bf5fb070', 'Default Admin', 3) ON CONFLICT DO NOTHING;
+VALUES ('0c8bc815-c64d-4959-be6b-de83bf5fb070', 'Default Admin', 'FOUR_ADMIN') ON CONFLICT DO NOTHING;
 
 INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('0c8bc815-c64d-4959-be6b-de83bf5fb070::READ', '0c8bc815-c64d-4959-be6b-de83bf5fb070', 'READ', true) ON CONFLICT DO NOTHING;
@@ -85,7 +85,7 @@ VALUES ('0c8bc815-c64d-4959-be6b-de83bf5fb070::06cd7155-576e-465d-8722-3eb837335
 
 -- This policy allows creation, deletion, and edit rights for content admins
 INSERT INTO policy (id, name, priority)
-VALUES ('c947154a-9079-4963-9d70-9f550f524f31', 'Default Content Admin', 3) ON CONFLICT DO NOTHING;
+VALUES ('c947154a-9079-4963-9d70-9f550f524f31', 'Default Content Admin', 'FOUR_ADMIN') ON CONFLICT DO NOTHING;
 
 INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('c947154a-9079-4963-9d70-9f550f524f31::READ', 'c947154a-9079-4963-9d70-9f550f524f31', 'READ', true) ON CONFLICT DO NOTHING;
@@ -109,7 +109,7 @@ VALUES ('c947154a-9079-4963-9d70-9f550f524f31::77c52c87-f46e-4c12-8eb0-b6a701f0b
 
 -- This policy allows creation rights for content creators
 INSERT INTO policy (id, name, priority)
-VALUES ('a962bb77-48b7-41ec-882b-35ad27afb025', 'Default Content Creator', 0) ON CONFLICT DO NOTHING;
+VALUES ('a962bb77-48b7-41ec-882b-35ad27afb025', 'Default Content Creator', 'ONE_AUTO') ON CONFLICT DO NOTHING;
 
 INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('a962bb77-48b7-41ec-882b-35ad27afb025::READ', 'a962bb77-48b7-41ec-882b-35ad27afb025', 'READ', true) ON CONFLICT DO NOTHING;
@@ -129,7 +129,7 @@ VALUES ('a962bb77-48b7-41ec-882b-35ad27afb025::817ab8e6-c1ce-435a-86e1-69a4c07ba
 
 -- This policy allows creation rights for article creators
 INSERT INTO policy (id, name, priority)
-VALUES ('5b36b9bc-18d0-4d12-8bde-ec4eeb0b78fd', 'Default Article Creator', 0) ON CONFLICT DO NOTHING;
+VALUES ('5b36b9bc-18d0-4d12-8bde-ec4eeb0b78fd', 'Default Article Creator', 'ONE_AUTO') ON CONFLICT DO NOTHING;
 
 INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('5b36b9bc-18d0-4d12-8bde-ec4eeb0b78fd::READ', '5b36b9bc-18d0-4d12-8bde-ec4eeb0b78fd', 'READ', true) ON CONFLICT DO NOTHING;
@@ -147,7 +147,7 @@ VALUES ('5b36b9bc-18d0-4d12-8bde-ec4eeb0b78fd::6b3a5490-548c-41c8-a12c-e85fa8545
 
 -- This policy allows creation rights for navigation creators
 INSERT INTO policy (id, name, priority)
-VALUES ('a4dc6477-d104-4179-9c78-881a58b6fdef', 'Default Navigation Creator', 0) ON CONFLICT DO NOTHING;
+VALUES ('a4dc6477-d104-4179-9c78-881a58b6fdef', 'Default Navigation Creator', 'ONE_AUTO') ON CONFLICT DO NOTHING;
 
 INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('a4dc6477-d104-4179-9c78-881a58b6fdef::READ', 'a4dc6477-d104-4179-9c78-881a58b6fdef', 'READ', true) ON CONFLICT DO NOTHING;
@@ -165,7 +165,7 @@ VALUES ('a4dc6477-d104-4179-9c78-881a58b6fdef::44ee8b61-c4bf-46d5-8c94-7b9cfd733
 
 -- This policy allows creation rights for user/group admins
 INSERT INTO policy (id, name, priority)
-VALUES ('4e278e27-d1f5-4275-9727-39dd765d919c', 'Default User Admin', 3) ON CONFLICT DO NOTHING;
+VALUES ('4e278e27-d1f5-4275-9727-39dd765d919c', 'Default User Admin', 'FOUR_ADMIN') ON CONFLICT DO NOTHING;
 
 INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('4e278e27-d1f5-4275-9727-39dd765d919c::READ', '4e278e27-d1f5-4275-9727-39dd765d919c', 'READ', true) ON CONFLICT DO NOTHING;
@@ -189,7 +189,7 @@ VALUES ('4e278e27-d1f5-4275-9727-39dd765d919c::a6a5c68e-13d0-4dfa-a688-b41c4255b
 
 -- This policy allows creation rights for user creators
 INSERT INTO policy (id, name, priority)
-VALUES ('37ec1100-86ec-41da-a1ac-40c3e14e30ef', 'Default User Creator', 0) ON CONFLICT DO NOTHING;
+VALUES ('37ec1100-86ec-41da-a1ac-40c3e14e30ef', 'Default User Creator', 'ONE_AUTO') ON CONFLICT DO NOTHING;
 
 INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('37ec1100-86ec-41da-a1ac-40c3e14e30ef::READ', '37ec1100-86ec-41da-a1ac-40c3e14e30ef', 'READ', true) ON CONFLICT DO NOTHING;
@@ -207,7 +207,7 @@ VALUES ('37ec1100-86ec-41da-a1ac-40c3e14e30ef::7708b85f-e09b-431b-b2ba-9fea59dfa
 
 -- This policy allows creation rights for user group creators
 INSERT INTO policy (id, name, priority)
-VALUES ('de63a100-b01f-4fa8-a527-8c3950a7e213', 'Default User Group Creator', 0) ON CONFLICT DO NOTHING;
+VALUES ('de63a100-b01f-4fa8-a527-8c3950a7e213', 'Default User Group Creator', 'ONE_AUTO') ON CONFLICT DO NOTHING;
 
 INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('de63a100-b01f-4fa8-a527-8c3950a7e213::READ', 'de63a100-b01f-4fa8-a527-8c3950a7e213', 'READ', true) ON CONFLICT DO NOTHING;

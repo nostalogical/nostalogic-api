@@ -4,9 +4,7 @@ import com.auth0.jwt.interfaces.DecodedJWT
 import net.nostalogic.constants.AuthenticationType
 import net.nostalogic.datamodel.NoDate
 import net.nostalogic.exceptions.NoAuthException
-import net.nostalogic.security.grants.ImpersonationGrant
-import net.nostalogic.security.grants.LoginGrant
-import net.nostalogic.security.grants.NoGrant
+import net.nostalogic.security.grants.*
 
 object TokenDecoder {
 
@@ -16,6 +14,8 @@ object TokenDecoder {
         return when (decodedJWT.getClaim(TokenEncoder.GRANT_TYPE).asString()) {
             AuthenticationType.USERNAME.name, AuthenticationType.EMAIL.name -> decodeLoginToken(decodedJWT)
             AuthenticationType.IMPERSONATION.name -> decodeImpersonationToken(decodedJWT)
+            AuthenticationType.REG_CONFIRM.name -> decodeRegistrationToken(decodedJWT)
+            AuthenticationType.PASSWORD_RESET.name -> decodePasswordResetToken(decodedJWT)
             else -> throw NoAuthException(102002, "The supplied token has an unknown authentication type")
         }
 
@@ -40,6 +40,20 @@ object TokenDecoder {
                 jwt.getClaim(TokenEncoder.SESSION).asString(),
                 jwt.getClaim(TokenEncoder.ORIGINAL_USER).asString(),
                 jwt.getClaim(TokenEncoder.ALTERNATE_IMPERSONATIONS).asArray(String::class.java).toSet(),
+                created = NoDate(jwt.issuedAt)
+        )
+    }
+
+    private fun decodeRegistrationToken(jwt: DecodedJWT): ConfirmationGrant {
+        return ConfirmationGrant(
+                jwt.subject,
+                created = NoDate(jwt.issuedAt)
+        )
+    }
+
+    private fun decodePasswordResetToken(jwt: DecodedJWT): PasswordResetGrant {
+        return PasswordResetGrant(
+                jwt.subject,
                 created = NoDate(jwt.issuedAt)
         )
     }

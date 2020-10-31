@@ -4,7 +4,7 @@ import net.nostalogic.config.Config
 
 object ParameterUtils {
 
-    val PARAM_BASE_URL = "base_url"
+    private const val PARAM_BASE_URL = "base_url"
 
     fun keyToParameter(key: String): String {
         return "{{${key.trim().toLowerCase()}}}"

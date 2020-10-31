@@ -1,7 +1,7 @@
 package net.nostalogic.excomm.validators
 
 import net.nostalogic.datamodel.excomm.MessageOutline
-import net.nostalogic.validation.InvalidFieldsReport
+import net.nostalogic.validators.InvalidFieldsReport
 import org.apache.commons.lang3.StringUtils
 
 object EmailValidator {

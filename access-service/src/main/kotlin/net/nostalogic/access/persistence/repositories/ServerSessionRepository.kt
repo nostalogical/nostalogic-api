@@ -5,5 +5,5 @@ import org.springframework.data.repository.CrudRepository
 import java.sql.Timestamp
 
 interface ServerSessionRepository : CrudRepository<ServerSessionEntity, String> {
-    fun findAllByUserIdAndEndDateTimeIsAfter(userId: String, now: Timestamp): Set<ServerSessionEntity>
+    fun findAllByUserIdAndEndDateTimeIsAfter(userId: String, now: Timestamp): HashSet<ServerSessionEntity>
 }

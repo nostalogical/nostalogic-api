@@ -1,0 +1,47 @@
+security:
+  jwt:
+    key: ZqHPJkeRMjYRpNKFfFtUNZZPGnHzclYFpwnISiabFCddietCFUeiKBTNyMaLOsgQ
+    duration-minutes: 525600
+
+spring:
+  application:
+    name: excomm-service
+  datasource:
+    username: postgres
+    password: solice
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://localhost:5432/nostalogic?currentSchema=nostalogic_users
+    platform: postgres
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        temp:
+          use_jdbc_metadata_defaults: false
+    open-in-view: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  liquibase:
+    default-schema: nostalogic_users
+
+
+server:
+  port: 3602
+
+microservices:
+  base-url: http://localhost
+  access-port: :3601
+  user-port: :3602
+  excomm-port: :3603
+  content-port: :3604
+  file-port: :3605
+
+client:
+  base-url: http://localhost
+  port: :3331
+
+email:
+  ses:
+    enabled: true
+    access-key: AKIA6LEGPLTYM3FZEBVB
+    secret-key: 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
+  reply-address: noreply@nostalogic.net

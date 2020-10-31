@@ -4,7 +4,7 @@ import net.nostalogic.access.services.AccessService
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.entities.NoEntity
 import net.nostalogic.utils.EntityUtils
-import net.nostalogic.validation.InvalidFieldsReport
+import net.nostalogic.validators.InvalidFieldsReport
 import org.apache.commons.lang3.StringUtils
 
 object PolicyValidator {

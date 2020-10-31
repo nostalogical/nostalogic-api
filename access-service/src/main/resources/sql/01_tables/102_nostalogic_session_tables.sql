@@ -1,19 +1,20 @@
 CREATE TABLE IF NOT EXISTS server_session (
-  tenant VARCHAR(10) NOT NULL DEFAULT 'nostalogic',
-  id VARCHAR(36) PRIMARY KEY,
+  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
   created TIMESTAMP NOT NULL DEFAULT now(),
-  creator_id varchar(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
-  user_id VARCHAR(36) NOT NULL,
+  creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
+  id CHAR(36) PRIMARY KEY,
+  user_id CHAR(36) NOT NULL,
   additional TEXT NULL,
   start_date_time TIMESTAMP NOT NULL,
   end_date_time TIMESTAMP NOT NULL,
-  type int NOT NULL,
+  type VARCHAR(30) NOT NULL,
   details VARCHAR(256) NULL
 );
 
 CREATE TABLE IF NOT EXISTS server_session_event (
+  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  created TIMESTAMP NOT NULL,
   id bigint GENERATED ALWAYS AS IDENTITY,
-  session_id VARCHAR(36) NOT NULL REFERENCES server_session(id),
-  event VARCHAR(20) NOT NULL,
-  created TIMESTAMP NOT NULL
+  session_id CHAR(36) NOT NULL REFERENCES server_session(id),
+  event CHAR(20) NOT NULL
 );

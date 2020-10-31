@@ -9,7 +9,9 @@ import net.nostalogic.constants.AuthenticationType
 import net.nostalogic.constants.SessionEvent
 import net.nostalogic.datamodel.NoDate
 import net.nostalogic.exceptions.NoAuthException
+import net.nostalogic.security.grants.ImpersonationGrant
 import net.nostalogic.security.grants.LoginGrant
+import net.nostalogic.security.grants.PasswordResetGrant
 import net.nostalogic.security.models.SessionPrompt
 import net.nostalogic.security.models.SessionSummary
 import net.nostalogic.security.utils.TokenDecoder
@@ -34,13 +36,33 @@ class SessionService(
             throw throw NoAuthException(201007, "Cannot create a session without a user ID")
         val start = NoDate()
         val end = standardExpiration(start)
-        val grant = LoginGrant(prompt.userId, prompt.additional, end,
-                EntityUtils.uuid(), prompt.type, created = start)
-        val entity = ServerSessionEntity(grant.sessionId, grant.subject, grant.additional.joinToString(","),
-                grant.created.getTimestamp(), grant.expiration.getTimestamp(), grant.type, grant.description, creatorId = prompt.userId)
-        val persisted = sessionRepo.save(entity)
+
+        val persisted: ServerSessionEntity = if (prompt.type == AuthenticationType.USERNAME || prompt.type == AuthenticationType.EMAIL) {
+            val grant = LoginGrant(prompt.userId, prompt.additional, end,
+                    EntityUtils.uuid(), prompt.type, created = start)
+            val entity = ServerSessionEntity(grant.sessionId, grant.subject, grant.additional.joinToString(","),
+                    grant.created.getTimestamp(), grant.expiration!!.getTimestamp(), grant.type, grant.description, creatorId = prompt.userId)
+            sessionRepo.save(entity)
+        } else if (prompt.type == AuthenticationType.IMPERSONATION) {
+            val grant = ImpersonationGrant(prompt.userId, prompt.additional, end,
+                    EntityUtils.uuid(), prompt.originalUserId!!, prompt.additional, created = start)
+            val entity = ServerSessionEntity(grant.sessionId, grant.subject, grant.additional.joinToString(","),
+                    grant.created.getTimestamp(), grant.expiration!!.getTimestamp(), grant.type, grant.description, creatorId = prompt.originalUserId!!)
+            sessionRepo.save(entity)
+        } else if (prompt.type == AuthenticationType.PASSWORD_RESET) {
+            val grant = PasswordResetGrant(prompt.userId, created = start)
+            val entity = ServerSessionEntity(EntityUtils.uuid(), grant.subject, prompt.additional.joinToString(","),
+                    start.getTimestamp(), end.getTimestamp(), grant.type, grant.description, creatorId = prompt.userId)
+            sessionRepo.save(entity)
+        } else
+            throw NoAuthException(201009, "Authentication type is not supported")
+
         addSessionEvent(ServerSessionEventEntity(persisted.id, SessionEvent.LOGIN))
-        return summaryFromSession(persisted)
+        if (prompt.reset) {
+            addSessionEvent(ServerSessionEventEntity(persisted.id, SessionEvent.RESET))
+            endOtherSessions(persisted.userId, persisted)
+        }
+        return summaryFromSession(persisted, alternates = prompt.alternates)
     }
 
     fun verifySession(token: String): SessionSummary {
@@ -96,18 +118,28 @@ class SessionService(
         eventRepo.save(event)
     }
 
-    private fun summaryFromSession(entity: ServerSessionEntity, requiredValid: Boolean = true): SessionSummary {
+    private fun summaryFromSession(entity: ServerSessionEntity, requiredValid: Boolean = true, alternates: Set<String>? = null): SessionSummary {
         if (requiredValid && isExpired(entity.endDateTime))
             throw NoAuthException(201004, "Server session has expired")
         return SessionSummary(entity.id, entity.userId, entity.type,
-                NoDate(entity.startDateTime), NoDate(entity.endDateTime), entity.details, tokenFromSession(entity))
+                NoDate(entity.startDateTime), NoDate(entity.endDateTime), entity.details, tokenFromSession(entity, alternates))
     }
 
-    private fun tokenFromSession(entity: ServerSessionEntity): String {
-        when (entity.type) {
-            AuthenticationType.EMAIL, AuthenticationType.USERNAME -> return loginTokenFromSession(entity)
+    private fun tokenFromSession(entity: ServerSessionEntity, alternates: Set<String>? = null): String {
+        return when (entity.type) {
+            AuthenticationType.EMAIL, AuthenticationType.USERNAME, AuthenticationType.PASSWORD_RESET -> loginTokenFromSession(entity)
+            AuthenticationType.IMPERSONATION -> impersonationTokenFromSession(entity, alternates!!)
             else -> throw NoAuthException(201001, "Session type ${entity.type.name} is not supported")
         }
+    }
+
+    private fun endOtherSessions(userId: String, exclude: ServerSessionEntity?) {
+        val sessions = sessionRepo.findAllByUserIdAndEndDateTimeIsAfter(userId, Timestamp(System.currentTimeMillis()))
+        sessions.removeIf { it.id ==  exclude?.id }
+        val endTime = Timestamp.from(Instant.now().minusSeconds(5))
+        sessions.forEach { if (it.endDateTime.after(endTime)) it.endDateTime = endTime }
+        if (sessions.isNotEmpty())
+            sessionRepo.saveAll(sessions)
     }
 
     private fun loginTokenFromSession(entity: ServerSessionEntity): String {
@@ -119,6 +151,18 @@ class SessionService(
                 entity.type,
                 NoDate(entity.startDateTime))
         return TokenEncoder.encodeLoginGrant(grant)
+    }
+
+    private fun impersonationTokenFromSession(entity: ServerSessionEntity, alternates: Set<String>): String {
+        val grant = ImpersonationGrant(
+                entity.userId,
+                entity.additional?.split(",")!!.toSet(),
+                NoDate(entity.endDateTime),
+                entity.id,
+                entity.creatorId,
+                alternates,
+                NoDate(entity.startDateTime))
+        return TokenEncoder.encodeImpersonationGrant(grant)
     }
 
     private fun isExpired(time: Timestamp): Boolean {

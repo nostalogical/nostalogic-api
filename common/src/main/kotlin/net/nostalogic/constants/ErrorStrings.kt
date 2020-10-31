@@ -19,6 +19,13 @@ object ErrorStrings {
     private const val FIELD_TOO_LONG = "fieldTooLong"
     private const val INVALID_ENTITY = "invalidEntity"
 
+    const val ACTIVATE_USER = "activateUser"
+    const val DELETED_USER = "deletedUser"
+    const val PASSWORD_EXPIRED = "passwordExpired"
+    const val PASSWORD_INVALID = "passwordInvalid"
+    const val WRONG_PASSWORD = "wrongPassword"
+    const val COMMS_ERROR = "commsError"
+
     fun fieldsInvalid(fields: String): String {
         return Translator.translate(FIELDS_INVALID, fields)
     }

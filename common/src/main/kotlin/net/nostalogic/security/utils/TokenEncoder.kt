@@ -1,7 +1,9 @@
 package net.nostalogic.security.utils
 
+import net.nostalogic.security.grants.ConfirmationGrant
 import net.nostalogic.security.grants.ImpersonationGrant
 import net.nostalogic.security.grants.LoginGrant
+import net.nostalogic.security.grants.PasswordResetGrant
 
 object TokenEncoder {
 
@@ -16,7 +18,7 @@ object TokenEncoder {
         return JwtUtil.signTokenBuilder(JwtUtil.getTokenBuilder()
                 .withSubject(grant.subject)
                 .withIssuedAt(grant.created.getDate())
-                .withExpiresAt(grant.expiration.getDate())
+                .withExpiresAt(grant.expiration!!.getDate())
                 .withClaim(GRANT_TYPE, grant.type.name)
                 .withClaim(DESCRIPTION, grant.description)
                 .withClaim(SESSION, grant.sessionId)
@@ -27,12 +29,29 @@ object TokenEncoder {
         return JwtUtil.signTokenBuilder(JwtUtil.getTokenBuilder()
                 .withSubject(grant.subject)
                 .withIssuedAt(grant.created.getDate())
-                .withExpiresAt(grant.expiration.getDate())
+                .withExpiresAt(grant.expiration!!.getDate())
                 .withClaim(GRANT_TYPE, grant.type.name)
                 .withClaim(DESCRIPTION, grant.description)
                 .withClaim(SESSION, grant.sessionId)
                 .withArrayClaim(ADDITIONAL_SUBJECTS, grant.additional.toTypedArray())
                 .withArrayClaim(ALTERNATE_IMPERSONATIONS, grant.alternateSubjects.toTypedArray())
                 .withClaim(ORIGINAL_USER, grant.originalSubject))
+    }
+
+    fun encodeRegistrationGrant(grant: ConfirmationGrant): String {
+        return JwtUtil.signTokenBuilder(JwtUtil.getTokenBuilder()
+                .withSubject(grant.subject)
+                .withIssuedAt(grant.created.getDate())
+                .withClaim(GRANT_TYPE, grant.type.name)
+                .withClaim(DESCRIPTION, grant.description))
+    }
+
+    fun encodePasswordResetGrant(grant: PasswordResetGrant): String {
+        return JwtUtil.signTokenBuilder(JwtUtil.getTokenBuilder()
+                .withSubject(grant.subject)
+                .withIssuedAt(grant.created.getDate())
+                .withExpiresAt(grant.expiration!!.getDate())
+                .withClaim(GRANT_TYPE, grant.type.name)
+                .withClaim(DESCRIPTION, grant.description))
     }
 }

@@ -1,6 +1,9 @@
 package net.nostalogic.access.services
 
-import io.mockk.*
+import io.mockk.clearAllMocks
+import io.mockk.every
+import io.mockk.slot
+import io.mockk.verify
 import net.nostalogic.access.config.AccessTestConfig
 import net.nostalogic.access.persistence.entities.ServerSessionEntity
 import net.nostalogic.access.persistence.entities.ServerSessionEventEntity
@@ -157,7 +160,7 @@ class SessionServiceTest(
     @Test
     fun `Update a user's session`() {
         sessionService.createSession(SessionPrompt(testId, additional, AuthenticationType.USERNAME))
-        every { sessionRepo.findAllByUserIdAndEndDateTimeIsAfter(testId, any()) } answers { setOf(savedSession.captured) }
+        every { sessionRepo.findAllByUserIdAndEndDateTimeIsAfter(testId, any()) } answers { hashSetOf(savedSession.captured) }
         sessionService.updateUserSessions(testId, Collections.emptySet())
         Assertions.assertEquals(SessionEvent.GROUPS_CHANGE.name, savedEvent.captured.event)
         Assertions.assertEquals("", savedSession.captured.additional)
@@ -165,7 +168,7 @@ class SessionServiceTest(
 
     @Test
     fun `Update a non-existing user's session`() {
-        every { sessionRepo.findAllByUserIdAndEndDateTimeIsAfter(testId, any()) } answers { Collections.emptySet() }
+        every { sessionRepo.findAllByUserIdAndEndDateTimeIsAfter(testId, any()) } answers { HashSet() }
         sessionService.updateUserSessions(testId, additional)
         verify(exactly = 0) { sessionRepo.save(ofType(ServerSessionEntity::class)) }
         verify(exactly = 0) { sessionEventRepo.save(ofType(ServerSessionEventEntity::class)) }

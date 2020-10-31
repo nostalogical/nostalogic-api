@@ -22,6 +22,9 @@ object NoStrings {
     fun authRefreshDenied(): String {return Translator.translate("refreshDenied")}
     fun passwordNotVerified(): String {return Translator.translate("passwordNotVerified")}
     fun impersonationDenied(): String {return Translator.translate("impersonationDenied")}
+    fun notLoggedIn(): String {return Translator.translate("notLoggedIn")}
+    fun passwordChanged(): String {return Translator.translate("passwordWasChanged")}
+    fun passwordEmailSent(): String {return Translator.translate("passwordEmailSent")}
 
 
     const val EMAIL_REGEX = "\\w+@\\w+\\.\\w+"

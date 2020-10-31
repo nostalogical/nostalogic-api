@@ -61,7 +61,7 @@ open class AccessService(
         try {
             return savePolicy(policy)
         } catch (e: Exception) {
-            throw NoSaveException(205001, "policy", null, e)
+            throw NoSaveException(205001, "policy", e)
         }
     }
 
@@ -77,7 +77,7 @@ open class AccessService(
             matchPolicyApplicationChanges(policyId, existingPolicy, policyEdit)
             return savePolicy(existingPolicy, policyId)
         } catch (e: Exception) {
-            throw NoSaveException(205002, "policy", null, e)
+            throw NoSaveException(205002, "policy", e)
         }
     }
 

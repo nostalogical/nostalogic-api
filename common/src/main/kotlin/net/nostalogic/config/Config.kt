@@ -5,6 +5,7 @@ import net.nostalogic.exceptions.NoRetrieveException
 import net.nostalogic.persistence.entities.ConfigEntity
 import net.nostalogic.persistence.repositories.ConfigRepository
 import net.nostalogic.security.utils.JwtUtil
+import org.slf4j.LoggerFactory
 import org.springframework.boot.env.YamlPropertySourceLoader
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.DependsOn
@@ -18,6 +19,8 @@ class Config(private val context: ApplicationContext,
              private var configRepository: ConfigRepository) {
 
     companion object {
+
+        private val logger = LoggerFactory.getLogger(Config::class.java)
         private val cache: HashMap<String, Setting> = HashMap()
         private const val ENVIRONMENT = "environment"
         private val censorList = setOf(
@@ -118,6 +121,8 @@ class Config(private val context: ApplicationContext,
     }
 
     init {
+        if (environment.activeProfiles.isEmpty())
+            logger.error("No active environment profile has been defined!")
         reloadSettings()
     }
 

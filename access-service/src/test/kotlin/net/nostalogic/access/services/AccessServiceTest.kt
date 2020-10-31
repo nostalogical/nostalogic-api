@@ -45,7 +45,7 @@ class AccessServiceTest(
 
     @Test
     fun `Create a policy`() {
-        val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
+        val policy = Policy(name = name, priority = PolicyPriority.TWO_STANDARD,
                 resources = hashSetOf(resource.toEntityReference().toString()),
                 subjects = hashSetOf(subject.toEntityReference().toString()),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
@@ -55,7 +55,7 @@ class AccessServiceTest(
 
     @Test
     fun `Creating a policy with invalid fields should fail`() {
-        val policy = Policy(name = "", priority = PolicyPriority.LEVEL_TWO,
+        val policy = Policy(name = "", priority = PolicyPriority.TWO_STANDARD,
                 resources = HashSet(),
                 subjects = HashSet(),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
@@ -64,7 +64,7 @@ class AccessServiceTest(
 
     @Test
     fun `Edit a policy`() {
-        val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
+        val policy = Policy(name = name, priority = PolicyPriority.TWO_STANDARD,
                 resources = hashSetOf(resource.toEntityReference().toString()),
                 subjects = hashSetOf(subject.toEntityReference().toString()),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
@@ -76,7 +76,7 @@ class AccessServiceTest(
 
     @Test
     fun `Delete a policy`() {
-        val policy = Policy(name = name, priority = PolicyPriority.LEVEL_TWO,
+        val policy = Policy(name = name, priority = PolicyPriority.TWO_STANDARD,
                 resources = hashSetOf(resource.toEntityReference().toString()),
                 subjects = hashSetOf(subject.toEntityReference().toString()),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))

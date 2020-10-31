@@ -9,6 +9,7 @@ import net.nostalogic.security.grants.LoginGrant
 import net.nostalogic.security.models.SessionPrompt
 import net.nostalogic.security.models.SessionSummary
 import net.nostalogic.security.utils.TokenDecoder
+import net.nostalogic.utils.EntityUtils
 import org.apache.commons.lang3.StringUtils
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
@@ -30,7 +31,7 @@ import java.util.*
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [AccessApplication::class])
 class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTest(dbLoader) {
 
-    private val userId = "TestUserId"
+    private val userId = EntityUtils.uuid()
     private val group1 = "group1"
     private val group2 = "group2"
     private val additional = setOf(group1, group2)

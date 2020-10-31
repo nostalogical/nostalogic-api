@@ -21,6 +21,6 @@ interface PolicyRepository: JpaRepository<PolicyEntity, String> {
 
 
     @Query("SELECT ps.policyId FROM policy_subject ps JOIN policy_resource pr ON pr.policyId = ps.policyId " +
-            "WHERE (pr.resourceId IN (:resourceIds) OR pr.resourceId IS NULL AND pr.entity IN (:resourceEntities)) AND (ps.entity = :allEntity OR ps.subjectId IN (:subjectIds))")
+            "WHERE (pr.resourceId IN (:resourceIds) OR pr.resourceId IS NULL AND (pr.entity IN (:resourceEntities) OR pr.entity = :allEntity)) AND (ps.entity = :allEntity OR ps.subjectId IN (:subjectIds))")
     fun findPolicyIdsForSubjectsAndResources(allEntity: NoEntity, resourceEntities: Collection<NoEntity>, resourceIds: Collection<String>, subjectIds: Collection<String>): Set<String>
 }

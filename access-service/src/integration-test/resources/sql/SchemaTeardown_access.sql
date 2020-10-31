@@ -11,4 +11,4 @@ DROP TABLE IF EXISTS server_session;
 
 DROP TABLE IF EXISTS service_config;
 
-DROP SCHEMA IF EXISTS test_nostalogic_access;
+DROP SCHEMA IF EXISTS test_nostalogic_access CASCADE;

@@ -12,7 +12,7 @@ class EmailTemplateEntity(
         val subject: String,
         val bodyHtml: String,
         val bodyPlain: String,
-        val type: MessageType,
+        @Enumerated(EnumType.STRING) val type: MessageType,
         @Enumerated(EnumType.STRING) val locale: NoLocale,
         val fromEmailAddress: String
 ): AbstractCoreEntity()

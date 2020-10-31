@@ -5,12 +5,13 @@ import net.nostalogic.entities.EntityStatus
 import net.nostalogic.persistence.entities.AbstractCoreEntity
 import net.nostalogic.utils.EntityUtils
 import javax.persistence.Entity
+import javax.persistence.EnumType
 import javax.persistence.Enumerated
 
 @Entity(name = "policy")
 class PolicyEntity(
         var name: String,
-        @Enumerated var priority: PolicyPriority,
+        @Enumerated(EnumType.STRING) var priority: PolicyPriority,
         creatorId: String = EntityUtils.SYSTEM_ID,
-        @Enumerated var status: EntityStatus = EntityStatus.ACTIVE
+        @Enumerated(EnumType.STRING) var status: EntityStatus = EntityStatus.ACTIVE
 ): AbstractCoreEntity(creatorId = creatorId)

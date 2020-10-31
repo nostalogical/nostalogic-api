@@ -7,7 +7,9 @@ import net.nostalogic.datamodel.NoPageResponse
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.datamodel.access.PolicyPriority
+import net.nostalogic.entities.EntityReference
 import net.nostalogic.entities.EntityStatus
+import net.nostalogic.entities.NoEntity
 import net.nostalogic.utils.CollUtils
 import net.nostalogic.utils.EntityUtils
 import org.junit.jupiter.api.Assertions
@@ -53,7 +55,7 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
 
     @Test
     fun `Create a policy with empty lists`() {
-        val policy = Policy(name = "Test blank", priority = PolicyPriority.LEVEL_ONE)
+        val policy = Policy(name = "Test blank", priority = PolicyPriority.ONE_AUTO)
         policy.permissions = EnumMap(PolicyAction::class.java)
         policy.resources = HashSet()
         policy.subjects = HashSet()
@@ -135,7 +137,7 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
     fun `Edit all policy fields`() {
         val policy = createPolicy(testPolicy())
         policy.name = "Changed"
-        policy.priority = PolicyPriority.LEVEL_THREE
+        policy.priority = PolicyPriority.THREE_HIGH
         policy.permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true), Pair(PolicyAction.CREATE, true), Pair(PolicyAction.DELETE_OWN, false))
         policy.status = EntityStatus.INACTIVE
         policy.resources!!.addAll(hashSetOf(rndResource(), rndResource()))

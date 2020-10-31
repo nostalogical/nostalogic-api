@@ -20,11 +20,12 @@ open class LocaleResolver : AcceptHeaderLocaleResolver(), WebMvcConfigurer {
     override fun resolveLocale(request: HttpServletRequest): Locale {
         val headerLang = request.getHeader("Accept-Language")
         val parameterLang = request.getParameter("lang")
-        return when {
+        val parseLocale: Locale? = when {
             StringUtils.isNotEmpty(parameterLang) -> Locale.lookup(Locale.LanguageRange.parse(parameterLang), locales)
             StringUtils.isNotEmpty(headerLang) -> Locale.lookup(Locale.LanguageRange.parse(headerLang), locales)
             else -> Locale.getDefault()
         }
+        return parseLocale ?: Locale.UK
     }
 
     @Bean

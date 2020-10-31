@@ -5,6 +5,8 @@ import net.nostalogic.persistence.entities.AbstractCoreEntity
 import net.nostalogic.utils.EntityUtils
 import java.sql.Timestamp
 import javax.persistence.Entity
+import javax.persistence.EnumType
+import javax.persistence.Enumerated
 
 @Entity(name = "server_session")
 class ServerSessionEntity(
@@ -13,7 +15,7 @@ class ServerSessionEntity(
         var additional: String?,
         val startDateTime: Timestamp,
         var endDateTime: Timestamp,
-        val type: AuthenticationType,
+        @Enumerated(EnumType.STRING) val type: AuthenticationType,
         val details: String?,
         creatorId : String = EntityUtils.SYSTEM_ID
 ) : AbstractCoreEntity(id = id, creatorId =  creatorId)

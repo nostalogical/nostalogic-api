@@ -11,12 +11,21 @@ object ExcommComms {
     private const val EXCOMM_MESSAGE_ENDPOINT = "/v0/excomm/message"
 
     fun send(messageOutline: MessageOutline): String? {
-        val response = khttp.post(url = Config.excommUrl() + EXCOMM_MESSAGE_ENDPOINT, json = Serialiser.toJson(messageOutline), headers = BaseComms.HEADERS)
-        if (response.statusCode != 200) {
-            logger.error("Excomm request returned non-OK response (${response.statusCode}): ${String(response.content)}")
-            return null
+        logger.info("Sending ${messageOutline.type} to ${messageOutline.recipientId}")
+        return try {
+            val response = khttp.post(url = Config.excommUrl() + EXCOMM_MESSAGE_ENDPOINT, json = Serialiser.toJson(messageOutline), headers = Comms.HEADERS)
+            if (response.statusCode != 200) {
+                logger.error("Excomm request returned non-OK response (${response.statusCode}): ${String(response.content)}")
+                null
+            } else {
+                val messageId = String(response.content)
+                logger.info("Sent ${messageOutline.type} to ${messageOutline.recipientId} as $messageId")
+                messageId
+            }
+        } catch (e: Exception) {
+            logger.error("Failed to send ${messageOutline.type} to ${messageOutline.recipientId}", e)
+            null
         }
-        return String(response.content)
     }
 
 }

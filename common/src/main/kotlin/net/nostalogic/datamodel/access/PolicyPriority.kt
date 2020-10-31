@@ -1,9 +1,9 @@
 package net.nostalogic.datamodel.access
 
 enum class PolicyPriority {
-    LEVEL_ONE, // Auto-generated
-    LEVEL_TWO, // Standard
-    LEVEL_THREE, // High
-    LEVEL_FOUR, // Admin
-    LEVEL_FIVE // High admin
+    ONE_AUTO, // Auto-generated
+    TWO_STANDARD, // Standard
+    THREE_HIGH, // High
+    FOUR_ADMIN, // Admin
+    FIVE_SUPER // High admin
 }

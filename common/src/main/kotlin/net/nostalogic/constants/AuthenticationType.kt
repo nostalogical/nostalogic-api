@@ -6,5 +6,6 @@ enum class AuthenticationType {
     USERNAME,
     EMAIL,
     IMPERSONATION,
-    REG_CONFIRM
+    REG_CONFIRM,
+    PASSWORD_RESET
 }

@@ -1,8 +1,8 @@
 package net.nostalogic.security
 
-import net.nostalogic.crypto.encoders.PBKDF2Encoder
+import net.nostalogic.crypto.encoders.EncoderType
 import net.nostalogic.crypto.encoders.PasswordEncoder
-import net.nostalogic.crypto.encoders.SHAEncoder
+import net.nostalogic.datamodel.authentication.UserAuthentication
 import net.nostalogic.exceptions.NoValidationException
 import org.apache.commons.lang3.RandomStringUtils
 import org.junit.jupiter.api.Assertions
@@ -16,14 +16,14 @@ class PasswordEncoderTest {
     private val testPasswords = arrayListOf("net/nostalogic/security/password", "TestPassword567", "pnfb93~'a;]",
             "WordBasedPass!4", "01s12';{fb@]6[=")
 
-    private val encoders: ArrayList<PasswordEncoder> = arrayListOf(SHAEncoder, PBKDF2Encoder)
+    private val encoders: ArrayList<EncoderType> = arrayListOf(EncoderType.SHA512, EncoderType.PBKDF2)
 
     @Test
     fun `Encoded passwords should be verifiable by the encoder`() {
         for (encoder in encoders) {
             for (password in testPasswords) {
-                val validationString = encoder.encodePassword(password)
-                Assertions.assertTrue(encoder.verifyPassword(password, validationString))
+                val auth = PasswordEncoder.encodePassword(password, encoder)
+                Assertions.assertTrue(PasswordEncoder.verifyPassword(auth))
             }
         }
     }
@@ -32,9 +32,9 @@ class PasswordEncoderTest {
     fun `Invalid passwords should not be verified by the encoder`() {
         for (encoder in encoders) {
             for (password in testPasswords) {
-                val validationString = encoder.encodePassword(password)
+                val auth = PasswordEncoder.encodePassword(password, encoder)
                 val invalidPassword = password + RandomStringUtils.random(5)
-                Assertions.assertFalse(encoder.verifyPassword(invalidPassword, validationString))
+                Assertions.assertFalse(PasswordEncoder.verifyPassword(UserAuthentication(invalidPassword, auth.hash, auth.salt, auth.encoder, auth.iterations)))
             }
         }
     }
@@ -44,7 +44,7 @@ class PasswordEncoderTest {
         for (encoder in encoders) {
             val password = ""
             Assertions.assertThrows(NoValidationException::class.java) {
-                encoder.encodePassword(password)
+                PasswordEncoder.encodePassword(password, encoder)
             }
         }
     }
@@ -54,7 +54,7 @@ class PasswordEncoderTest {
         val validationString = ""
         for (encoder in encoders) {
             for (password in testPasswords) {
-                Assertions.assertFalse(encoder.verifyPassword(password, validationString))
+                Assertions.assertFalse(PasswordEncoder.verifyPassword(UserAuthentication(validationString, "", "", EncoderType.PBKDF2)))
             }
         }
     }

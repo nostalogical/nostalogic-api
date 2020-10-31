@@ -4,6 +4,8 @@ import net.nostalogic.constants.MessageType
 import net.nostalogic.excomm.constants.EmailStatus
 import net.nostalogic.persistence.entities.AbstractCoreEntity
 import javax.persistence.Entity
+import javax.persistence.EnumType
+import javax.persistence.Enumerated
 
 @Entity(name = "email")
 class EmailEntity(
@@ -13,7 +15,7 @@ class EmailEntity(
         val subject: String,
         val bodyHtml: String,
         val bodyPlain: String,
-        val type: MessageType,
-        var status: EmailStatus = EmailStatus.SENT,
+        @Enumerated(EnumType.STRING) val type: MessageType,
+        @Enumerated(EnumType.STRING) var status: EmailStatus = EmailStatus.SENT,
         var failReason: String? = null
     ): AbstractCoreEntity()

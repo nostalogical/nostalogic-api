@@ -5,11 +5,10 @@ import net.nostalogic.datamodel.NoDate
 
 class ConfirmationGrant(
         subject: String,
-        expiration: NoDate,
         created: NoDate = NoDate()
 ) : NoGrant(
         subject,
-        expiration,
+        null,
         AuthenticationType.REG_CONFIRM,
         created = created
 )

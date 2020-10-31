@@ -44,8 +44,8 @@ abstract class EmailService {
         return try {
             emailRepository.save(emailEntity)
         } catch (e: Exception) {
-            logger.error("Failed to save email", e)
-            throw NoSaveException(405001, "Email", null, e)
+            logger.error("Failed to save email to ${emailEntity.recipientEmailAddress}", e)
+            throw NoSaveException(405001, "email", e)
         }
     }
 

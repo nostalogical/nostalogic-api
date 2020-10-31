@@ -1,8 +1,12 @@
 package net.nostalogic.datamodel
 
 import com.fasterxml.jackson.annotation.JsonValue
+import com.google.gson.JsonDeserializationContext
+import com.google.gson.JsonDeserializer
+import com.google.gson.JsonElement
 import net.nostalogic.constants.ErrorStrings
 import net.nostalogic.exceptions.NoValidationException
+import java.lang.reflect.Type
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.time.Instant
@@ -24,6 +28,7 @@ class NoDate {
     }
 
     private val instant: Instant
+
     @Transient
     private val strict: Boolean = false
 
@@ -114,7 +119,14 @@ class NoDate {
         FRIENDLY(SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
 
         fun parse(rawDate: String): Instant {
+            sdf.timeZone = TimeZone.getTimeZone("UTC")
             return sdf.parse(rawDate).toInstant()
+        }
+    }
+
+    class NoDateDeserializer: JsonDeserializer<NoDate> {
+        override fun deserialize(json: JsonElement?, typeOfT: Type?, context: JsonDeserializationContext?): NoDate {
+            return NoDate(json!!.asString)
         }
     }
 

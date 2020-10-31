@@ -68,7 +68,7 @@ abstract class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader) {
     fun testPolicy(): Policy {
         return Policy(
                 name = "Test Policy " + RandomUtils.nextInt(0, 10000),
-                priority = PolicyPriority.LEVEL_TWO,
+                priority = PolicyPriority.TWO_STANDARD,
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true), Pair(PolicyAction.EDIT_OWN, true)),
                 resources = hashSetOf(rndResource()),
                 subjects = hashSetOf(rndSubject())

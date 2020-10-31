@@ -1,7 +1,5 @@
 package net.nostalogic.crypto.encoders
 
-import kotlin.experimental.and
-
 object HexEncoder {
 
     private val HEX_ARRAY = "0123456789abcdef".toCharArray()
