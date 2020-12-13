@@ -57,8 +57,8 @@ class UserController(@Autowired val userService: UserService) {
     }
 
     @RequestMapping(method = [RequestMethod.GET], path = [PROFILE_URI])
-    fun profile(): User {
-        return userService.getCurrentUser()
+    fun profile(@RequestParam memberships: Boolean = false): User {
+        return userService.getCurrentUser(memberships)
     }
 
     @RequestMapping(method = [RequestMethod.DELETE], path = ["/{userId}"])

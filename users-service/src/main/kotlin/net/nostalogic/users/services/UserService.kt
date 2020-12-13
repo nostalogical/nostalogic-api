@@ -8,6 +8,7 @@ import net.nostalogic.constants.NoStrings
 import net.nostalogic.crypto.encoders.EncoderType
 import net.nostalogic.crypto.encoders.PasswordEncoder
 import net.nostalogic.datamodel.ChangeSummary
+import net.nostalogic.datamodel.NoPageable
 import net.nostalogic.datamodel.access.AccessQuery
 import net.nostalogic.datamodel.access.AccessReport
 import net.nostalogic.datamodel.access.PolicyAction
@@ -20,6 +21,8 @@ import net.nostalogic.security.contexts.SessionContext
 import net.nostalogic.security.grants.ConfirmationGrant
 import net.nostalogic.security.utils.TokenDecoder
 import net.nostalogic.security.utils.TokenEncoder
+import net.nostalogic.users.datamodel.memberships.Membership
+import net.nostalogic.users.datamodel.memberships.MembershipSearchCriteria
 import net.nostalogic.users.datamodel.users.*
 import net.nostalogic.users.mappers.AuthMapper
 import net.nostalogic.users.mappers.UserMapper
@@ -164,13 +167,18 @@ class UserService(
         return userRepository.findByIdEquals(userId) ?: throw NoRetrieveException(304007, "User")
     }
 
-    fun getCurrentUser(): User {
+    fun getCurrentUser(includeMemberships: Boolean): User {
         return if (!SessionContext.isLoggedIn())
             User(username = NoStrings.guest())
         else {
             val userId = SessionContext.getUserId()
             val userEntity = userRepository.findByIdEquals(userId) ?: throw NoRetrieveException(304012, "User")
-            UserMapper.entityToDto(userEntity)
+            val memberships = if (!includeMemberships) null else {
+                val pageable = NoPageable<Membership>(sortFields = *UserSearchCriteria.DEFAULT_SORT_FIELDS)
+                val criteria = MembershipSearchCriteria(userIds = setOf(userId), page = pageable)
+                pageable.toResponse(membershipService.getMemberships(searchCriteria = criteria, showUsers = false))
+            }
+            UserMapper.entityToDto(userEntity, memberships)
         }
     }
 
