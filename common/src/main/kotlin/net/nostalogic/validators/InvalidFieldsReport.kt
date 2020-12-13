@@ -34,6 +34,11 @@ class InvalidFieldsReport {
         this.invalidReasons[fieldName] = Translator.translate(correctFormatKey)
     }
 
+    fun addInvalidFieldValue(fieldName: String, value: String) {
+        this.fieldNames.add(fieldName)
+        this.invalidReasons[fieldName] = ErrorStrings.invalidFieldValue(fieldName, value)
+    }
+
     fun addFieldAlreadyInUse(fieldName: String) {
         this.fieldNames.add(fieldName)
         this.invalidReasons[fieldName] = ErrorStrings.fieldAlreadyUsed(fieldName)

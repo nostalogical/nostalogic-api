@@ -12,8 +12,6 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
-import java.util.*
-import kotlin.collections.HashMap
 
 @ActiveProfiles(profiles = ["test"])
 @ExtendWith(SpringExtension::class)
@@ -26,22 +24,22 @@ class AccessReportsTest {
     @Test
     fun `Resource level permission in the report works`() {
         val report = AccessReport(setOf(subject),
-                Collections.singletonMap(testOne.toString(),
-                        Collections.singletonMap(PolicyAction.READ, true)),
-                Collections.singletonMap(testOne.entity,
-                        Collections.singletonMap(PolicyAction.READ, true)))
+                hashMapOf(Pair(testOne.toString(),
+                        hashMapOf(Pair(PolicyAction.READ, true)))),
+                hashMapOf(Pair(testOne.entity,
+                        hashMapOf(Pair(PolicyAction.READ, true)))))
         Assertions.assertTrue(report.hasPermission(testOne, PolicyAction.READ))
     }
 
     @Test
     fun `Entity level permission for a specific resource in the report works`() {
-        val entityActions = HashMap<NoEntity, Map<PolicyAction, Boolean>>()
-        entityActions[testOne.entity] = Collections.singletonMap(PolicyAction.CREATE, true)
-        entityActions[testTwo.entity] = Collections.singletonMap(PolicyAction.DELETE, false)
+        val entityActions = HashMap<NoEntity, HashMap<PolicyAction, Boolean>>()
+        entityActions[testOne.entity] = hashMapOf(Pair(PolicyAction.CREATE, true))
+        entityActions[testTwo.entity] = hashMapOf(Pair(PolicyAction.DELETE, false))
 
         val report = AccessReport(setOf(subject),
-                Collections.singletonMap(testOne.toString(),
-                        Collections.singletonMap(PolicyAction.EDIT, true)),
+                hashMapOf(Pair(testOne.toString(),
+                        hashMapOf(Pair(PolicyAction.EDIT, true)))),
                 entityActions)
         Assertions.assertTrue(report.hasPermission(testOne, PolicyAction.CREATE))
         Assertions.assertFalse(report.hasPermission(testTwo, PolicyAction.DELETE))
@@ -49,13 +47,13 @@ class AccessReportsTest {
 
     @Test
     fun `Retrieving an unspecified permission from the report throws an error`() {
-        val entityActions = HashMap<NoEntity, Map<PolicyAction, Boolean>>()
-        entityActions[testOne.entity] = Collections.singletonMap(PolicyAction.CREATE, true)
-        entityActions[testTwo.entity] = Collections.singletonMap(PolicyAction.DELETE, false)
+        val entityActions = HashMap<NoEntity, HashMap<PolicyAction, Boolean>>()
+        entityActions[testOne.entity] = hashMapOf(Pair(PolicyAction.CREATE, true))
+        entityActions[testTwo.entity] = hashMapOf(Pair(PolicyAction.DELETE, false))
 
         val report = AccessReport(setOf(subject),
-                Collections.singletonMap(testOne.toString(),
-                        Collections.singletonMap(PolicyAction.EDIT, true)),
+                hashMapOf(Pair(testOne.toString(),
+                        hashMapOf(Pair(PolicyAction.EDIT, true)))),
                 entityActions)
         assertThrows<NoAccessException> { report.hasPermission(testTwo, PolicyAction.EDIT) }
     }

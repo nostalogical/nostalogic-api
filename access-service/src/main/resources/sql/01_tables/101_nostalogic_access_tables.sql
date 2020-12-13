@@ -6,7 +6,7 @@ CREATE TABLE IF NOT EXISTS policy (
     id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
     created TIMESTAMP NOT NULL DEFAULT now(),
     creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
-    name VARCHAR(50) NOT NULL UNIQUE,
+    name VARCHAR(100) NOT NULL UNIQUE,
     status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     priority VARCHAR(15) NOT NULL
 );

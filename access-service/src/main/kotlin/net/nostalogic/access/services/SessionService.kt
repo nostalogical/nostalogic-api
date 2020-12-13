@@ -81,10 +81,13 @@ class SessionService(
 
     fun updateUserSessions(userId: String, groups: Set<String>) {
         val userSessions = sessionRepo.findAllByUserIdAndEndDateTimeIsAfter(userId, Timestamp.from(Instant.now()))
-        for (session in userSessions) {
-            session.additional = groups.joinToString(",")
-            sessionRepo.save(session)
-            addSessionEvent(ServerSessionEventEntity(session.id, SessionEvent.GROUPS_CHANGE))
+        val currentGroups = if (userSessions.isEmpty()) emptySet<String>() else HashSet(userSessions.first().additional!!.split(","))
+        if (currentGroups != groups) {
+            for (session in userSessions) {
+                session.additional = groups.joinToString(",")
+                sessionRepo.save(session)
+                addSessionEvent(ServerSessionEventEntity(session.id, SessionEvent.GROUPS_CHANGE))
+            }
         }
     }
 

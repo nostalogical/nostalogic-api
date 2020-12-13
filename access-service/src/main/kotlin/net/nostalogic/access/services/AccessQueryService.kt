@@ -29,19 +29,15 @@ open class AccessQueryService(
         private val policyResourceRepository: PolicyResourceRepository,
         private val policyActionRepository: PolicyActionRepository) {
 
-    companion object {
-        val SORT_FIELDS = arrayOf("created", "id")
-    }
-
     fun evaluateAccessQuery(accessQuery: AccessQuery): AccessReport {
         val contexts = analyseAccessQuery(accessQuery)
-        val resourcePermissions = HashMap<String, EnumMap<PolicyAction, Boolean>>()
-        val entityPermissions = HashMap<NoEntity, EnumMap<PolicyAction, Boolean>>()
+        val resourcePermissions = HashMap<String, HashMap<PolicyAction, Boolean>>()
+        val entityPermissions = HashMap<NoEntity, HashMap<PolicyAction, Boolean>>()
         for (context in contexts) {
             if (context.resource.isSignature())
-                resourcePermissions.getOrPut(context.resource.toString()) { EnumMap(PolicyAction::class.java) }[context.action] = context.allow
+                resourcePermissions.getOrPut(context.resource.toString()) { HashMap() }[context.action] = context.allow
             else
-                entityPermissions.getOrPut(context.resource.entity) { EnumMap(PolicyAction::class.java) }[context.action] = context.allow
+                entityPermissions.getOrPut(context.resource.entity) { HashMap() }[context.action] = context.allow
         }
         return AccessReport(accessQuery.subjects, resourcePermissions, entityPermissions)
     }
@@ -58,7 +54,7 @@ open class AccessQueryService(
         val policies = ArrayList<Policy>()
         var pageNum = 0
         do {
-            val criteria = PolicySearchCriteria(status = setOf(EntityStatus.ACTIVE), page = NoPageable(page = ++pageNum, sortFields = *SORT_FIELDS))
+            val criteria = PolicySearchCriteria(status = setOf(EntityStatus.ACTIVE), page = NoPageable(page = ++pageNum, sortFields = *PolicySearchCriteria.DEFAULT_SORT_FIELDS))
             policies.addAll(retrievePolicies(policyIds, criteria))
         } while (criteria.page.hasNext == true)
 
@@ -107,7 +103,18 @@ open class AccessQueryService(
         if (criteria.subjectIds.isNotEmpty() && criteria.resourceIds.isNotEmpty())
             filteredPolicyIds.retainAll(policiesByResource)
 
-        return retrievePolicies(filteredPolicyIds, criteria)
+        val filteredPolicies = retrievePolicies(filteredPolicyIds, criteria)
+        if (criteria.actions.size != PolicyAction.values().size)
+            filteredPolicies.removeIf {
+                var containsAction = false
+                for (action in criteria.actions) {
+                    if (it.permissions!!.containsKey(action))
+                        containsAction = true
+                }
+                !containsAction
+            }
+
+        return filteredPolicies
     }
 
     fun getPolicy(policyId: String): Policy {
@@ -149,13 +156,18 @@ open class AccessQueryService(
         }
     }
 
+    private fun addPoliciesByActionCriteria(criteria: PolicySearchCriteria, aggregate: HashSet<String>) {
+        if (criteria.actions.isNotEmpty())
+            aggregate.addAll(policyActionRepository.findAllByActionIn(criteria.actions).map { a -> a.policyId })
+    }
+
     private fun retrievePolicies(policyIds: Set<String>, criteria: PolicySearchCriteria): ArrayList<Policy> {
-        val policyEntities = policyRepository.findAllByIdInAndStatusIn(policyIds, criteria.status, criteria.page.toQuery())
+        val policyEntities = policyRepository.findAllByIdInAndStatusInAndPriorityIn(policyIds, criteria.status, criteria.priority, criteria.page.toQuery())
         criteria.page.hasNext = policyEntities.hasNext()
         val policiesById = HashMap<String, Policy>()
         val orderedPolicies = ArrayList<Policy>()
         for (policy in policyEntities) {
-            policiesById[policy.id] = Policy(id = policy.id, name = policy.name, priority = policy.priority, status = policy.status)
+            policiesById[policy.id] = Policy(id = policy.id, name = policy.name, priority = policy.priority, status = policy.status, creator = policy.creatorId)
             orderedPolicies.add(policiesById[policy.id]!!)
         }
         val resourceEntities = policyResourceRepository.findAllByPolicyIdIn(policyIds)

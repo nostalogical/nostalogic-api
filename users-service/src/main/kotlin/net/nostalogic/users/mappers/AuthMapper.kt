@@ -1,6 +1,7 @@
 package net.nostalogic.users.mappers
 
 import net.nostalogic.datamodel.authentication.UserAuthentication
+import net.nostalogic.security.contexts.SessionContext
 import net.nostalogic.users.persistence.entities.AuthenticationEntity
 import java.sql.Timestamp
 
@@ -12,7 +13,8 @@ object AuthMapper {
                 hash = dto.hash,
                 salt = dto.salt,
                 iterations = dto.iterations,
-                encoder = dto.encoder)
+                encoder = dto.encoder,
+                creatorId = SessionContext.getUserId())
     }
 
     fun tempAuthToEntity(dto: UserAuthentication, userId: String, tempReason: String): AuthenticationEntity {
@@ -24,7 +26,8 @@ object AuthMapper {
                 encoder = dto.encoder,
                 expiration = Timestamp(System.currentTimeMillis()),
                 expired = true,
-                expiredReason = tempReason)
+                expiredReason = tempReason,
+                creatorId = SessionContext.getUserId())
     }
 
 }

@@ -9,6 +9,7 @@ import net.nostalogic.datamodel.access.AccessQuery
 import net.nostalogic.datamodel.access.AccessReport
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.entities.NoEntity
+import net.nostalogic.security.grants.ImpersonationGrant
 import net.nostalogic.security.grants.LoginGrant
 import net.nostalogic.security.models.SessionPrompt
 import net.nostalogic.security.models.SessionSummary
@@ -58,6 +59,19 @@ class AuthenticationControllerTest(@Autowired dbLoader: DatabaseLoader): BaseCon
                 method = HttpMethod.POST, url = "$baseApiUrl${AuthenticationController.AUTH_ENDPOINT}${AuthenticationController.LOGIN_URI}").body!!
     }
 
+    private fun doImpersonation(loginToken: String, userId: String = REGULAR_ID, originalUserId: String = OWNER_ID): AuthenticationResponse {
+        val grant = ImpersonationGrant(userId, emptySet(), endDate, EntityUtils.uuid(), originalUserId, emptySet())
+        val token = TokenEncoder.encodeImpersonationGrant(grant)
+        every { accessComms.createSession(ofType(SessionPrompt::class)) } answers {
+            SessionSummary(EntityUtils.uuid(), userId, grant.type, NoDate(), endDate, null, token) }
+        val headers = HttpHeaders()
+        headers.set(NoStrings.AUTH_HEADER, loginToken)
+        return  exchange(
+                entity = HttpEntity(ImpersonationRequest(REGULAR_ID), headers),
+                responseType = object : ParameterizedTypeReference<AuthenticationResponse>() {},
+                method = HttpMethod.POST, url = "$baseApiUrl${AuthenticationController.AUTH_ENDPOINT}${AuthenticationController.IMPERSONATE_URI}").body!!
+    }
+
     @Test
     fun `Normal login`() {
         val response = doLogin()
@@ -70,17 +84,13 @@ class AuthenticationControllerTest(@Autowired dbLoader: DatabaseLoader): BaseCon
     @Test
     fun `Site Owner can impersonate a regular user`() {
         val session = doLogin()
-        val headers = HttpHeaders()
-        headers.set(NoStrings.AUTH_HEADER, session.token)
         every { accessComms.query(ofType(AccessQuery::class)) } answers {
             AccessReport(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.EDIT, true))))) }
-        val exchange = exchange(
-                entity = HttpEntity(ImpersonationRequest(REGULAR_ID), headers),
-                responseType = object : ParameterizedTypeReference<AuthenticationResponse>() {},
-                method = HttpMethod.POST, url = "$baseApiUrl${AuthenticationController.AUTH_ENDPOINT}${AuthenticationController.IMPERSONATE_URI}").body!!
+        val exchange = doImpersonation(loginToken = session.token!!)
         Assertions.assertTrue(exchange.authenticated)
-        TokenDecoder.decodeToken("ZXlKMGVYQWlPaUpLVjFRaUxDSmhiR2NpT2lKSVV6VXhNaUo5LmV5SnpaWE1pT2lKaE4yTmhPR014WXkxbE9UVXhMVFJoWkdRdFlUUXdaQzAxWkRjM09XVTNZemN4TURjaUxDSmhaR1FpT2x0ZExDSnpkV0lpT2lKak1XVTVPVE01TkMwd09HVTJMVFJoTmpVdE9XRTJOaTFpTXpObU5qUmlNMkpoTnpRaUxDSnBjM01pT2lKdWIzTjBZV3h2WjJsakxtNWxkQ0lzSW1WNGNDSTZNVFl3TkRjd05EVTBNeXdpYVdGMElqb3hOakEwTURrNU56UXpMQ0puZENJNklsVlRSVkpPUVUxRkluMC5YM0Q5X3NCbmdHMnVnRDJkZndjNEtvUjZaaklPM3pNN0RreUQ3VzN5Vm1ldFJqcTh6T3E0MzhtRGE3ZVAyNFZKVmpYa29mcEZDZ2tfZWoxd3pUQ2ZBdw==")
-
+        val grant: ImpersonationGrant = TokenDecoder.decodeToken(exchange.token!!) as ImpersonationGrant
+        Assertions.assertEquals(REGULAR_ID, grant.subject)
+        Assertions.assertEquals(OWNER_ID, grant.originalSubject)
     }
 
     @Test

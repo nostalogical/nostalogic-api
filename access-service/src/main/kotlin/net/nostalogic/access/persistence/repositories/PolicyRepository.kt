@@ -1,6 +1,7 @@
 package net.nostalogic.access.persistence.repositories
 
 import net.nostalogic.access.persistence.entities.PolicyEntity
+import net.nostalogic.datamodel.access.PolicyPriority
 import net.nostalogic.entities.EntityStatus
 import net.nostalogic.entities.NoEntity
 import org.springframework.data.domain.Page
@@ -12,7 +13,7 @@ import javax.transaction.Transactional
 
 interface PolicyRepository: JpaRepository<PolicyEntity, String> {
 
-    fun findAllByIdInAndStatusIn(ids: Collection<String>, statuses: Collection<EntityStatus>, page: Pageable): Page<PolicyEntity>
+    fun findAllByIdInAndStatusInAndPriorityIn(ids: Collection<String>, statuses: Collection<EntityStatus>, priority: Collection<PolicyPriority>, page: Pageable): Page<PolicyEntity>
 
     @Modifying
     @Transactional

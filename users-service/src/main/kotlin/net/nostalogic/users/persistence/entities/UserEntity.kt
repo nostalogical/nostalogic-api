@@ -14,8 +14,8 @@ import javax.persistence.Table
 class UserEntity(
         id: String = EntityUtils.uuid(),
         creatorId: String = EntityUtils.SYSTEM_ID,
-        val name: String,
-        val email: String,
+        var username: String,
+        var email: String,
         @Enumerated(EnumType.STRING) val locale: NoLocale,
         @Enumerated(EnumType.STRING) var status: EntityStatus
 ): AbstractCoreEntity(id = id, creatorId = creatorId)

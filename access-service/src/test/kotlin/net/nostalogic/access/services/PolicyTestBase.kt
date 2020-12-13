@@ -32,6 +32,7 @@ open class PolicyTestBase {
             Assertions.assertEquals(p1.permissions, p2.permissions)
             Assertions.assertEquals(p1.resources, p2.resources)
             Assertions.assertEquals(p1.subjects, p2.subjects)
+            Assertions.assertEquals(p1.creator, p2.creator)
         }
     }
 

@@ -7,8 +7,8 @@ import net.nostalogic.exceptions.NoAccessException
 
 data class AccessReport(
         val subjectIds: Set<String> = emptySet(),
-        val resourcePermissions: Map<String, Map<PolicyAction, Boolean>> = emptyMap(),
-        val entityPermissions: Map<NoEntity, Map<PolicyAction, Boolean>> = emptyMap()
+        val resourcePermissions: HashMap<String, HashMap<PolicyAction, Boolean>> = HashMap(),
+        val entityPermissions: HashMap<NoEntity, HashMap<PolicyAction, Boolean>> = HashMap()
 ) {
 
     fun hasPermission(reference: EntityReference, action: PolicyAction): Boolean {
@@ -21,5 +21,16 @@ data class AccessReport(
             throw NoAccessException(101001,
                     "Action '${action}' not specified for '${reference}'",
                     Translator.translate("permissionMissing"))
+    }
+
+    fun filterByPermitted(ids: Collection<String>, entity: NoEntity, action: PolicyAction): Set<String> {
+        if (entityPermissions[entity]?.get(action) == true)
+            return ids.toHashSet()
+        val permitted = HashSet<String>()
+        ids.forEach {
+            if (resourcePermissions[EntityReference(it, entity).toString()]?.containsKey(action) == true)
+                permitted.add(it)
+        }
+        return permitted
     }
 }

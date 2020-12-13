@@ -1,4 +1,4 @@
-package net.nostalogic.users.datamodel
+package net.nostalogic.users.datamodel.users
 
 import com.fasterxml.jackson.annotation.JsonInclude
 

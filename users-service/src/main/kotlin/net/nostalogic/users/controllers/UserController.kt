@@ -1,18 +1,19 @@
 package net.nostalogic.users.controllers
 
 import net.nostalogic.constants.NoStrings
+import net.nostalogic.datamodel.NoPageResponse
+import net.nostalogic.datamodel.NoPageable
+import net.nostalogic.entities.EntityStatus
 import net.nostalogic.security.contexts.SessionContext
 import net.nostalogic.users.UsersApplication
 import net.nostalogic.users.controllers.UserController.Companion.USERS_ENDPOINT
-import net.nostalogic.users.datamodel.RegistrationAvailability
-import net.nostalogic.users.datamodel.User
-import net.nostalogic.users.datamodel.UserRegistration
+import net.nostalogic.users.datamodel.users.*
 import net.nostalogic.users.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping(USERS_ENDPOINT, produces = ["application/json"], consumes = ["application/json"])
+@RequestMapping(USERS_ENDPOINT, produces = ["application/json"])
 class UserController(@Autowired val userService: UserService) {
 
     companion object {
@@ -20,6 +21,7 @@ class UserController(@Autowired val userService: UserService) {
         const val REGISTER_URI = "/register"
         const val AVAILABLE_URI = "/check"
         const val CONFIRM_URI = "/confirm"
+        const val PROFILE_URI = "/profile"
         const val SECURE_URI = "/secure"
     }
 
@@ -45,28 +47,41 @@ class UserController(@Autowired val userService: UserService) {
     }
 
     @RequestMapping(method = [RequestMethod.PUT], path = ["/{userId}"])
-    fun updateUser(@PathVariable userId: String, @RequestBody user: User) {
-        // TODO
+    fun updateUser(@PathVariable userId: String, @RequestBody user: User): User {
+        return userService.updateUser(userId, user)
     }
 
     @RequestMapping(method = [RequestMethod.PUT], path = ["/{userId}$SECURE_URI"])
-    fun secureUpdateUser(@PathVariable userId: String, @RequestBody user: User) {
-        // TODO
+    fun secureUpdateUser(@PathVariable userId: String, @RequestBody update: SecureUserUpdate): User {
+        return userService.secureUpdate(userId, update)
     }
 
-    @RequestMapping(method = [RequestMethod.DELETE])
-    fun deleteUser() {
-        // TODO
+    @RequestMapping(method = [RequestMethod.GET], path = [PROFILE_URI])
+    fun profile(): User {
+        return userService.getCurrentUser()
+    }
+
+    @RequestMapping(method = [RequestMethod.DELETE], path = ["/{userId}"])
+    fun deleteUser(@PathVariable userId: String, @RequestParam hard: Boolean = false): User {
+        return userService.deleteUser(userId, hard)
     }
 
     @RequestMapping(method = [RequestMethod.GET], path = ["/{userId}"])
-    fun getUser(@PathVariable userId: String) {
-        // TODO
+    fun getUser(@PathVariable userId: String): User {
+        return userService.getUser(userId)
     }
 
     @RequestMapping(method = [RequestMethod.GET])
-    fun getUsers() {
-        // TODO
+    fun getUsers(@RequestParam(defaultValue = "1") page: Int, @RequestParam(defaultValue = "20") size: Int,
+                 @RequestParam id: Set<String>?,
+                 @RequestParam email: Set<String>?,
+                 @RequestParam username: Set<String>?,
+                 @RequestParam group: Set<String>?,
+                 @RequestParam status: Set<EntityStatus>?): NoPageResponse<User> {
+        val pageable = NoPageable<User>(page, size, *UserSearchCriteria.DEFAULT_SORT_FIELDS)
+        val result = userService.getUsers(
+                UserSearchCriteria(userIds = id, memberGroupIds = group, usernames = username, emails = email, status = status, page = pageable))
+        return pageable.toResponse(result)
     }
 
 }

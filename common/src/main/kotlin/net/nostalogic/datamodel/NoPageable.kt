@@ -15,7 +15,7 @@ class NoPageable<T>(private val page: Int = 1, private val size: Int = MAX_PAGE_
         private const val MAX_PAGE_SIZE = 1_000
     }
 
-    var hasNext: Boolean? = null
+    var hasNext: Boolean? = false
 
     private fun normalisedPage(): Int {
         return max(1, this.page)
@@ -36,7 +36,7 @@ class NoPageable<T>(private val page: Int = 1, private val size: Int = MAX_PAGE_
                 Sort.by(Sort.Direction.ASC, *this.sortFields))
     }
 
-    fun toResponse(content: ArrayList<T>): NoPageResponse<T> {
+    fun toResponse(content: List<T>): NoPageResponse<T> {
         return NoPageResponse(normalisedPage(), content.size, hasNext, content)
     }
 }

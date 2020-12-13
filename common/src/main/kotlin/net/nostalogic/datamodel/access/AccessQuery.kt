@@ -64,9 +64,9 @@ data class AccessQuery(val subjects: HashSet<String> = HashSet(),
         return Comms.accessComms.query(this)
     }
 
-    fun simpleCheck(id: String? = null, entity: NoEntity, action: PolicyAction): Boolean {
+    fun simpleCheck(id: String? = null, entity: NoEntity, action: PolicyAction, creatorId: String? = null): Boolean {
         val ref = EntityReference(id, entity)
-        val selfCheck = id == SessionContext.getUserId()
+        val selfCheck = id == SessionContext.getUserId() || creatorId == SessionContext.getUserId()
         val actions = hashSetOf(action)
 
         val query = currentSubject().addQuery(ref, action)

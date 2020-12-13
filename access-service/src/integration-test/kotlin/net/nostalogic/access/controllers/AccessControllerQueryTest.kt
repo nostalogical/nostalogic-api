@@ -29,11 +29,6 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [AccessApplication::class])
 class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseControllerTest(dbLoader) {
 
-    companion object {
-        private val TEST_USER = EntitySignature("5f086280-32d2-4955-9874-0a9d8ee3ca88", NoEntity.USER)
-        private val TEST_USER_GROUP = EntitySignature("d8d6a9c4-b9ce-4660-b037-2d6d330da846", NoEntity.GROUP)
-    }
-
     private fun analyseUrl(): String {
         return baseApiUrl + AccessController.ACCESS_ENDPOINT + AccessController.ANALYSE_URI
     }
@@ -88,7 +83,7 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
     fun `Confirm read access on navs`() {
         val contexts = analyse(AccessQuery(hashSetOf(TEST_USER.toString()), hashMapOf(Pair(NoEntity.NAV.name, hashSetOf(PolicyAction.READ)))))
         val context = assertSingleContext(contexts)
-        assertContext(context, EntityReference(entity = NoEntity.NAV), PolicyAction.READ, PolicyPriority.ONE_AUTO, true)
+        assertContext(context, EntityReference(entity = NoEntity.NAV), PolicyAction.READ, PolicyPriority.TWO_STANDARD, true)
         assertPolicyApplied(context, "6aac60f8-1b4d-430e-911f-a86caa8ec1ba", "Default Read", false, "ALL")
 
         val report = query(AccessQuery(hashSetOf(TEST_USER.toString()), hashMapOf(Pair(NoEntity.NAV.name, hashSetOf(PolicyAction.READ)))))
@@ -100,7 +95,7 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val equalOppositeEntity = EntityReference("b332223b-32bf-42b7-bb07-24174516a410", NoEntity.ARTICLE)
         val contexts = analyse(AccessQuery(hashSetOf(TEST_USER.toString()), hashMapOf(Pair(equalOppositeEntity.toString(), hashSetOf(PolicyAction.READ)))))
         val context = assertSingleContext(contexts)
-        assertContext(context, equalOppositeEntity, PolicyAction.READ, PolicyPriority.ONE_AUTO, false)
+        assertContext(context, equalOppositeEntity, PolicyAction.READ, PolicyPriority.TWO_STANDARD, false)
         assertPolicyApplied(context, "93b8b29f-ad3f-4697-a716-1c56fe9d93d8", "Equal priority opposite effect 2", true, TEST_USER.toString())
 
         val report = query(AccessQuery(hashSetOf(TEST_USER.toString()), hashMapOf(Pair(equalOppositeEntity.toString(), hashSetOf(PolicyAction.READ)))))
@@ -124,7 +119,7 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val equalResults = EntityReference("20590221-63d1-4750-873d-916e24900406", NoEntity.NAV)
         val contexts = analyse(AccessQuery(hashSetOf(TEST_USER.toString()), hashMapOf(Pair(equalResults.toString(), hashSetOf(PolicyAction.DELETE)))))
         val context = assertSingleContext(contexts)
-        assertContext(context, equalResults, PolicyAction.DELETE, PolicyPriority.ONE_AUTO, true)
+        assertContext(context, equalResults, PolicyAction.DELETE, PolicyPriority.TWO_STANDARD, true)
         assertPolicyApplied(context, "f2adeff6-912d-4022-b5b4-267ecef4beee", "Equal result for resource 1", true, TEST_USER.toString())
         assertPolicyApplied(context, "c013563b-6480-43e4-bc1b-c457d389df95", "Equal result for resource 2", true, TEST_USER.toString())
 
@@ -138,7 +133,7 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val contexts = analyse(AccessQuery(hashSetOf(TEST_USER.toString(), TEST_USER_GROUP.toString()),
                 hashMapOf(Pair(multipleSubjects.toString(), hashSetOf(PolicyAction.DELETE)))))
         val context = assertSingleContext(contexts)
-        assertContext(context, multipleSubjects, PolicyAction.DELETE, PolicyPriority.ONE_AUTO, true)
+        assertContext(context, multipleSubjects, PolicyAction.DELETE, PolicyPriority.TWO_STANDARD, true)
         assertPolicyApplied(context, "35929e52-4f15-4f41-a445-e4e68ef3f30e", "Multiple subjects report 1", true, TEST_USER.toString())
         assertPolicyApplied(context, "1f88a5b8-55af-47a9-b43d-c22da8d1721a", "Multiple subjects report 2", false, TEST_USER_GROUP.toString())
 
@@ -175,7 +170,7 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         var contextCount = 0
         for (context in contexts) {
             if (context.resource == container1 && context.action == PolicyAction.DELETE) {
-                assertContext(context, container1, PolicyAction.DELETE, PolicyPriority.ONE_AUTO, true)
+                assertContext(context, container1, PolicyAction.DELETE, PolicyPriority.TWO_STANDARD, true)
                 assertPolicyApplied(context, "35929e52-4f15-4f41-a445-e4e68ef3f30e", "Multiple subjects report 1", true, TEST_USER.toString())
                 assertPolicyApplied(context, "1f88a5b8-55af-47a9-b43d-c22da8d1721a", "Multiple subjects report 2", false, TEST_USER_GROUP.toString())
                 contextCount += 1

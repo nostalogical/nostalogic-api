@@ -7,16 +7,13 @@ import net.nostalogic.access.persistence.repositories.PolicyRepository
 import net.nostalogic.access.persistence.repositories.PolicyResourceRepository
 import net.nostalogic.access.persistence.repositories.PolicySubjectRepository
 import net.nostalogic.access.validators.PolicyValidator
-import net.nostalogic.constants.AuthenticationType
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.entities.EntityReference
 import net.nostalogic.entities.EntityStatus
 import net.nostalogic.entities.NoEntity
-import net.nostalogic.exceptions.NoAccessException
 import net.nostalogic.exceptions.NoDeleteException
 import net.nostalogic.exceptions.NoSaveException
-import net.nostalogic.security.contexts.SessionContext
 import net.nostalogic.utils.EntityUtils
 import org.apache.commons.lang3.StringUtils
 import org.springframework.stereotype.Service
@@ -56,7 +53,6 @@ open class AccessService(
     }
 
     open fun createPolicy(policy: Policy): Policy {
-        // TODO: user SessionContext to confirm user can create sessions
         PolicyValidator.validate(policy)
         try {
             return savePolicy(policy)
@@ -81,11 +77,14 @@ open class AccessService(
         }
     }
 
-    fun deletePolicy(policyId: String) {
+    fun deletePolicy(policyId: String, hard: Boolean) {
         val policies = searchPolicies(PolicySearchCriteria(policyIds = setOf(policyId), status = setOf(*EntityStatus.values())))
         if (policies.isEmpty())
-            throw NoDeleteException(203001, "Policy", "Policy not found for deletion: ${policyId}")
-        changePolicyStatuses(setOf(policyId), EntityStatus.DELETED)
+            throw NoDeleteException(203001, "Policy", "Policy not found for deletion: $policyId")
+        if (hard)
+            hardDeletePolicy(policyId)
+        else
+            changePolicyStatuses(setOf(policyId), EntityStatus.DELETED)
     }
 
     open fun changePolicyStatuses(policyIds: Collection<String>, status: EntityStatus) {
@@ -126,10 +125,15 @@ open class AccessService(
         return policy
     }
 
-    fun verifyAccess(allowGuest: Boolean) {
-        val grant = SessionContext.currentSession.get().grant
-        if (!allowGuest && grant.type == AuthenticationType.GUEST)
-            throw NoAccessException(201008, "You must be logged in to perform this action")
+    open fun hardDeletePolicy(policyId: String) {
+        try {
+            policyActionRepository.deleteAll(policyActionRepository.findAllByPolicyIdIn(setOf(policyId)))
+            policySubjectRepository.deleteAll(policySubjectRepository.findAllByPolicyIdIn(setOf(policyId)))
+            policyResourceRepository.deleteAll(policyResourceRepository.findAllByPolicyIdIn(setOf(policyId)))
+            policyRepository.deleteById(policyId)
+        } catch (e: Exception) {
+            throw NoSaveException(205003, "policy", e)
+        }
     }
 
 }

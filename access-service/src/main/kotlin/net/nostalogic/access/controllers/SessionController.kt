@@ -37,7 +37,7 @@ class SessionController(private val sessionService: SessionService) {
     }
 
     @RequestMapping(path= ["/update/{userId}"], method = [RequestMethod.PUT], produces = ["application/json"])
-    fun updateUserSessions(@RequestBody groups: Set<String>, @PathVariable userId: String) {
+    fun updateUserSessions(@RequestBody groups: HashSet<String>, @PathVariable userId: String) {
         sessionService.updateUserSessions(userId, groups)
     }
 

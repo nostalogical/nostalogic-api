@@ -95,7 +95,7 @@ class CommsTest(@Autowired val dbLoader: DatabaseLoader) {
     fun `Update session comms works`() {
         val creation = AccessComms.createSession(SessionPrompt(TEST_USER.id, emptySet(), AuthenticationType.EMAIL))
         Assertions.assertNotNull(creation)
-        val groups = setOf(EntityUtils.uuid(), EntityUtils.uuid())
+        val groups = hashSetOf(EntityUtils.uuid(), EntityUtils.uuid())
         val summary = AccessComms.updateSession(groups, TEST_USER.id)
         Assertions.assertNotNull(summary)
     }

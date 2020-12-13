@@ -11,5 +11,6 @@ data class Policy(
         var priority: PolicyPriority? = null,
         var resources: HashSet<String>? = HashSet(),
         var subjects: HashSet<String>? = HashSet(),
-        var permissions: EnumMap<PolicyAction, Boolean>? = EnumMap(PolicyAction::class.java)
+        var permissions: EnumMap<PolicyAction, Boolean>? = EnumMap(PolicyAction::class.java),
+        val creator: String? = null
 )

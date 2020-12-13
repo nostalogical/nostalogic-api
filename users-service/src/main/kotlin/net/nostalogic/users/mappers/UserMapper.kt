@@ -1,8 +1,9 @@
 package net.nostalogic.users.mappers
 
+import net.nostalogic.datamodel.NoDate
 import net.nostalogic.entities.EntityStatus
-import net.nostalogic.users.datamodel.User
-import net.nostalogic.users.datamodel.UserRegistration
+import net.nostalogic.users.datamodel.users.User
+import net.nostalogic.users.datamodel.users.UserRegistration
 import net.nostalogic.users.persistence.entities.UserEntity
 import net.nostalogic.utils.EntityUtils
 
@@ -11,9 +12,10 @@ object UserMapper {
     fun entityToDto(entity: UserEntity): User {
         return User(
                 id = entity.id,
-                username = entity.name,
+                username = entity.username,
                 email = entity.email,
-                status = entity.status)
+                status = entity.status,
+                created = NoDate(entity.created))
     }
 
     fun registrationToEntity(
@@ -23,7 +25,7 @@ object UserMapper {
     ): UserEntity {
         val userId = EntityUtils.uuid()
         return UserEntity(id = userId, creatorId = creatorId ?: userId,
-                name = userRegistration.username!!,
+                username = userRegistration.username!!,
                 email = userRegistration.email!!,
                 status = status,
                 locale = userRegistration.locale)

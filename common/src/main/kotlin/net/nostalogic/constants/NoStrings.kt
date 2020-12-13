@@ -8,6 +8,7 @@ object NoStrings {
     fun authValid(): String {return Translator.translate("authValid")}
     fun authInvalidated(): String {return Translator.translate("logoutSuccess")}
     fun authAlreadyInvalid(): String {return Translator.translate("alreadyLoggedOut")}
+    fun guest(): String {return Translator.translate("guest")}
 
     fun sessionCreateFail(): String {return Translator.translate("sessionCreateFail")}
     fun sessionVerifyFail(): String {return Translator.translate("sessionVerifyFail")}
@@ -25,6 +26,15 @@ object NoStrings {
     fun notLoggedIn(): String {return Translator.translate("notLoggedIn")}
     fun passwordChanged(): String {return Translator.translate("passwordWasChanged")}
     fun passwordEmailSent(): String {return Translator.translate("passwordEmailSent")}
+
+    fun membershipPermissions(): String {return Translator.translate("membershipPermissions")}
+    fun membershipUnchanged(): String {return Translator.translate("membershipUnchanged")}
+    fun alreadyMember(): String {return Translator.translate("alreadyMember")}
+    fun alreadySuspended(): String {return Translator.translate("alreadySuspended")}
+    fun notMember(): String {return Translator.translate("notMember")}
+    fun ownerCannotLeave(): String {return Translator.translate("ownerCannotLeave")}
+    fun cannotRemoveFromGroup(): String {return Translator.translate("cannotRemoveFromGroup")}
+    fun cannotRemoveFromRightsGroup(): String {return Translator.translate("cannotRemoveFromRightsGroup")}
 
 
     const val EMAIL_REGEX = "\\w+@\\w+\\.\\w+"

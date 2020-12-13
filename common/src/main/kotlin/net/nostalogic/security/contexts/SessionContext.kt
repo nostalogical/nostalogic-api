@@ -30,6 +30,10 @@ open class SessionContext (
             return getSession().token
         }
 
+        fun isLoggedIn(): Boolean {
+            return getToken() != null
+        }
+
         private fun getSession(): SessionContext {
             if (Config.isTest() && currentSession.get()?.token == null) {
                 currentSession.set(SessionContext(grant = TestGrant()))

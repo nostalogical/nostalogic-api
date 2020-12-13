@@ -1,13 +1,24 @@
 package net.nostalogic.users.controllers
 
+import io.mockk.every
 import io.mockk.mockk
 import net.nostalogic.comms.AccessComms
 import net.nostalogic.comms.Comms
 import net.nostalogic.comms.ExcommComms
 import net.nostalogic.config.Config
 import net.nostalogic.config.DatabaseLoader
+import net.nostalogic.constants.AuthenticationType
+import net.nostalogic.constants.NoStrings
+import net.nostalogic.datamodel.NoDate
 import net.nostalogic.datamodel.Setting
+import net.nostalogic.datamodel.access.AccessQuery
+import net.nostalogic.datamodel.access.AccessReport
+import net.nostalogic.datamodel.access.PolicyAction
+import net.nostalogic.entities.NoEntity
+import net.nostalogic.security.grants.LoginGrant
+import net.nostalogic.security.utils.TokenEncoder
 import net.nostalogic.users.UsersApplication
+import net.nostalogic.utils.EntityUtils
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -16,10 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.core.ParameterizedTypeReference
-import org.springframework.http.HttpEntity
-import org.springframework.http.HttpMethod
-import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
+import org.springframework.http.*
 import org.springframework.http.client.ClientHttpResponse
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory
 import org.springframework.test.context.ActiveProfiles
@@ -27,6 +35,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.web.client.DefaultResponseErrorHandler
 import org.springframework.web.client.RestTemplate
 import java.io.IOException
+import java.time.temporal.ChronoUnit
 
 @Suppress("FunctionName")
 @ActiveProfiles(profiles = ["integration-test"])
@@ -81,6 +90,22 @@ open class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader) {
             }
         }
         return template
+    }
+
+    protected fun testHeaders(userId: String? = null): HttpHeaders {
+        val headers = HttpHeaders()
+        if (userId != null)
+            headers.set(NoStrings.AUTH_HEADER, TokenEncoder.encodeLoginGrant(LoginGrant(
+                    subject = userId, expiration = NoDate.plus(1, ChronoUnit.MINUTES),
+                    sessionId = EntityUtils.uuid(), type = AuthenticationType.USERNAME)))
+        return headers
+    }
+
+    protected fun mockPermissions(resourcePermissions: HashMap<String, HashMap<PolicyAction, Boolean>> = HashMap(),
+                                  entityPermissions: HashMap<NoEntity, HashMap<PolicyAction, Boolean>> = HashMap()
+    ) {
+        every { accessComms.query(ofType(AccessQuery::class)) } answers {
+            AccessReport(entityPermissions = entityPermissions, resourcePermissions = resourcePermissions) }
     }
 
 }

@@ -5,7 +5,7 @@ import net.nostalogic.datamodel.NoDate
 
 class LoginGrant(
         subject: String,
-        val additional: Set<String>,
+        val additional: Set<String> = emptySet(),
         expiration: NoDate,
         val sessionId: String,
         type: AuthenticationType,

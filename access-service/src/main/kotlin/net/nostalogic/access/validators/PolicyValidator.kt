@@ -9,7 +9,7 @@ import org.apache.commons.lang3.StringUtils
 
 object PolicyValidator {
 
-    private const val MAX_NAME_LENGTH = 50
+    private const val MAX_NAME_LENGTH = 100
 
     fun validate(policy: Policy, isNewEntity: Boolean = true) {
         val report = InvalidFieldsReport()

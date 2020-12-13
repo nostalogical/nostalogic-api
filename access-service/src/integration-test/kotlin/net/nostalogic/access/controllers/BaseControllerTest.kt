@@ -8,6 +8,7 @@ import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.datamodel.access.PolicyPriority
 import net.nostalogic.entities.EntityReference
+import net.nostalogic.entities.EntitySignature
 import net.nostalogic.entities.NoEntity
 import net.nostalogic.utils.CollUtils
 import net.nostalogic.utils.EntityUtils
@@ -37,6 +38,11 @@ import java.io.IOException
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [AccessApplication::class])
 abstract class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader) {
+
+    companion object {
+        val TEST_USER = EntitySignature("5f086280-32d2-4955-9874-0a9d8ee3ca88", NoEntity.USER)
+        val TEST_USER_GROUP = EntitySignature("d8d6a9c4-b9ce-4660-b037-2d6d330da846", NoEntity.GROUP)
+    }
 
     private val localhost = "http://localhost:"
 
@@ -71,7 +77,8 @@ abstract class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader) {
                 priority = PolicyPriority.TWO_STANDARD,
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true), Pair(PolicyAction.EDIT_OWN, true)),
                 resources = hashSetOf(rndResource()),
-                subjects = hashSetOf(rndSubject())
+                subjects = hashSetOf(rndSubject()),
+                creator = TEST_USER.id
         )
     }
 

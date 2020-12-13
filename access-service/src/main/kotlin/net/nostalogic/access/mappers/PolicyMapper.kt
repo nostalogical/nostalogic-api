@@ -17,7 +17,7 @@ object PolicyMapper {
                     subjectEntities: Collection<PolicySubjectEntity>,
                     actionEntities: Collection<PolicyActionEntity>): Policy {
         val policy = Policy(id = policyEntity.id, name = policyEntity.name,
-                priority = policyEntity.priority, status = policyEntity.status)
+                priority = policyEntity.priority, status = policyEntity.status, creator = policyEntity.creatorId)
         for (resource in resourceEntities)
             policy.resources?.add(EntityReference(resource.resourceId, resource.entity).toString())
         for (subject in subjectEntities)
@@ -28,7 +28,7 @@ object PolicyMapper {
     }
 
     fun dtoToEntities(policy: Policy, existingEntity: PolicyEntity? = null): PolicyEntityComponents {
-        val policyEntity: PolicyEntity = existingEntity ?: PolicyEntity(policy.name!!, policy.priority!!, SessionContext.getUserId())
+        val policyEntity: PolicyEntity = existingEntity ?: PolicyEntity(policy.name!!, policy.priority!!, policy.creator ?: SessionContext.getUserId())
         existingEntity?.let {
             policyEntity.name = policy.name!!
             policyEntity.priority = policy.priority!!

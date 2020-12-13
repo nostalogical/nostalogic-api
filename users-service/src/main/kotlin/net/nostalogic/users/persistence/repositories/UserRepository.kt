@@ -10,13 +10,15 @@ interface UserRepository: JpaRepository<UserEntity, String> {
     @Query(value = "SELECT count(*) = 0 FROM (SELECT 1 FROM \"user\" u WHERE u.email ilike ?1) users;", nativeQuery = true)
     fun isEmailAvailable(email: String): Boolean
 
-    @Query(value = "SELECT count(*) = 0 FROM (SELECT 1 FROM \"user\" u WHERE u.name ilike ?1) users;", nativeQuery = true)
+    @Query(value = "SELECT count(*) = 0 FROM (SELECT 1 FROM \"user\" u WHERE u.username ilike ?1) users;", nativeQuery = true)
     fun isUsernameAvailable(email: String): Boolean
 
-    @Query(value = "UPDATE \"user\" SET status = ?1 WHERE id IN (?2)", nativeQuery = true)
-    fun updateUsersStatus(userIds: Collection<String>, status: EntityStatus)
+    @Query(value = "UPDATE \"user\" SET status = :status WHERE id IN (:userIds) RETURNING *", nativeQuery = true)
+    fun updateUsersStatus(userIds: Collection<String>, status: String): Collection<UserEntity>
 
-    fun findByNameEquals(name: String): UserEntity?
+    fun findByUsernameInOrEmailIn(names: Collection<String>, emails: Collection<String>): Collection<UserEntity>
+
+    fun findByUsernameEquals(name: String): UserEntity?
 
     fun findByEmailEquals(email: String): UserEntity?
 

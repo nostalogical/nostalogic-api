@@ -14,8 +14,8 @@ import net.nostalogic.access.persistence.entities.PolicySubjectEntity
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.datamodel.access.PolicyPriority
-import net.nostalogic.entities.EntityStatus
 import net.nostalogic.exceptions.NoValidationException
+import net.nostalogic.security.grants.TestGrant
 import net.nostalogic.utils.CollUtils
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -67,7 +67,8 @@ class AccessServiceTest(
         val policy = Policy(name = name, priority = PolicyPriority.TWO_STANDARD,
                 resources = hashSetOf(resource.toEntityReference().toString()),
                 subjects = hashSetOf(subject.toEntityReference().toString()),
-                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
+                permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)),
+                creator = TestGrant.TEST_SUBJECT)
         mockSavedPolicy(policy)
         val result = accessService.editPolicy(policy, policy.id!!)
         assertPoliciesEqual(policy, result)
@@ -81,9 +82,13 @@ class AccessServiceTest(
                 subjects = hashSetOf(subject.toEntityReference().toString()),
                 permissions = CollUtils.enumMapOf(Pair(PolicyAction.READ, true)))
         mockSavedPolicy(policy)
-        every { policyRepository.changePoliciesToStatus(any(), any()) } answers { Unit }
-        accessService.deletePolicy(policy.id!!)
-        verify(exactly = 1) { policyRepository.changePoliciesToStatus(setOf(policy.id!!), EntityStatus.DELETED) }
+
+        every { actionRepository.deleteAll(any()) } answers { mockk() }
+        every { subjectRepository.deleteAll(any()) } answers { mockk() }
+        every { resourceRepository.deleteAll(any()) } answers { mockk() }
+        every { policyRepository.deleteById(any()) } answers { mockk() }
+        accessService.deletePolicy(policy.id!!, true)
+        verify(exactly = 1) { policyRepository.deleteById(policy.id!!) }
     }
 
     private fun mockSavedPolicy(vararg policies: Policy) {
@@ -93,7 +98,7 @@ class AccessServiceTest(
         entities.forEach {
             val policy = it.policy
             every { policyRepository.getOne(policy.id) } answers { policy } }
-        every { policyRepository.findAllByIdInAndStatusIn(policyIds, any(), any()) } answers {policyMock}
+        every { policyRepository.findAllByIdInAndStatusInAndPriorityIn(policyIds, any(), any(), any()) } answers {policyMock}
         every { policyMock.hasNext() } answers { false }
         every { policyMock.iterator() } answers { entities.map { e -> e.policy }.toHashSet().iterator() }
 

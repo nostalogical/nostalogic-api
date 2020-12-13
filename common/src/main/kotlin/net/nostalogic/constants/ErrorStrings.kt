@@ -18,12 +18,14 @@ object ErrorStrings {
     private const val FIELD_TOO_SHORT = "fieldTooShort"
     private const val FIELD_TOO_LONG = "fieldTooLong"
     private const val INVALID_ENTITY = "invalidEntity"
+    private const val INVALID_FIELD_VALUE = "invalidFieldValue"
 
     const val ACTIVATE_USER = "activateUser"
     const val DELETED_USER = "deletedUser"
     const val PASSWORD_EXPIRED = "passwordExpired"
     const val PASSWORD_INVALID = "passwordInvalid"
     const val WRONG_PASSWORD = "wrongPassword"
+    const val WRONG_PASSWORD_UPDATE = "wrongPasswordForUpdate"
     const val COMMS_ERROR = "commsError"
 
     fun fieldsInvalid(fields: String): String {
@@ -40,6 +42,10 @@ object ErrorStrings {
 
     fun invalidEntity(value: String): String {
         return Translator.translate(INVALID_ENTITY, value)
+    }
+
+    fun invalidFieldValue(field: String, value: String): String {
+        return Translator.translate(INVALID_FIELD_VALUE, field, value)
     }
 
     fun dateFormat(date: String): String {

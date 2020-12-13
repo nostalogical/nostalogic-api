@@ -8,9 +8,7 @@ import net.nostalogic.access.services.AccessQueryService
 import net.nostalogic.access.services.AccessService
 import net.nostalogic.datamodel.NoPageResponse
 import net.nostalogic.datamodel.NoPageable
-import net.nostalogic.datamodel.access.AccessQuery
-import net.nostalogic.datamodel.access.AccessReport
-import net.nostalogic.datamodel.access.Policy
+import net.nostalogic.datamodel.access.*
 import net.nostalogic.entities.EntityStatus
 import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
@@ -51,8 +49,8 @@ class AccessController(
     }
 
     @RequestMapping(method = [RequestMethod.DELETE], produces = ["application/json"], path = ["${POLICIES_URI}/{policyId}"])
-    fun deletePolicy(@PathVariable policyId: String) {
-        accessService.deletePolicy(policyId)
+    fun deletePolicy(@PathVariable policyId: String, @RequestParam hard: Boolean = false) {
+        accessService.deletePolicy(policyId, hard)
     }
 
     @RequestMapping(method = [RequestMethod.GET], produces = ["application/json"], path = ["${POLICIES_URI}/{policyId}"])
@@ -64,10 +62,12 @@ class AccessController(
     fun getPolicies(@RequestParam(defaultValue = "1") page: Int, @RequestParam(defaultValue = "20") size: Int,
                     @RequestParam subjects: Set<String>?,
                     @RequestParam resources: Set<String>?,
-                    @RequestParam status: Set<EntityStatus>?): NoPageResponse<Policy> {
-        val pageable = NoPageable<Policy>(page, size, *AccessQueryService.SORT_FIELDS)
+                    @RequestParam status: Set<EntityStatus>?,
+                    @RequestParam priority: Set<PolicyPriority>?,
+                    @RequestParam actions: Set<PolicyAction>?): NoPageResponse<Policy> {
+        val pageable = NoPageable<Policy>(page, size, *PolicySearchCriteria.DEFAULT_SORT_FIELDS)
         val result = accessService.getPolicies(PolicySearchCriteria(
-                subjectIds = subjects, resourceIds =  resources, status = status, page = pageable))
+                subjectIds = subjects, resourceIds =  resources, status = status, page = pageable, priority = priority, actions = actions))
         return pageable.toResponse(result)
     }
 
@@ -76,10 +76,11 @@ class AccessController(
                        @RequestParam policies: Set<String>?,
                        @RequestParam subjects: Set<String>?,
                        @RequestParam resources: Set<String>?,
-                       @RequestParam status: Set<EntityStatus>?): NoPageResponse<Policy> {
-        val pageable = NoPageable<Policy>(page, size, *AccessQueryService.SORT_FIELDS)
+                       @RequestParam status: Set<EntityStatus>?,
+                       @RequestParam priority: Set<PolicyPriority>?): NoPageResponse<Policy> {
+        val pageable = NoPageable<Policy>(page, size, *PolicySearchCriteria.DEFAULT_SORT_FIELDS)
         val result = queryService.searchPolicies(PolicySearchCriteria(
-                policies, subjects, resources, status, pageable))
+                policyIds = policies, subjectIds = subjects, resourceIds = resources, status = status, priority = priority, page = pageable))
         return pageable.toResponse(result)
     }
 

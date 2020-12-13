@@ -142,7 +142,7 @@ class PolicyValidationTest(
 
     @Test
     fun `A long name should be invalid`() {
-        val policy = Policy(name = "A name over the fifty character limit that the database would not accept",
+        val policy = Policy(name = "A long name over the one hundred character limit which should throw an exception unless I've increased the name limit",
                 priority = PolicyPriority.TWO_STANDARD,
                 resources = hashSetOf(resource.toEntityReference().toString()),
                 subjects = hashSetOf(subject.toEntityReference().toString()),

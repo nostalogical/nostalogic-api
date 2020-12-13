@@ -1,7 +1,8 @@
 package net.nostalogic.users.constants
 
 enum class MembershipRole {
-    OWNER,
+    CHIEF,
     MANAGER,
-    MEMBER
+    MODERATOR,
+    REGULAR
 }

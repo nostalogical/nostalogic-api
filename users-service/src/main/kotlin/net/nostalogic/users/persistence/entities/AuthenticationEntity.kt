@@ -2,6 +2,7 @@ package net.nostalogic.users.persistence.entities
 
 import net.nostalogic.crypto.encoders.EncoderType
 import net.nostalogic.persistence.entities.AbstractCoreEntity
+import net.nostalogic.utils.EntityUtils
 import java.sql.Timestamp
 import javax.persistence.Entity
 import javax.persistence.EnumType
@@ -18,5 +19,6 @@ class AuthenticationEntity(
         var expired: Boolean = false,
         var invalidation: Timestamp? = null,
         var invalid: Boolean = false,
-        var expiredReason: String? = null
-): AbstractCoreEntity()
+        var expiredReason: String? = null,
+        creatorId: String = EntityUtils.SYSTEM_ID
+): AbstractCoreEntity(creatorId = creatorId)

@@ -1,7 +1,7 @@
 package net.nostalogic.users.validators
 
-import net.nostalogic.users.datamodel.RegistrationAvailability
-import net.nostalogic.users.datamodel.UserRegistration
+import net.nostalogic.users.datamodel.users.RegistrationAvailability
+import net.nostalogic.users.datamodel.users.UserRegistration
 import net.nostalogic.validators.InvalidFieldsReport
 import org.apache.commons.lang3.StringUtils
 
