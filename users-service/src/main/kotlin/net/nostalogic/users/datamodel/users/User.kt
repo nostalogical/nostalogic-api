@@ -1,10 +1,11 @@
 package net.nostalogic.users.datamodel.users
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.google.gson.JsonObject
 import net.nostalogic.datamodel.NoDate
 import net.nostalogic.datamodel.NoPageResponse
+import net.nostalogic.datamodel.access.EntityRights
 import net.nostalogic.entities.EntityStatus
+import net.nostalogic.entities.NoEntity
 import net.nostalogic.users.datamodel.memberships.Membership
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -12,8 +13,10 @@ class User(
         val id: String? = null,
         var username: String? = null,
         var email: String? = null,
-        var status: EntityStatus = EntityStatus.ACTIVE,
-        var details: JsonObject? = null,
+        var status: EntityStatus? = EntityStatus.ACTIVE,
+        var details: String? = null,
+        var locale: String? = null,
         var memberships: NoPageResponse<Membership>? = null,
+        var rights: Map<NoEntity, EntityRights>? = null,
         var created: NoDate? = null
 )

@@ -13,16 +13,18 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
 
 @RestController
+@CrossOrigin
 @RequestMapping(USERS_ENDPOINT, produces = ["application/json"])
 class UserController(@Autowired val userService: UserService) {
 
     companion object {
-        const val USERS_ENDPOINT = "/v${UsersApplication.MAJOR}/users"
+        const val USERS_ENDPOINT = "/api/v${UsersApplication.MAJOR}/users"
         const val REGISTER_URI = "/register"
         const val AVAILABLE_URI = "/check"
         const val CONFIRM_URI = "/confirm"
         const val PROFILE_URI = "/profile"
         const val SECURE_URI = "/secure"
+        const val RIGHTS_URI = "/rights"
     }
 
     @RequestMapping(method = [RequestMethod.POST])
@@ -57,8 +59,8 @@ class UserController(@Autowired val userService: UserService) {
     }
 
     @RequestMapping(method = [RequestMethod.GET], path = [PROFILE_URI])
-    fun profile(@RequestParam memberships: Boolean = false): User {
-        return userService.getCurrentUser(memberships)
+    fun profile(@RequestParam memberships: Boolean = false, @RequestParam rights: Boolean = false): User {
+        return userService.getCurrentUser(memberships, rights)
     }
 
     @RequestMapping(method = [RequestMethod.DELETE], path = ["/{userId}"])

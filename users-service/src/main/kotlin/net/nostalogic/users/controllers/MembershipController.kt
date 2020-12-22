@@ -14,11 +14,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
 
 @RestController
+@CrossOrigin
 @RequestMapping(MEMBERS_ENDPOINT, produces = ["application/json"])
 class MembershipController(@Autowired private val membershipService: MembershipService) {
 
     companion object {
-        const val MEMBERS_ENDPOINT = "/v${UsersApplication.MAJOR}/members"
+        const val MEMBERS_ENDPOINT = "/api/v${UsersApplication.MAJOR}/members"
         const val USERS_ENDPOINT = "/users"
         const val GROUPS_ENDPOINT = "/groups"
     }

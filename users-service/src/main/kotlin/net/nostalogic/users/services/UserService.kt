@@ -4,6 +4,7 @@ import net.nostalogic.comms.ExcommComms
 import net.nostalogic.config.i18n.Translator
 import net.nostalogic.constants.ErrorStrings
 import net.nostalogic.constants.MessageType
+import net.nostalogic.constants.NoLocale
 import net.nostalogic.constants.NoStrings
 import net.nostalogic.crypto.encoders.EncoderType
 import net.nostalogic.crypto.encoders.PasswordEncoder
@@ -11,6 +12,7 @@ import net.nostalogic.datamodel.ChangeSummary
 import net.nostalogic.datamodel.NoPageable
 import net.nostalogic.datamodel.access.AccessQuery
 import net.nostalogic.datamodel.access.AccessReport
+import net.nostalogic.datamodel.access.EntityRights
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.datamodel.excomm.MessageOutline
 import net.nostalogic.entities.EntityReference
@@ -26,7 +28,9 @@ import net.nostalogic.users.datamodel.memberships.MembershipSearchCriteria
 import net.nostalogic.users.datamodel.users.*
 import net.nostalogic.users.mappers.AuthMapper
 import net.nostalogic.users.mappers.UserMapper
+import net.nostalogic.users.persistence.entities.DetailsEntity
 import net.nostalogic.users.persistence.entities.UserEntity
+import net.nostalogic.users.persistence.repositories.DetailsRepository
 import net.nostalogic.users.persistence.repositories.UserRepository
 import net.nostalogic.users.validators.PasswordValidator
 import net.nostalogic.users.validators.RegistrationValidator
@@ -41,6 +45,7 @@ import org.springframework.stereotype.Service
 @Service
 class UserService(
         @Autowired private val userRepository: UserRepository,
+        @Autowired private val detailsRepository: DetailsRepository,
         @Autowired private val membershipService: MembershipService,
         @Autowired private val authService: UserAuthService) {
 
@@ -131,9 +136,18 @@ class UserService(
         }
     }
 
+    private fun saveUserDetails(detailsEntity: DetailsEntity): DetailsEntity {
+        return try {
+            detailsRepository.save(detailsEntity)
+        } catch (e: Exception) {
+            logger.error("Unable to save user details ${detailsEntity.id}", e)
+            throw NoSaveException(305001, "user", e)
+        }
+    }
+
     private fun hardDeleteUser(userEntity: UserEntity): UserEntity {
         return try {
-            // delete details
+            detailsRepository.deleteAllById(userEntity.id)
             authService.deleteAllUserAuthentications(userEntity.id)
             membershipService.deleteUserFromAllGroups(userEntity.id)
             userRepository.delete(userEntity)
@@ -160,58 +174,76 @@ class UserService(
         if (!AccessQuery().simpleCheck(userId, NoEntity.USER, PolicyAction.READ))
             throw NoAccessException(301005, "You do not have read permission for user $userId")
         val userEntity = getUserEntity(userId)
-        return UserMapper.entityToDto(userEntity)
+        val detailsEntity = getUserDetailsEntity(userId)
+        return UserMapper.entityToDto(userEntity, details = detailsEntity)
     }
 
     private fun getUserEntity(userId: String): UserEntity {
         return userRepository.findByIdEquals(userId) ?: throw NoRetrieveException(304007, "User")
     }
 
-    fun getCurrentUser(includeMemberships: Boolean): User {
+    private fun getUserDetailsEntity(userId: String): DetailsEntity? {
+        return detailsRepository.findByIdOrNull(userId)
+    }
+
+    fun getCurrentUser(includeMemberships: Boolean, includeRights: Boolean): User {
         return if (!SessionContext.isLoggedIn())
             User(username = NoStrings.guest())
         else {
             val userId = SessionContext.getUserId()
             val userEntity = userRepository.findByIdEquals(userId) ?: throw NoRetrieveException(304012, "User")
+
+            val rights = if (!includeRights) null else {
+                val query = AccessQuery().currentSubject();
+                for (entity in setOf(NoEntity.USER, NoEntity.GROUP))
+                    query.addQuery(entity, PolicyAction.READ, PolicyAction.CREATE)
+                val report = query.toReport()
+                report.entityPermissions.map { it.key to EntityRights(
+                    read = it.value[PolicyAction.READ],
+                    create = it.value[PolicyAction.CREATE]) }.toMap()
+            }
+
+            val detailsEntity = getUserDetailsEntity(userId)
             val memberships = if (!includeMemberships) null else {
                 val pageable = NoPageable<Membership>(sortFields = *UserSearchCriteria.DEFAULT_SORT_FIELDS)
-                val criteria = MembershipSearchCriteria(userIds = setOf(userId), page = pageable)
+                val criteria = MembershipSearchCriteria(userIds = setOf(userId), page = pageable, rights = includeRights)
                 pageable.toResponse(membershipService.getMemberships(searchCriteria = criteria, showUsers = false))
             }
-            UserMapper.entityToDto(userEntity, memberships)
+            UserMapper.entityToDto(userEntity, memberships = memberships, details = detailsEntity, rights = rights)
         }
     }
 
     fun getUsers(searchCriteria: UserSearchCriteria): List<User> {
-        val userIds = searchCriteria.userIds
         val query = AccessQuery().currentSubject()
-                .addQuery(null, NoEntity.USER, PolicyAction.READ)
-        if (userIds.isNotEmpty())
-            query.addQuery(userIds, NoEntity.USER, PolicyAction.READ)
+            .addQuery(null, NoEntity.USER, PolicyAction.READ)
+            .addQuery(null, NoEntity.GROUP, PolicyAction.READ)
+        if (searchCriteria.userIds.isNotEmpty())
+            query.addQuery(searchCriteria.userIds, NoEntity.USER, PolicyAction.READ)
+        if (searchCriteria.memberGroupIds.isNotEmpty())
+            query.addQuery(searchCriteria.memberGroupIds, NoEntity.GROUP, PolicyAction.READ)
         val report = query.toReport()
 
-        val userEntities: ArrayList<UserEntity> = if (userIds.isEmpty()
-                && report.hasPermission(EntityReference(entity = NoEntity.USER), PolicyAction.READ)) {
-            if (searchCriteria.usernames.isNotEmpty() || searchCriteria.emails.isNotEmpty())
-                ArrayList(userRepository.findByUsernameInOrEmailIn(searchCriteria.usernames, searchCriteria.emails))
-            else
-                ArrayList(userRepository.findAll())
-        } else {
-            val validIds: Collection<String> =
-                    when {
-                        report.hasPermission(EntityReference(entity = NoEntity.USER), PolicyAction.READ) -> userIds
-                        userIds.isEmpty() -> report.resourcePermissions.map { EntityReference(it.key).id!! }.toHashSet()
-                        else -> report.filterByPermitted(userIds, NoEntity.USER, PolicyAction.READ)
-                    }
-            ArrayList(userRepository.findAllById(validIds))
-        }
+        val userIds: Set<String>? = if (searchCriteria.userIds.isEmpty() && report.hasPermission(EntityReference(entity = NoEntity.USER), PolicyAction.READ)) null
+            else if (searchCriteria.userIds.isEmpty()) report.permittedForEntity(NoEntity.USER, PolicyAction.READ)
+            else report.filterByPermitted(searchCriteria.userIds, NoEntity.USER, PolicyAction.READ)
+        val groupIds: Set<String>? =
+            if (searchCriteria.memberGroupIds.isEmpty() && report.hasPermission(EntityReference(entity = NoEntity.GROUP), PolicyAction.READ)) null
+            else if (searchCriteria.memberGroupIds.isEmpty()) report.permittedForEntity(NoEntity.GROUP, PolicyAction.READ)
+            else report.filterByPermitted(searchCriteria.memberGroupIds, NoEntity.GROUP, PolicyAction.READ)
 
-        if (searchCriteria.status.isNotEmpty())
-            userEntities.removeIf { !searchCriteria.status.contains(it.status) }
-        if (searchCriteria.usernames.isNotEmpty())
-            userEntities.removeIf { !searchCriteria.usernames.contains(it.username) }
-        if (searchCriteria.emails.isNotEmpty())
-            userEntities.removeIf { !searchCriteria.emails.contains(it.email) }
+        val status = searchCriteria.status.map { it.name }.toSet()
+        val usernames = searchCriteria.usernames.toSet()
+        val emails = searchCriteria.emails.toSet()
+        val page = searchCriteria.page.toQuery()
+
+        val userEntities =
+            when {
+                userIds == null && groupIds == null && emails.isEmpty() && usernames.isEmpty() -> userRepository.searchUsers(status, page)
+                userIds == null && groupIds?.isNotEmpty() == true && emails.isEmpty() && usernames.isEmpty() -> userRepository.searchUsersByGroups(groupIds, status, page)
+                groupIds == null -> userRepository.searchUsersByIdentifiers(userIds?: emptySet(), usernames, emails, status, page)
+                else -> userRepository.searchUsersByIdentifiersAndGroups(userIds?: emptySet(), groupIds, usernames, emails, status, page)
+            }
+        searchCriteria.page.setResponseMetadata(userEntities)
 
         return userEntities.map { UserMapper.entityToDto(it) }.toList()
     }
@@ -226,8 +258,12 @@ class UserService(
 
         if (StringUtils.isNotBlank(update.username))
             userEntity.username = update.username!!
+        if (StringUtils.isNotBlank(update.locale))
+            userEntity.locale = NoLocale.fromString(update.locale!!)!!
+        val details = if (update.details != null) saveUserDetails(UserMapper.stringToDetailsEntity(detailsString = update.details!!, userId = userId))
+            else detailsRepository.findByIdOrNull(userId)
 
-        return UserMapper.entityToDto(saveUser(userEntity))
+        return UserMapper.entityToDto(saveUser(userEntity), details = details)
     }
 
     fun secureUpdate(userId: String, update: SecureUserUpdate): User {
@@ -257,6 +293,17 @@ class UserService(
         }
 
         return UserMapper.entityToDto(userEntity)
+    }
+
+    fun checkRights(): EntityRights {
+        val userEntity = EntityReference(entity = NoEntity.USER);
+        val report = AccessQuery().currentSubject()
+            .addQuery(userEntity, PolicyAction.CREATE, PolicyAction.DELETE, PolicyAction.EDIT)
+            .toReport()
+        return EntityRights(
+            create = report.hasPermission(userEntity, PolicyAction.CREATE),
+            edit = report.hasPermission(userEntity, PolicyAction.EDIT),
+            delete = report.hasPermission(userEntity, PolicyAction.DELETE))
     }
 
 }

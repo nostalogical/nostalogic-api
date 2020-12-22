@@ -16,9 +16,9 @@ import org.slf4j.LoggerFactory
 object AccessComms {
 
     private val logger = LoggerFactory.getLogger(AccessComms::class.java)
-    private const val ACCESS_ENDPOINT = "/v0/access"
-    private const val SESSIONS_ENDPOINT = "/v0/sessions"
-    private const val POLICY_ENDPOINT = "/policies"
+    private const val ACCESS_ENDPOINT = "/api/v0/access"
+    private const val SESSIONS_ENDPOINT = "/api/v0/sessions"
+    private const val POLICY_URN = "/policies"
 
     private fun headerWithToken(token: String): HashMap<String, String> {
         return hashMapOf(Pair("Content-Type", "application/json"), Pair(NoStrings.AUTH_HEADER, token))
@@ -36,7 +36,7 @@ object AccessComms {
 
     fun createPolicy(policy: Policy): Policy? {
         return try {
-            val response = khttp.post(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_ENDPOINT", json = Serialiser.toJson(policy), headers = Comms.HEADERS)
+            val response = khttp.post(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_URN", json = Serialiser.toJson(policy), headers = Comms.HEADERS)
             Comms.parseResponse(response, Policy::class.java, expectedCode = 201)
         } catch (e: Exception) {
             logger.error("Internal request to update a session failed with an exception", e)
@@ -54,7 +54,7 @@ object AccessComms {
             if (status.isNotEmpty()) params["status"] = status.joinToString(",")
             if (priority.isNotEmpty()) params["priority"] = priority.joinToString(",")
             if (actions.isNotEmpty()) params["actions"] = actions.joinToString(",")
-            val response = khttp.get(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_ENDPOINT", params = params, headers = Comms.HEADERS)
+            val response = khttp.get(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_URN", params = params, headers = Comms.HEADERS)
             return Comms.parsePagedResponse(response, type = object : TypeToken<NoPageResponse<Policy>>() {}.type)
         } catch (e: Exception) {
             logger.error("Internal request to update a session failed with an exception", e)
@@ -64,7 +64,7 @@ object AccessComms {
 
     fun deletePolicy(policyId: String, hard: Boolean = false) {
         return try {
-            val response = khttp.delete(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_ENDPOINT/$policyId?hard=$hard", headers = Comms.HEADERS)
+            val response = khttp.delete(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_URN/$policyId?hard=$hard", headers = Comms.HEADERS)
             Comms.parseResponse(response, Unit::class.java)
             return
         } catch (e: Exception) {
@@ -74,7 +74,7 @@ object AccessComms {
 
     fun updatePolicy(policy: Policy): Policy? {
         return try {
-            val response = khttp.put(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_ENDPOINT/${policy.id}", json = Serialiser.toJson(policy), headers = Comms.HEADERS)
+            val response = khttp.put(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_URN/${policy.id}", json = Serialiser.toJson(policy), headers = Comms.HEADERS)
             return Comms.parseResponse(response, Policy::class.java)
         } catch (e: Exception) {
             logger.error("Internal request to update a session failed with an exception", e)

@@ -5,7 +5,7 @@ security:
 
 spring:
   application:
-    name: excomm-service
+    name: user-service
   datasource:
     username: postgres
     password: solice

@@ -1,5 +1,6 @@
 package net.nostalogic.datamodel
 
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Sort
 import kotlin.math.max
@@ -16,6 +17,8 @@ class NoPageable<T>(private val page: Int = 1, private val size: Int = MAX_PAGE_
     }
 
     var hasNext: Boolean? = false
+    private var totalCount: Long = 0L
+    private var totalPages: Int = 0
 
     private fun normalisedPage(): Int {
         return max(1, this.page)
@@ -23,6 +26,12 @@ class NoPageable<T>(private val page: Int = 1, private val size: Int = MAX_PAGE_
 
     private fun normalisedSize(): Int {
         return min(max(1, this.size), MAX_PAGE_SIZE)
+    }
+
+    fun setResponseMetadata(results: Page<*>) {
+        this.hasNext = results.hasNext()
+        this.totalCount = results.totalElements
+        this.totalPages = results.totalPages
     }
 
     /**
@@ -37,6 +46,13 @@ class NoPageable<T>(private val page: Int = 1, private val size: Int = MAX_PAGE_
     }
 
     fun toResponse(content: List<T>): NoPageResponse<T> {
-        return NoPageResponse(normalisedPage(), content.size, hasNext, content)
+        return NoPageResponse(
+            page = normalisedPage(),
+            size = content.size,
+            pageCount = totalPages,
+            totalSize = totalCount,
+            hasNext = hasNext,
+            query = null,
+            content = content)
     }
 }

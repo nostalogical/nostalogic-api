@@ -163,7 +163,7 @@ open class AccessQueryService(
 
     private fun retrievePolicies(policyIds: Set<String>, criteria: PolicySearchCriteria): ArrayList<Policy> {
         val policyEntities = policyRepository.findAllByIdInAndStatusInAndPriorityIn(policyIds, criteria.status, criteria.priority, criteria.page.toQuery())
-        criteria.page.hasNext = policyEntities.hasNext()
+        criteria.page.setResponseMetadata(policyEntities)
         val policiesById = HashMap<String, Policy>()
         val orderedPolicies = ArrayList<Policy>()
         for (policy in policyEntities) {

@@ -17,6 +17,7 @@ import net.nostalogic.users.datamodel.users.User
 import net.nostalogic.users.datamodel.users.UserRegistration
 import net.nostalogic.utils.EntityUtils
 import org.apache.commons.lang3.RandomStringUtils
+import org.json.JSONObject
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -35,8 +36,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
 
     private val ownerId = "09acf630-1a15-49a0-bddf-cc1c0794c2f9"
 
-    private fun <T> createUser(name: String = RandomStringUtils.random(10),
-                               email: String = "${RandomStringUtils.random(5)}@nostalogic.net",
+    private fun <T> createUser(name: String = RandomStringUtils.random(10, true, true),
+                               email: String = "${RandomStringUtils.random(5, true, true)}@nostalogic.net",
                                password: String = "Testing1.", responseType: ParameterizedTypeReference<T>): ResponseEntity<T> {
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.CREATE, true)))))
         return exchange(
@@ -203,6 +204,21 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$ownerId")
         Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
         Assertions.assertEquals(name, exchange.body!!.username)
+    }
+
+    @Test
+    fun `Update a user's details`() {
+        val detailsRaw = "{\"age\": 22, \"address\": {\"town\": \"Whitehaven\"}, \"hasPassport\": true, \"cities\": [\"Sheffield\", \"Oxford\"] }"
+        val detailsInput = JSONObject(detailsRaw)
+        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.EDIT, true)))))
+        val exchange = exchange(
+            entity = HttpEntity(User(details = detailsRaw)),
+            responseType = object : ParameterizedTypeReference<User>() {},
+            method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$ownerId")
+        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
+        Assertions.assertNotNull(exchange.body!!.details)
+        Assertions.assertEquals(detailsInput.toString(), exchange.body!!.details)
+        deleteUser(ownerId, object : ParameterizedTypeReference<User>() {}, true)
     }
 
     @Test
@@ -398,7 +414,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
     fun `Get all users`() {
         for (i in 1..3)
             createUser(responseType = object : ParameterizedTypeReference<User>() {})
-        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true)))))
+        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true))), Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true)))))
         val exchange = exchange(
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<NoPageResponse<User>>() {},
@@ -408,9 +424,24 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
     }
 
     @Test
+    fun `Get users filtered by multiple fields`() {
+        val users = ArrayList<User>()
+        for (i in 1..6)
+            users.add(createUser(responseType = object : ParameterizedTypeReference<User>() {}).body!!)
+        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true))), Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true)))))
+        val exchange = exchange(
+                entity = HttpEntity<Unit>(testHeaders()),
+                responseType = object : ParameterizedTypeReference<NoPageResponse<User>>() {},
+                method = HttpMethod.GET, url = "$baseApiUrl${UserController.USERS_ENDPOINT}" +
+                    "?username=${users.get(0).username}&email=${users.get(2).email}&id=${users.get(5).id}")
+        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
+        Assertions.assertEquals(3, exchange.body!!.size)
+    }
+
+    @Test
     fun `Get all users filtered by ids`() {
         val newId = createUser(responseType = object : ParameterizedTypeReference<User>() {}).body!!.id
-        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true)))))
+        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true))), Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true)))))
         val exchange = exchange(
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<NoPageResponse<User>>() {},
@@ -422,7 +453,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
     @Test
     fun `Get all users with permissions for only one`() {
         createUser(responseType = object : ParameterizedTypeReference<User>() {}).body!!.id
-        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, false)))),
+        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, false))), Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true)))),
                 resourcePermissions = hashMapOf(Pair(EntitySignature(ownerId, NoEntity.USER).toString(), hashMapOf(Pair(PolicyAction.READ, true)))))
         val exchange = exchange(
                 entity = HttpEntity<Unit>(testHeaders()),

@@ -8,17 +8,15 @@ import net.nostalogic.users.datamodel.authentication.ImpersonationRequest
 import net.nostalogic.users.datamodel.authentication.LoginRequest
 import net.nostalogic.users.services.UserAuthService
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 
 @RestController
+@CrossOrigin
 @RequestMapping(AUTH_ENDPOINT, produces = ["application/json"])
 class AuthenticationController(@Autowired private val userAuthService: UserAuthService) {
 
     companion object {
-        const val AUTH_ENDPOINT = "/v${UsersApplication.MAJOR}/auth"
+        const val AUTH_ENDPOINT = "/api/v${UsersApplication.MAJOR}/auth"
         const val LOGIN_URI = "/login"
         const val LOGOUT_URI = "/logout"
         const val REFRESH_URI = "/refresh"

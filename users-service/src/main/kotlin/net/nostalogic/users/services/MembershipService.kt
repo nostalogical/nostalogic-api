@@ -242,7 +242,7 @@ class MembershipService(
         if (searchCriteria.userIds.isNotEmpty())
             query.addQuery(searchCriteria.userIds, NoEntity.USER, PolicyAction.READ)
         if (searchCriteria.groupIds.isNotEmpty())
-            query.addQuery(searchCriteria.groupIds, NoEntity.USER, PolicyAction.READ)
+            query.addQuery(searchCriteria.groupIds, NoEntity.GROUP, PolicyAction.READ)
         val report = query.toReport()
 
         val userIds: Set<String>? = if (searchCriteria.userIds.isEmpty()
@@ -264,8 +264,8 @@ class MembershipService(
                     userIds == null && groupIds!!.isNotEmpty() -> membershipRepository.searchMembershipsForGroups(groupIds, types, status, page)
                     else -> membershipRepository.searchMembershipsForUsersAndGroups(userIds!!, groupIds!!, types, status, page)
                 }
+        searchCriteria.page.setResponseMetadata(membershipEntities)
 
-        searchCriteria.page.hasNext = membershipEntities.hasNext()
         return membershipEntities.map {
             when {
                 showUsers == showGroups -> MembershipMapper.entityToDto(it)

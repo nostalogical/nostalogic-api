@@ -21,7 +21,7 @@ class AccessController(
 ) {
 
     companion object {
-        const val ACCESS_ENDPOINT = "/v${AccessApplication.MAJOR}/access"
+        const val ACCESS_ENDPOINT = "/api/v${AccessApplication.MAJOR}/access"
         const val POLICIES_URI = "/policies"
         const val ANALYSE_URI = "/analyse"
     }

@@ -11,7 +11,7 @@ class InvalidFieldsReport {
 
     fun addMissingField(fieldName: String) {
         this.fieldNames.add(fieldName)
-        this.invalidReasons[fieldName] = ErrorStrings.FIELD_MISSING
+        this.invalidReasons[fieldName] = Translator.translate(ErrorStrings.FIELD_MISSING)
     }
 
     fun addFieldTooLong(fieldName: String, upperLimit: Int) {
@@ -55,7 +55,7 @@ class InvalidFieldsReport {
                 invalids.add(field + reason)
             }
 
-            throw NoValidationException(errorCode, invalids.joinToString(", "))
+            throw NoValidationException(errorCode, invalids.joinToString("; "))
         }
     }
 

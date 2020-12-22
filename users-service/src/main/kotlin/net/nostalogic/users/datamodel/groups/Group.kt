@@ -1,11 +1,13 @@
 package net.nostalogic.users.datamodel.groups
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.google.gson.JsonObject
 import net.nostalogic.datamodel.access.EntityPermission
 import net.nostalogic.entities.EntityStatus
 import net.nostalogic.users.constants.GroupType
 import net.nostalogic.users.datamodel.memberships.Membership
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 class Group(
         val id: String? = null,
         val name: String? = null,

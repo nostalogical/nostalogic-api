@@ -1,3 +1,14 @@
 package net.nostalogic.datamodel
 
-class NoPageResponse<T>(val page: Int, val size: Int, val hasNext: Boolean?, val content: List<T>)
+import com.fasterxml.jackson.annotation.JsonInclude
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
+class NoPageResponse<T>(
+    val page: Int,
+    val size: Int,
+    val pageCount: Int,
+    val totalSize: Long,
+    val hasNext: Boolean?,
+    val query: String?,
+    val content: List<T>
+)

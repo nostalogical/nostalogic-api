@@ -22,7 +22,6 @@ import net.nostalogic.utils.AutoPolicy
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.data.domain.Page
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 
@@ -50,21 +49,15 @@ class GroupService(
             accessQuery.addQuery(searchCriteria.groupIds, NoEntity.GROUP, PolicyAction.READ)
         val report = accessQuery.toReport()
 
-        val groupEntities: Page<GroupEntity> = if (groupIds.isEmpty()
-                && report.hasPermission(EntityReference(entity = NoEntity.GROUP), PolicyAction.READ)) {
-//            ArrayList(groupRepository.findAll())
-            groupRepository.findAllByTypeInAndStatusIn(searchCriteria.type, searchCriteria.status, searchCriteria.page.toQuery())
-        } else {
-            val validIds: Collection<String> =
-                    when {
-                        report.hasPermission(EntityReference(entity = NoEntity.GROUP), PolicyAction.READ) -> groupIds
-                        groupIds.isEmpty() -> report.resourcePermissions.map { EntityReference(it.key).id!! }.toHashSet()
-                        else -> report.filterByPermitted(groupIds, NoEntity.GROUP, PolicyAction.READ)
-                    }
-//            ArrayList(groupRepository.findAllById(validIds))
-            groupRepository.findAllByIdInAndTypeInAndStatusIn(validIds, searchCriteria.type, searchCriteria.status, searchCriteria.page.toQuery())
+        val groupEntities = when {
+            groupIds.isEmpty() && report.hasPermission(EntityReference(entity = NoEntity.GROUP), PolicyAction.READ) ->
+                groupRepository.findAllByTypeInAndStatusIn(searchCriteria.type, searchCriteria.status, searchCriteria.page.toQuery())
+            groupIds.isEmpty() -> groupRepository.findAllByIdInAndTypeInAndStatusIn(report.permittedForEntity(NoEntity.GROUP, PolicyAction.READ),
+                searchCriteria.type, searchCriteria.status, searchCriteria.page.toQuery())
+            else -> groupRepository.findAllByIdInAndTypeInAndStatusIn(report.filterByPermitted(groupIds, NoEntity.GROUP, PolicyAction.READ),
+                searchCriteria.type, searchCriteria.status, searchCriteria.page.toQuery())
         }
-        searchCriteria.page.hasNext = groupEntities.hasNext()
+        searchCriteria.page.setResponseMetadata(groupEntities)
 
         return groupEntities.map { GroupMapper.entityToDto(it) }.toList()
     }

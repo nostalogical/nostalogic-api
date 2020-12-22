@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*
 class SessionController(private val sessionService: SessionService) {
 
     companion object {
-        const val SESSIONS_ENDPOINT = "/v${AccessApplication.MAJOR}/sessions"
+        const val SESSIONS_ENDPOINT = "/api/v${AccessApplication.MAJOR}/sessions"
     }
 
     @RequestMapping(method = [RequestMethod.POST], produces = ["application/json"])

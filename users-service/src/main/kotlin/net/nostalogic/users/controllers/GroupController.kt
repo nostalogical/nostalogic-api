@@ -14,11 +14,12 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.bind.annotation.*
 
 @RestController
+@CrossOrigin
 @RequestMapping(GROUPS_ENDPOINT, produces = ["application/json"])
 class GroupController(@Autowired private val groupService: GroupService) {
 
     companion object {
-        const val GROUPS_ENDPOINT = "/v${UsersApplication.MAJOR}/groups"
+        const val GROUPS_ENDPOINT = "/api/v${UsersApplication.MAJOR}/groups"
     }
 
     @RequestMapping(method = [RequestMethod.POST])
@@ -46,12 +47,11 @@ class GroupController(@Autowired private val groupService: GroupService) {
     fun searchGroups(@RequestParam(defaultValue = "1") page: Int,
                      @RequestParam(defaultValue = "20") size: Int,
                      @RequestParam id: Set<String>?,
-                     @RequestParam user: Set<String>?,
                      @RequestParam type: Set<GroupType>?,
                      @RequestParam status: Set<EntityStatus>?): NoPageResponse<Group> {
         val pageable = NoPageable<Group>(page, size, *GroupSearchCriteria.DEFAULT_SORT_FIELDS)
         val result = groupService.getGroups(
-                GroupSearchCriteria(groupIds = id, memberUserIds = user, type = type, status = status, page = pageable))
+                GroupSearchCriteria(groupIds = id, type = type, status = status, page = pageable))
         return pageable.toResponse(result)
     }
 

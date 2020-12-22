@@ -37,6 +37,9 @@ data class AccessQuery(val subjects: HashSet<String> = HashSet(),
         return this
     }
 
+    fun addQuery(entity: NoEntity, vararg actions: PolicyAction): AccessQuery {
+        return addQuery(null, entity, *actions)
+    }
 
     fun addQuery(ref: EntityReference, vararg actions: PolicyAction): AccessQuery {
         return addQuery(ref.id, ref.entity, *actions)

@@ -10,6 +10,7 @@ class MembershipSearchCriteria(userIds: Collection<String>? = null,
                                groupIds: Collection<String>? = null,
                                type: Collection<GroupType>? = null,
                                status: Collection<MembershipStatus>? = null,
+                               rights: Boolean = false,
                                page: NoPageable<Membership>? = null): SearchCriteria<Membership> {
 
     companion object {

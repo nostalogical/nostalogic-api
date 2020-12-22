@@ -33,4 +33,14 @@ data class AccessReport(
         }
         return permitted
     }
+
+    fun permittedForEntity(entity: NoEntity, action: PolicyAction): Set<String> {
+        val permitted = HashSet<String>()
+        for (resource in resourcePermissions) {
+            val ref = EntityReference(resource.key)
+            if (ref.entity == entity && resource.value[action] == true)
+                permitted.add(ref.id!!)
+        }
+        return permitted
+    }
 }

@@ -47,6 +47,19 @@ object Serialiser {
         }
     }
 
+    fun toJsonObject(src: String): JSONObject? {
+        return try {
+            JSONObject(src)
+        } catch (e: Exception) {
+            logger.error("Failed to convert object to JSONObject", e)
+            null
+        }
+    }
+
+    fun isValidJson(src: String): Boolean {
+        return toJsonObject(src) != null
+    }
+
     fun <T> fromJson(src: JSONObject, clazz: Class<T>?): T? {
         return classDeserialise(src.toString(), clazz)
     }
