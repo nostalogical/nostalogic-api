@@ -171,11 +171,17 @@ class UserService(
     }
 
     fun getUser(userId: String): User {
-        if (!AccessQuery().simpleCheck(userId, NoEntity.USER, PolicyAction.READ))
+        val query = AccessQuery().currentSubject()
+            .addQuery(null, NoEntity.USER, PolicyAction.READ)
+            .addQuery(null, NoEntity.USER, PolicyAction.EDIT)
+        if (SessionContext.getUserId() == userId)
+            query.addQuery(null, NoEntity.USER, PolicyAction.EDIT_OWN)
+        val report = query.toReport()
+        if (!report.hasPermission(EntityReference(userId, NoEntity.USER), PolicyAction.READ))
             throw NoAccessException(301005, "You do not have read permission for user $userId")
         val userEntity = getUserEntity(userId)
         val detailsEntity = getUserDetailsEntity(userId)
-        return UserMapper.entityToDto(userEntity, details = detailsEntity)
+        return UserMapper.entityToDto(userEntity, details = detailsEntity, includeSensitive = hasUserEditPermissions(report, userId))
     }
 
     private fun getUserEntity(userId: String): UserEntity {
@@ -216,9 +222,13 @@ class UserService(
     fun getUsers(searchCriteria: UserSearchCriteria): List<User> {
         val query = AccessQuery().currentSubject()
             .addQuery(null, NoEntity.USER, PolicyAction.READ)
+            .addQuery(null, NoEntity.USER, PolicyAction.EDIT)
+            .addQuery(null, NoEntity.USER, PolicyAction.EDIT_OWN)
             .addQuery(null, NoEntity.GROUP, PolicyAction.READ)
-        if (searchCriteria.userIds.isNotEmpty())
+        if (searchCriteria.userIds.isNotEmpty()) {
             query.addQuery(searchCriteria.userIds, NoEntity.USER, PolicyAction.READ)
+            query.addQuery(searchCriteria.userIds, NoEntity.USER, PolicyAction.EDIT)
+        }
         if (searchCriteria.memberGroupIds.isNotEmpty())
             query.addQuery(searchCriteria.memberGroupIds, NoEntity.GROUP, PolicyAction.READ)
         val report = query.toReport()
@@ -245,7 +255,14 @@ class UserService(
             }
         searchCriteria.page.setResponseMetadata(userEntities)
 
-        return userEntities.map { UserMapper.entityToDto(it) }.toList()
+        return userEntities.map { UserMapper.entityToDto(it, includeSensitive = hasUserEditPermissions(report, it.id)) }.toList()
+    }
+
+    fun hasUserEditPermissions(report: AccessReport, userId: String): Boolean {
+        val allowed = report.hasPermission(EntityReference(userId, NoEntity.USER), PolicyAction.EDIT)
+        return if (!allowed && userId == SessionContext.getUserId())
+            report.hasPermission(EntityReference(userId, NoEntity.USER), PolicyAction.EDIT_OWN)
+        else allowed
     }
 
     fun updateUser(userId: String, update: User): User {

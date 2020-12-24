@@ -7,7 +7,7 @@ INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('6aac60f8-1b4d-430e-911f-a86caa8ec1ba', '6aac60f8-1b4d-430e-911f-a86caa8ec1ba', 'READ', true) ON CONFLICT DO NOTHING;
 
 INSERT INTO policy_resource (id, policy_id, resource_id, entity)
-VALUES ('6aac60f8-1b4d-430e-911f-a86caa8ec1ba::NAV', '6aac60f8-1b4d-430e-911f-a86caa8ec1ba', null, 'NAV') ON CONFLICT DO NOTHING;
+VALUES ('6aac60f8-1b4d-430e-911f-a86caa8ec1ba::ALL', '6aac60f8-1b4d-430e-911f-a86caa8ec1ba', null, 'ALL') ON CONFLICT DO NOTHING;
 
 INSERT INTO policy_subject (id, policy_id, subject_id, entity)
 VALUES ('6aac60f8-1b4d-430e-911f-a86caa8ec1ba::ALL', '6aac60f8-1b4d-430e-911f-a86caa8ec1ba', null, 'ALL') ON CONFLICT DO NOTHING;
