@@ -201,11 +201,12 @@ class UserService(
 
             val rights = if (!includeRights) null else {
                 val query = AccessQuery().currentSubject();
-                for (entity in setOf(NoEntity.USER, NoEntity.GROUP))
-                    query.addQuery(entity, PolicyAction.READ, PolicyAction.CREATE)
+                for (entity in setOf(NoEntity.USER, NoEntity.GROUP, NoEntity.NAV, NoEntity.ARTICLE))
+                    query.addQuery(entity, PolicyAction.READ, PolicyAction.CREATE, PolicyAction.EDIT)
                 val report = query.toReport()
                 report.entityPermissions.map { it.key to EntityRights(
                     read = it.value[PolicyAction.READ],
+                    edit = it.value[PolicyAction.EDIT],
                     create = it.value[PolicyAction.CREATE]) }.toMap()
             }
 

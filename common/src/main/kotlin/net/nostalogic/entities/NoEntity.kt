@@ -7,7 +7,6 @@ enum class NoEntity {
     POLICY,
     SESSION,
     NAV,
-    CONTAINER,
     ARTICLE,
     EMAIL
 }

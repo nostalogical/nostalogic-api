@@ -7,12 +7,14 @@ CREATE TABLE IF NOT EXISTS navigation (
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+
   parent_id CHAR(36) REFERENCES navigation(id),
   urn public.citext NOT NULL,
   full_urn public.citext NOT NULL UNIQUE,
-  name VARCHAR(50) NOT NULL,
+  text VARCHAR(50) NOT NULL,
   icon VARCHAR(50) NOT NULL,
   ordinal SMALLINT NOT NULL DEFAULT 0,
+  type varchar(10),
   status VARCHAR(20) NOT NULL DEFAULT 'INACTIVE'
 );
 
@@ -21,10 +23,12 @@ CREATE TABLE IF NOT EXISTS container (
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+
   navigation_id CHAR(36) REFERENCES navigation(id),
-  type VARCHAR(20) NOT NULL DEFAULT 'SYSTEM',
-  ordinal SMALLINT NOT NULL DEFAULT 0,
-  locale CHAR(5)
+  type VARCHAR(30) NOT NULL,
+  resource_id CHAR(36),
+  locale CHAR(5),
+  UNIQUE(navigation_id, locale)
 );
 
 CREATE TABLE IF NOT EXISTS article (
@@ -32,29 +36,21 @@ CREATE TABLE IF NOT EXISTS article (
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+
   name VARCHAR(100) NOT NULL UNIQUE,
-  description VARCHAR(3000),
-  type VARCHAR(20) NOT NULL DEFAULT 'SYSTEM',
+  contents VARCHAR(10000),
   status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
 );
 
-CREATE TABLE IF NOT EXISTS link (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
-  created TIMESTAMP NOT NULL DEFAULT now(),
-  creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
-  id CHAR(36) PRIMARY KEY,
-  entity VARCHAR(20) NOT NULL,
-  details TEXT NOT NULL
-);
-
-CREATE TABLE IF NOT EXISTS container_rule (
+CREATE TABLE IF NOT EXISTS article_revision (
   tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
-  user_id CHAR(36) NOT NULL REFERENCES "user"(id),
-  group_id CHAR(36) NOT NULL REFERENCES "group"(id),
-  status VARCHAR(20) NOT NULL DEFAULT 'INACTIVE',
-  role VARCHAR(20) NOT NULL DEFAULT 'REGULAR',
-  UNIQUE(user_id, group_id)
+
+  article_id CHAR(36) NOT NULL REFERENCES article(id),
+  name VARCHAR(100) NOT NULL UNIQUE,
+  contents VARCHAR(10000),
+  committed boolean NOT NULL DEFAULT FALSE,
+  discarded boolean NOT NULL DEFAULT FALSE
 );

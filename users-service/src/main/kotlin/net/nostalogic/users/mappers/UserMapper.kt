@@ -16,7 +16,7 @@ import net.nostalogic.utils.Serialiser
 object UserMapper {
 
     fun entityToDto(entity: UserEntity,
-                    includeSensitive: Boolean = false,
+                    includeSensitive: Boolean = true,
                     memberships: NoPageResponse<Membership>? = null,
                     details: DetailsEntity? = null,
                     rights: Map<NoEntity, EntityRights>? = null): User {
