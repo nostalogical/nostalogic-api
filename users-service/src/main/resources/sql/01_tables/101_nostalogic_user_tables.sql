@@ -1,14 +1,13 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public;
-CREATE EXTENSION IF NOT EXISTS "citext" SCHEMA public;
 
 CREATE TABLE IF NOT EXISTS "user" (
   tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
-  username public.citext NOT NULL UNIQUE,
-  email public.citext NOT NULL UNIQUE,
+  username VARCHAR(500) NOT NULL UNIQUE,
+  email VARCHAR(500) NOT NULL UNIQUE,
   status VARCHAR(20) NOT NULL DEFAULT 'INACTIVE',
   locale CHAR(5) NOT NULL DEFAULT 'en_GB'
 );

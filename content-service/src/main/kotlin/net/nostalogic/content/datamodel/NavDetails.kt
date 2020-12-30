@@ -1,9 +1,13 @@
 package net.nostalogic.content.datamodel
 
+import com.fasterxml.jackson.annotation.JsonIgnore
+
 data class NavDetails(
+    @JsonIgnore var navId: String,
     var fullPath: String,
     var urn: String,
     var breadcrumbs: List<String>,
-    var top: List<Nav>,
-    var side: List<Nav>
+    var topLinks: List<Nav>,
+    var sideLinks: List<Nav>,
+    @JsonIgnore val system: Boolean = false
 )

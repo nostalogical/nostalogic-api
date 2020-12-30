@@ -22,6 +22,6 @@ class ContentController(@Autowired private val contentService: ContentService) {
 
     @RequestMapping(method = [RequestMethod.GET], path = ["**"])
     fun getContent(request: HttpServletRequest): Content<*> {
-        return contentService.getNavContent(request.requestURI.substringAfter(CONTENT_ENDPOINT))
+        return contentService.getContentAtNavigation(request.requestURI.substringAfter(CONTENT_ENDPOINT))
     }
 }

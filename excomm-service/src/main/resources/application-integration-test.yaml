@@ -37,7 +37,7 @@ microservices:
 
 client:
   base-url: http://localhost
-  port: :3331
+  port: :4200
 
 email:
   ses:

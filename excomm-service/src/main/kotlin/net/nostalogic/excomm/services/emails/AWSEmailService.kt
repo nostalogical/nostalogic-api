@@ -37,20 +37,6 @@ class AWSEmailService(accessKey: String, secretKey: String): EmailService() {
                                     .withText(Content()
                                             .withCharset(emailCharset)
                                             .withData(emailEntity.bodyPlain)))))
-
-
-//                    .withMessage(Message()
-//                            .withSubject(Content()
-//                                    .withCharset(emailCharset)
-//                                    .withData(emailEntity.subject))
-//                            .withBody(Body()
-//                                    .withHtml(Content()
-//                                            .withCharset(emailCharset)
-//                                            .withData(emailEntity.bodyHtml))
-//                                    .withText(Content()
-//                                            .withCharset(emailCharset)
-//                                            .withData(emailEntity.bodyPlain))))
-//                    .withSource(emailEntity.fromEmailAddress)
             awsClient.sendEmail(emailRequest)
             return emailEntity
         } catch (e: Exception) {

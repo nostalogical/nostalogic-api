@@ -1,6 +1,5 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public;
-CREATE EXTENSION IF NOT EXISTS "citext" SCHEMA public;
 
 CREATE TABLE IF NOT EXISTS navigation (
   tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
@@ -9,13 +8,31 @@ CREATE TABLE IF NOT EXISTS navigation (
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
 
   parent_id CHAR(36) REFERENCES navigation(id),
-  urn public.citext NOT NULL,
-  full_urn public.citext NOT NULL UNIQUE,
+  urn VARCHAR(500) NOT NULL,
+  full_urn VARCHAR(500) NOT NULL UNIQUE,
   text VARCHAR(50) NOT NULL,
-  icon VARCHAR(50) NOT NULL,
-  ordinal SMALLINT NOT NULL DEFAULT 0,
-  type varchar(10),
+  icon VARCHAR(50) NOT NULL DEFAULT 'web',
+  system boolean DEFAULT false,
   status VARCHAR(20) NOT NULL DEFAULT 'INACTIVE'
+);
+
+CREATE TABLE IF NOT EXISTS navigation_link (
+  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  created TIMESTAMP NOT NULL DEFAULT now(),
+  creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
+  id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+
+  parent_id CHAR(36) NOT NULL REFERENCES navigation(id),
+  child_id CHAR(36) NOT NULL REFERENCES navigation(id),
+  ordinal SMALLINT NOT NULL DEFAULT 0,
+  type varchar(10) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'INACTIVE',
+  UNIQUE(parent_id, child_id)
+);
+
+CREATE TABLE IF NOT EXISTS navigation_link_mask (
+    nav_id CHAR(36) NOT NULL UNIQUE REFERENCES navigation(id),
+    mask_id CHAR(36) NOT NULL REFERENCES navigation(id)
 );
 
 CREATE TABLE IF NOT EXISTS container (
@@ -37,7 +54,7 @@ CREATE TABLE IF NOT EXISTS article (
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
 
-  name VARCHAR(100) NOT NULL UNIQUE,
+  name VARCHAR(100) NOT NULL,
   contents VARCHAR(10000),
   status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
 );
