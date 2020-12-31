@@ -40,26 +40,26 @@ class EntityUtilsTest {
     @Test
     fun `An entity reference is parsed as valid`() {
         val uuid = uuid()
-        val expectedRef = EntityReference(uuid, NoEntity.CONTAINER)
-        val ref = toEntityRef(NoEntity.CONTAINER.name.toLowerCase() + "_" + uuid)
+        val expectedRef = EntityReference(uuid, NoEntity.EMAIL)
+        val ref = toEntityRef(NoEntity.EMAIL.name.toLowerCase() + "_" + uuid)
         Assertions.assertEquals(expectedRef, ref)
     }
 
     @Test
     fun `An entity reference with a capitalised entity name is valid`() {
         val uuid = uuid()
-        val expectedRef = EntityReference(uuid, NoEntity.CONTAINER)
-        val ref = toEntityRef(NoEntity.CONTAINER.name + "_" + uuid)
+        val expectedRef = EntityReference(uuid, NoEntity.EMAIL)
+        val ref = toEntityRef(NoEntity.EMAIL.name + "_" + uuid)
         Assertions.assertEquals(expectedRef, ref)
-        Assertions.assertEquals(expectedRef, toMaybeEntityRef(NoEntity.CONTAINER.name + "_" + uuid))
+        Assertions.assertEquals(expectedRef, toMaybeEntityRef(NoEntity.EMAIL.name + "_" + uuid))
     }
 
     @Test
     fun `An entity is a valid entity reference`() {
-        val expectedRef = EntityReference(null, NoEntity.CONTAINER)
-        val ref = toEntityRef(NoEntity.CONTAINER.name)
+        val expectedRef = EntityReference(null, NoEntity.EMAIL)
+        val ref = toEntityRef(NoEntity.EMAIL.name)
         Assertions.assertEquals(expectedRef, ref)
-        Assertions.assertEquals(expectedRef, toMaybeEntityRef(NoEntity.CONTAINER.name))
+        Assertions.assertEquals(expectedRef, toMaybeEntityRef(NoEntity.EMAIL.name))
     }
 
     @Test
@@ -126,7 +126,7 @@ class EntityUtilsTest {
 
     @Test
     fun `An entity name is a valid entity reference`() {
-        Assertions.assertTrue(isEntityReference(NoEntity.CONTAINER.name))
+        Assertions.assertTrue(isEntityReference(NoEntity.EMAIL.name))
     }
 
     @Test

@@ -100,6 +100,8 @@ class AccessServiceTest(
             every { policyRepository.getOne(policy.id) } answers { policy } }
         every { policyRepository.findAllByIdInAndStatusInAndPriorityIn(policyIds, any(), any(), any()) } answers {policyMock}
         every { policyMock.hasNext() } answers { false }
+        every { policyMock.totalPages } answers { 1 }
+        every { policyMock.totalElements } answers { 1 }
         every { policyMock.iterator() } answers { entities.map { e -> e.policy }.toHashSet().iterator() }
 
         every { actionRepository.findAllByPolicyIdIn(policyIds) } answers { entities.flatMap { e -> e.actions }.toHashSet() }

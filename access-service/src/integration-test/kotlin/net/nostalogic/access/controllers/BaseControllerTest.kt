@@ -123,7 +123,6 @@ abstract class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader) {
     fun rndResource(): String {
         val entities = hashSetOf(
                 NoEntity.ARTICLE,
-                NoEntity.CONTAINER,
                 NoEntity.EMAIL,
                 NoEntity.GROUP,
                 NoEntity.USER,

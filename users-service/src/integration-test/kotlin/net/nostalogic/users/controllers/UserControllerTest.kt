@@ -58,7 +58,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
 
     private fun <T> deleteUser(userId: String, responseType: ParameterizedTypeReference<T>, hard: Boolean = false): ResponseEntity<T> {
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.DELETE, true),
-                Pair(PolicyAction.READ, true)))))
+                Pair(PolicyAction.READ, true), Pair(PolicyAction.EDIT, false)))))
         val hardDelete = if (hard) "?hard=true" else ""
         return exchange(
                 entity = HttpEntity<Unit>(testHeaders()),
@@ -270,7 +270,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
     fun `Update another user email`() {
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.EDIT, true)))))
         val exchange = exchange(
-                entity = HttpEntity(SecureUserUpdate(email = "newemail@nostalogic.net")),
+                entity = HttpEntity(SecureUserUpdate(email = "newemail@nostalogic.net", currentPassword = "Testing1.")),
                 responseType = object : ParameterizedTypeReference<User>() {},
                 method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$ownerId${UserController.SECURE_URI}")
         Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
@@ -281,7 +281,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
     fun `Update user email to the existing email`() {
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.EDIT, true)))))
         val exchange = exchange(
-                entity = HttpEntity(SecureUserUpdate(email = "admin@nostalogic.net")),
+                entity = HttpEntity(SecureUserUpdate(email = "admin@nostalogic.net", currentPassword = "Testing1.")),
                 responseType = object : ParameterizedTypeReference<User>() {},
                 method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$ownerId${UserController.SECURE_URI}")
         Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
@@ -328,7 +328,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
 
     @Test
     fun `Get a user`() {
-        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true)))))
+        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true), Pair(PolicyAction.EDIT, true)))))
         val exchange = exchange(
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<User>() {},
@@ -340,7 +340,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
 
     @Test
     fun `Get a user with specific permission`() {
-        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, false)))),
+        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, false), Pair(PolicyAction.EDIT, false)))),
                 resourcePermissions = hashMapOf(Pair(EntitySignature(ownerId, NoEntity.USER).toString(), hashMapOf(Pair(PolicyAction.READ, true)))))
         val exchange = exchange(
                 entity = HttpEntity<Unit>(testHeaders()),
@@ -414,7 +414,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
     fun `Get all users`() {
         for (i in 1..3)
             createUser(responseType = object : ParameterizedTypeReference<User>() {})
-        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true))), Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true)))))
+        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true), Pair(PolicyAction.EDIT, false))), Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true)))))
         val exchange = exchange(
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<NoPageResponse<User>>() {},
@@ -428,7 +428,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
         val users = ArrayList<User>()
         for (i in 1..6)
             users.add(createUser(responseType = object : ParameterizedTypeReference<User>() {}).body!!)
-        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true))), Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true)))))
+        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true), Pair(PolicyAction.EDIT, false))), Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true)))))
         val exchange = exchange(
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<NoPageResponse<User>>() {},
@@ -441,7 +441,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
     @Test
     fun `Get all users filtered by ids`() {
         val newId = createUser(responseType = object : ParameterizedTypeReference<User>() {}).body!!.id
-        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true))), Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true)))))
+        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true), Pair(PolicyAction.EDIT, false))), Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true)))))
         val exchange = exchange(
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<NoPageResponse<User>>() {},
@@ -453,7 +453,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
     @Test
     fun `Get all users with permissions for only one`() {
         createUser(responseType = object : ParameterizedTypeReference<User>() {}).body!!.id
-        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, false))), Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true)))),
+        mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, false), Pair(PolicyAction.EDIT, false))), Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true)))),
                 resourcePermissions = hashMapOf(Pair(EntitySignature(ownerId, NoEntity.USER).toString(), hashMapOf(Pair(PolicyAction.READ, true)))))
         val exchange = exchange(
                 entity = HttpEntity<Unit>(testHeaders()),

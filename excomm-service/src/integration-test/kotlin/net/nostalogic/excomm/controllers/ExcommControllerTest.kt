@@ -112,8 +112,8 @@ class ExcommControllerTest(@Autowired val dbLoader: DatabaseLoader, @Autowired v
         val email = emails.iterator().next()
         val dbId = EntitySignature(email.id, NoEntity.EMAIL)
         Assertions.assertEquals(entityId.toString(), dbId.toString())
-        Assertions.assertTrue(email.bodyHtml.contains("<a href=\"http://localhost:3331/regconfirm?code=test-code\">"))
-        Assertions.assertTrue(email.bodyPlain.contains("http://localhost:3331/regconfirm?code=test-code"))
+        Assertions.assertTrue(email.bodyHtml.contains("<a href=\"http://localhost:4200/link/regconfirm?code=test-code\">"))
+        Assertions.assertTrue(email.bodyPlain.contains("http://localhost:4200/link/regconfirm?code=test-code"))
     }
 
     @Test

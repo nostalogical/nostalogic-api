@@ -11,7 +11,7 @@ import org.apache.commons.lang3.StringUtils
 object UserValidator {
 
     private const val DETAILS_MAX_LENGTH = 50_000
-    private const val USERNAME_MAX_LENGTH = 10
+    private const val USERNAME_MAX_LENGTH = 20
 
     fun validateUpdate(user: User, userId: String, userByName: UserEntity?) {
         val report = InvalidFieldsReport()

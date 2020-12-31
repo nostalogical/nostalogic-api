@@ -59,7 +59,10 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         Assertions.assertTrue(context.policies.containsKey(policyId))
         val details = context.policies[policyId]
         Assertions.assertEquals(name, details!!.name)
-        Assertions.assertTrue(details.resources.contains(if (signatureLevel) context.resource.toString() else (context.resource.entity.name)))
+        if (signatureLevel)
+            Assertions.assertTrue(details.resources.contains(context.resource.toString()))
+        else
+            Assertions.assertTrue(details.resources.contains(context.resource.entity.name) || details.resources.contains(NoEntity.ALL.name))
         for (sub in subjects)
             Assertions.assertTrue(details.subjects.contains(sub), "Expected the policy subjects to include $sub")
     }
@@ -68,8 +71,8 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
                               action: PolicyAction, priority: PolicyPriority?, allow: Boolean) {
         Assertions.assertEquals(resource, context.resource)
         Assertions.assertEquals(action, context.action)
-        Assertions.assertEquals(priority, context.priority)
         Assertions.assertEquals(allow, context.allow)
+        Assertions.assertEquals(priority, context.priority)
     }
 
 
@@ -129,7 +132,7 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
 
     @Test
     fun `All equal result policies for multiple subjects are reported`() {
-        val multipleSubjects = EntityReference("e6285bef-d8d1-461a-9507-f9b8a7426b3e", NoEntity.CONTAINER)
+        val multipleSubjects = EntityReference("e6285bef-d8d1-461a-9507-f9b8a7426b3e", NoEntity.EMAIL)
         val contexts = analyse(AccessQuery(hashSetOf(TEST_USER.toString(), TEST_USER_GROUP.toString()),
                 hashMapOf(Pair(multipleSubjects.toString(), hashSetOf(PolicyAction.DELETE)))))
         val context = assertSingleContext(contexts)
@@ -160,24 +163,24 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
 
     @Test
     fun `Multiple actions can be queried`() {
-        val container1 = EntityReference("e6285bef-d8d1-461a-9507-f9b8a7426b3e", NoEntity.CONTAINER)
+        val email1 = EntityReference("e6285bef-d8d1-461a-9507-f9b8a7426b3e", NoEntity.EMAIL)
         val nav1 = EntityReference("04a20bb8-4d01-4b7e-91d9-ce9314d0bfbb", NoEntity.NAV)
         val contexts = analyse(AccessQuery(hashSetOf(TEST_USER.toString(), TEST_USER_GROUP.toString()),
                 hashMapOf(
-                        Pair(container1.toString(), hashSetOf(PolicyAction.DELETE, PolicyAction.READ)),
+                        Pair(email1.toString(), hashSetOf(PolicyAction.DELETE, PolicyAction.READ)),
                         Pair(nav1.toString(), hashSetOf(PolicyAction.EDIT))
                 )))
         var contextCount = 0
         for (context in contexts) {
-            if (context.resource == container1 && context.action == PolicyAction.DELETE) {
-                assertContext(context, container1, PolicyAction.DELETE, PolicyPriority.TWO_STANDARD, true)
+            if (context.resource == email1 && context.action == PolicyAction.DELETE) {
+                assertContext(context, email1, PolicyAction.DELETE, PolicyPriority.TWO_STANDARD, true)
                 assertPolicyApplied(context, "35929e52-4f15-4f41-a445-e4e68ef3f30e", "Multiple subjects report 1", true, TEST_USER.toString())
                 assertPolicyApplied(context, "1f88a5b8-55af-47a9-b43d-c22da8d1721a", "Multiple subjects report 2", false, TEST_USER_GROUP.toString())
                 contextCount += 1
                 continue
-            } else if (context.resource == container1 && context.action == PolicyAction.READ) {
-                assertContext(context, container1, PolicyAction.READ, null, false)
-                Assertions.assertTrue(context.policies.isEmpty())
+            } else if (context.resource == email1 && context.action == PolicyAction.READ) {
+                assertContext(context, email1, PolicyAction.READ, PolicyPriority.TWO_STANDARD, true)
+                assertPolicyApplied(context, "6aac60f8-1b4d-430e-911f-a86caa8ec1ba", "Default Read", false)
                 contextCount += 1
                 continue
             } else if (context.resource == nav1 && context.action == PolicyAction.EDIT) {
@@ -191,12 +194,12 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
 
         val report = query(AccessQuery(hashSetOf(TEST_USER.toString(), TEST_USER_GROUP.toString()),
                 hashMapOf(
-                        Pair(container1.toString(), hashSetOf(PolicyAction.DELETE, PolicyAction.READ)),
+                        Pair(email1.toString(), hashSetOf(PolicyAction.DELETE, PolicyAction.READ)),
                         Pair(nav1.toString(), hashSetOf(PolicyAction.EDIT))
                 )))
         TestUtils.assertReport(report, hashSetOf(TEST_USER.toString(), TEST_USER_GROUP.toString()),
                 hashMapOf(
-                        Pair(container1.toString(), hashMapOf(Pair(PolicyAction.DELETE, true), Pair(PolicyAction.READ, false))),
+                        Pair(email1.toString(), hashMapOf(Pair(PolicyAction.DELETE, true), Pair(PolicyAction.READ, true))),
                         Pair(nav1.toString(), hashMapOf(Pair(PolicyAction.EDIT, true)))
                 ), null)
     }

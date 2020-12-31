@@ -61,7 +61,7 @@ VALUES ('35929e52-4f15-4f41-a445-e4e68ef3f30e', 'Multiple subjects report 1', 'T
 INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('35929e52-4f15-4f41-a445-e4e68ef3f30e', '35929e52-4f15-4f41-a445-e4e68ef3f30e', 'DELETE', true) ON CONFLICT DO NOTHING;
 INSERT INTO policy_resource (id, policy_id, resource_id, entity)
-VALUES ('35929e52-4f15-4f41-a445-e4e68ef3f30e::e6285bef-d8d1-461a-9507-f9b8a7426b3e', '35929e52-4f15-4f41-a445-e4e68ef3f30e', 'e6285bef-d8d1-461a-9507-f9b8a7426b3e', 'CONTAINER') ON CONFLICT DO NOTHING;
+VALUES ('35929e52-4f15-4f41-a445-e4e68ef3f30e::e6285bef-d8d1-461a-9507-f9b8a7426b3e', '35929e52-4f15-4f41-a445-e4e68ef3f30e', 'e6285bef-d8d1-461a-9507-f9b8a7426b3e', 'EMAIL') ON CONFLICT DO NOTHING;
 INSERT INTO policy_subject (id, policy_id, subject_id, entity)
 VALUES ('35929e52-4f15-4f41-a445-e4e68ef3f30e::5f086280-32d2-4955-9874-0a9d8ee3ca88', '35929e52-4f15-4f41-a445-e4e68ef3f30e', '5f086280-32d2-4955-9874-0a9d8ee3ca88', 'USER') ON CONFLICT DO NOTHING;
 INSERT INTO policy (id, name, priority)
@@ -69,7 +69,7 @@ VALUES ('1f88a5b8-55af-47a9-b43d-c22da8d1721a', 'Multiple subjects report 2', 'T
 INSERT INTO policy_action (id, policy_id, action, allow)
 VALUES ('1f88a5b8-55af-47a9-b43d-c22da8d1721a', '1f88a5b8-55af-47a9-b43d-c22da8d1721a', 'DELETE', true) ON CONFLICT DO NOTHING;
 INSERT INTO policy_resource (id, policy_id, resource_id, entity)
-VALUES ('1f88a5b8-55af-47a9-b43d-c22da8d1721a::CONTAINER', '1f88a5b8-55af-47a9-b43d-c22da8d1721a', null, 'CONTAINER') ON CONFLICT DO NOTHING;
+VALUES ('1f88a5b8-55af-47a9-b43d-c22da8d1721a::EMAIL', '1f88a5b8-55af-47a9-b43d-c22da8d1721a', null, 'EMAIL') ON CONFLICT DO NOTHING;
 INSERT INTO policy_subject (id, policy_id, subject_id, entity)
 VALUES ('1f88a5b8-55af-47a9-b43d-c22da8d1721a::d8d6a9c4-b9ce-4660-b037-2d6d330da846', '1f88a5b8-55af-47a9-b43d-c22da8d1721a', 'd8d6a9c4-b9ce-4660-b037-2d6d330da846', 'GROUP') ON CONFLICT DO NOTHING;
 

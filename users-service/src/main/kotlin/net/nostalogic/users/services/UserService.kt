@@ -8,7 +8,6 @@ import net.nostalogic.constants.NoLocale
 import net.nostalogic.constants.NoStrings
 import net.nostalogic.crypto.encoders.EncoderType
 import net.nostalogic.crypto.encoders.PasswordEncoder
-import net.nostalogic.datamodel.ChangeSummary
 import net.nostalogic.datamodel.NoPageable
 import net.nostalogic.datamodel.access.AccessQuery
 import net.nostalogic.datamodel.access.AccessReport
@@ -109,24 +108,6 @@ class UserService(
                 emailAvailable = userRegistration.email?.let { userRepository.isEmailAvailable(it) })
     }
 
-    private fun changeUsersStatus(ids: Collection<String>, status: EntityStatus, accessReport: AccessReport? = null): Set<ChangeSummary> {
-        val currentUser = SessionContext.getUserId()
-        val rights = accessReport ?: AccessQuery().currentSubject()
-                .addQuery(ids, NoEntity.USER, PolicyAction.EDIT)
-                .addQuery(currentUser, NoEntity.USER, PolicyAction.EDIT_OWN).toReport()
-        val changes = HashSet<ChangeSummary>()
-        val idsToUpdate = HashSet<String>()
-        for (id in ids) {
-            val canChange = id == currentUser && rights.hasPermission(EntityReference(id, NoEntity.USER), PolicyAction.EDIT_OWN)
-                    || rights.hasPermission(EntityReference(id, NoEntity.USER), PolicyAction.EDIT)
-            changes.add(ChangeSummary(canChange, id, NoEntity.USER))
-            if (canChange)
-                idsToUpdate.add(id)
-        }
-//        userRepository.updateUsersStatus(idsToUpdate, status)
-        return changes
-    }
-
     private fun saveUser(userEntity: UserEntity): UserEntity {
         return try {
             userRepository.save(userEntity)
@@ -173,7 +154,7 @@ class UserService(
     fun getUser(userId: String): User {
         val query = AccessQuery().currentSubject()
             .addQuery(null, NoEntity.USER, PolicyAction.READ)
-            .addQuery(null, NoEntity.USER, PolicyAction.EDIT)
+            .addQuery(userId, NoEntity.USER, PolicyAction.EDIT)
         if (SessionContext.getUserId() == userId)
             query.addQuery(null, NoEntity.USER, PolicyAction.EDIT_OWN)
         val report = query.toReport()
