@@ -28,7 +28,9 @@ server:
   port: 3604
 
 microservices:
-  base-url: http://localhost
+  api-url: http://localhost
+  api-access-url: http://localhost
+  api-excomm-url: http://localhost
   access-port: :3601
   user-port: :3602
   excomm-port: :3603

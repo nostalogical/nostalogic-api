@@ -1,19 +1,19 @@
 security:
   jwt:
-    key: ZqHPJkeRMjYRpNKFfFtUNZZPGnHzclYFpwnISiabFCddietCFUeiKBTNyMaLOsgQ
+    key: ${JWT_KEY}
     duration-minutes: 525600
 
 spring:
   application:
     name: access-service
   datasource:
-    username: postgres
-    password: solice
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
     driverClassName: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/nostalogic?currentSchema=nostalogic_access
+    url: jdbc:postgresql://${DB_URL}:5432/nostalogic?currentSchema=nostalogic_access
     platform: postgres
   jpa:
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
         temp:
@@ -23,16 +23,16 @@ spring:
   liquibase:
     default-schema: nostalogic_access
 
-
-server:
-  port: 3601
-
 microservices:
-  api-url: http://localhost
-  api-access-url: http://localhost
-  api-excomm-url: http://localhost
-  access-port: :3601
+  api-url: https://nostalogic.io
+  api-access-url: ${API_ACCESS_URL}
+  api-excomm-url: ${API_EXCOMM_URL}
+  access-port:
+  user-port:
+  excomm-port:
+  content-port:
+  file-port:
 
 client:
-  base-url: http://localhost
-  port: :4200
+  base-url: https://nostalogic.net
+  port:

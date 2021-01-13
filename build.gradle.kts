@@ -1,30 +1,33 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-    id("org.springframework.boot") version "2.2.6.RELEASE" apply(false)
-    id("io.spring.dependency-management") version "1.0.9.RELEASE"
-    kotlin("plugin.jpa") version "1.3.71"
-    kotlin("jvm") version "1.3.71"
+    id("org.springframework.boot") version "2.3.7.RELEASE" apply(false)
+    id("io.spring.dependency-management") version "1.0.10.RELEASE"
+    kotlin("plugin.jpa") version "1.4.30-M1" apply(false)
+    kotlin("jvm") version "1.4.30-M1"
+    war
 }
 
 allprojects {
     apply(plugin = "io.spring.dependency-management")
+    apply(plugin = "org.springframework.boot")
     apply(plugin = "org.jetbrains.kotlin.plugin.jpa")
     apply(plugin = "org.jetbrains.kotlin.jvm")
+    apply(plugin = "war")
 
     repositories {
         mavenCentral()
         jcenter()
     }
-}
 
-group = "net.nostalogic.microservices"
-version = "00.01.000-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_12
+    group = "net.nostalogic.microservices"
+    version = "SNAPSHOT"
+    java.sourceCompatibility = JavaVersion.VERSION_15
+}
 
 subprojects {
 
-    dependencyManagement {
+    the<io.spring.gradle.dependencymanagement.dsl.DependencyManagementExtension>().apply {
         imports {
             mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
         }
@@ -64,18 +67,20 @@ subprojects {
         implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
         implementation("org.jetbrains.kotlin:kotlin-reflect")
         implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-        implementation("org.apache.commons:commons-lang3:3.10")
-        implementation("org.postgresql:postgresql:42.2.12")
-        implementation("com.auth0:java-jwt:3.10.3")
+        implementation("org.apache.commons:commons-lang3:3.11")
+        implementation("org.postgresql:postgresql:42.2.18")
+        implementation("com.auth0:java-jwt:3.12.0")
         implementation("khttp:khttp:1.0.0")
         implementation("com.google.code.gson:gson:2.8.6")
+        implementation(platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES))
         runtimeOnly("com.h2database:h2")
         runtimeOnly("org.springframework.boot:spring-boot-devtools")
+        providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
         testImplementation("org.springframework.boot:spring-boot-starter-test") {
             exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
         }
-        testImplementation("io.mockk:mockk:1.10.0")
-        `integration-testImplementation`("org.apache.httpcomponents:httpclient:4.5.12")
+        testImplementation("io.mockk:mockk:1.10.4")
+        `integration-testImplementation`("org.apache.httpcomponents:httpclient:4.5.13")
     }
     tasks.withType<Test> {
         useJUnitPlatform()
@@ -83,7 +88,14 @@ subprojects {
     tasks.withType<KotlinCompile> {
         kotlinOptions {
             freeCompilerArgs = listOf("-Xjsr305=strict")
-            jvmTarget = "1.8"
+            jvmTarget = "15"
         }
     }
+    tasks.getByName<Jar>("jar") {
+        enabled = true
+    }
+    tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootJar>("bootJar") {
+        classifier = "boot"
+    }
+
 }

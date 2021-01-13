@@ -12,18 +12,19 @@ open class AccessApplication {
 
     companion object {
         const val MAJOR = 0
-        val API_VERSION = ApiVersion(MAJOR, 0, 1)
-        val SERVICE = "access_service"
+        private val API_VERSION = ApiVersion(MAJOR, 0, 1)
+        private const val SERVICE = "access_service"
 
         init {
             Config.initService(SERVICE, API_VERSION)
         }
-    }
-}
 
-/**
- * Error prefix 2_00_000*
- */
-fun main(args: Array<String>) {
-    runApplication<AccessApplication>(*args)
+        /**
+         * Error prefix 2_00_000*
+         */
+        @JvmStatic
+        fun main(args: Array<String>) {
+            runApplication<AccessApplication>(*args)
+        }
+    }
 }

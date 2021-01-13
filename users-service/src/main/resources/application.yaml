@@ -28,7 +28,9 @@ server:
   port: 3602
 
 microservices:
-  base-url: http://localhost
+  api-url: http://localhost
+  api-access-url: http://localhost
+  api-excomm-url: http://localhost
   access-port: :3601
   user-port: :3602
   excomm-port: :3603
@@ -39,9 +41,3 @@ client:
   base-url: http://localhost
   port: :4200
 
-email:
-  ses:
-    enabled: true
-    access-key: AKIA6LEGPLTYM3FZEBVB
-    secret-key: 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
-  reply-address: noreply@nostalogic.net

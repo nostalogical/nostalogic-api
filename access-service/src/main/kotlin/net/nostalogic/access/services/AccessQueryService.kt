@@ -54,7 +54,7 @@ open class AccessQueryService(
         val policies = ArrayList<Policy>()
         var pageNum = 0
         do {
-            val criteria = PolicySearchCriteria(status = setOf(EntityStatus.ACTIVE), page = NoPageable(page = ++pageNum, sortFields = *PolicySearchCriteria.DEFAULT_SORT_FIELDS))
+            val criteria = PolicySearchCriteria(status = setOf(EntityStatus.ACTIVE), page = NoPageable(page = ++pageNum, sortFields = PolicySearchCriteria.DEFAULT_SORT_FIELDS))
             policies.addAll(retrievePolicies(policyIds, criteria))
         } while (criteria.page.hasNext == true)
 

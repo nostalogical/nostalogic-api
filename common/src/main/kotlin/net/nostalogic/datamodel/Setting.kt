@@ -10,6 +10,7 @@ data class Setting(@JsonIgnore val key: String, @JsonIgnore val initValue: Any, 
 
     enum class Source {
         RESOURCE,
+        ENV_RESOURCE,
         DATABASE,
         SERVICE
     }

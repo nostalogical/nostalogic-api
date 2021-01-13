@@ -1,0 +1,41 @@
+security:
+  jwt:
+    key: ${JWT_KEY}
+    duration-minutes: 525600
+
+spring:
+  application:
+    name: user-service
+  datasource:
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driverClassName: org.postgresql.Driver
+    url: jdbc:postgresql://${DB_URL}:5432/nostalogic?currentSchema=nostalogic_users
+    platform: postgres
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        temp:
+          use_jdbc_metadata_defaults: false
+    open-in-view: true
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+  liquibase:
+    default-schema: nostalogic_users
+
+
+server:
+  port: 3602
+
+microservices:
+  api-url: https://nostalogic.io
+  api-access-url: ${API_ACCESS_URL}
+  api-excomm-url: ${API_EXCOMM_URL}
+  access-port:
+  user-port:
+  excomm-port:
+  content-port:
+  file-port:
+
+client:
+  base-url: https://nostalogic.net

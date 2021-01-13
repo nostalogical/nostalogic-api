@@ -23,6 +23,7 @@ class Config(private val context: ApplicationContext,
         private val logger = LoggerFactory.getLogger(Config::class.java)
         private val cache: HashMap<String, Setting> = HashMap()
         private const val ENVIRONMENT = "environment"
+        private val ENV_VAR_REGEX = "\\$\\{.+}".toRegex()
         private val censorList = setOf(
                 JwtUtil.KEY_PROPERTY,
                 "spring.datasource.security.password",
@@ -31,7 +32,9 @@ class Config(private val context: ApplicationContext,
         private const val CENSORED = "*****"
         private const val SERVICE = "service"
         private const val API = "apiversion"
-        private const val BASE_URL = "microservices.base-url"
+        private const val API_URL = "microservices.api-url"
+        private const val API_ACCESS_URL = "microservices.api-access-url"
+        private const val API_EXCOMM_URL = "microservices.api-excomm-url"
         private const val ACCESS_PORT = "microservices.access-port"
         private const val EXCOMM_PORT = "microservices.excomm-port"
         private const val CLIENT_BASE_URL = "client.base-url"
@@ -41,8 +44,10 @@ class Config(private val context: ApplicationContext,
         private var apiVersion = ApiVersion(0, 0, 0)
 
         fun initService(service: String, apiVersion: ApiVersion) {
-            this.service = service
-            this.apiVersion = apiVersion
+            if (this.service == "unknown") {
+                this.service = service
+                this.apiVersion = apiVersion
+            }
         }
 
         fun addSetting(setting: Setting) {
@@ -76,21 +81,22 @@ class Config(private val context: ApplicationContext,
         }
 
         fun accessUrl(): String {
-            return getSetting(BASE_URL) + getSetting(ACCESS_PORT)
+            return getSetting(API_ACCESS_URL) + getSetting(ACCESS_PORT, true)
         }
 
         fun excommUrl(): String {
-            return getSetting(BASE_URL) + getSetting(EXCOMM_PORT)
+            return getSetting(API_EXCOMM_URL) + getSetting(EXCOMM_PORT)
         }
 
         fun frontendUrl(): String {
             return getSetting(CLIENT_BASE_URL) + getSetting(CLIENT_PORT)
         }
 
-        fun getSetting(key: String): String {
+        fun getSetting(key: String, allowEmpty: Boolean = false): String {
             val setting = cache[key.toLowerCase()]?.value
             if (setting.isNullOrBlank())
-                throw NoRetrieveException(103001, "Setting", "Setting $key not found in cache", null)
+                if (allowEmpty) return ""
+                else throw NoRetrieveException(103001, "Setting", "Setting $key not found in cache", null)
             return setting
         }
 
@@ -155,25 +161,45 @@ class Config(private val context: ApplicationContext,
                 RunEnvironment.PRODUCTION)) {
             val resource = this.context.getResource("classpath:${runEnv.getYamlFile()}")
             val isActive = runEnv == RunEnvironment.DEFAULT || this.environment.activeProfiles.contains(runEnv.profile)
-            if (isActive)
+            if (isActive) {
                 addSetting(Setting(ENVIRONMENT, runEnv, Setting.Source.RESOURCE))
-            if (resource.isFile && isActive) {
-                val load = loader.load(null, resource)[0]
-                val source = load.source
-                if (source is Map<*,*>) {
-                    for (key in source.keys) {
-                        val value = load.getProperty(key as String)
-                        if (value != null)
-                            addSetting(Setting(key, value, Setting.Source.RESOURCE))
+                if (resource.isReadable) {
+                    val load = loader.load(null, resource)[0]
+                    val source = load.source
+                    if (source is Map<*,*>) {
+                        for (key in source.keys) {
+                            val value = load.getProperty(key as String)
+                            if (value != null) {
+                                val replaced = replaceEnvironmentalVariables(value)
+                                if (replaced == value)
+                                    addSetting(Setting(key, value, Setting.Source.RESOURCE))
+                                else
+                                    addSetting(Setting(key, replaced, Setting.Source.ENV_RESOURCE))
+                            }
+                        }
                     }
                 }
             }
         }
     }
 
+    private fun replaceEnvironmentalVariables(input: Any): Any {
+        if (input is String) {
+            val envVars = ENV_VAR_REGEX.find(input)
+            if (envVars != null) {
+                val variable = envVars.groups[0]!!.value
+                val key = variable.substring(2, variable.length - 1)
+                val value = environment.getProperty(key)
+                if (value != null)
+                    return input.replace(variable, value)
+            }
+        }
+        return input
+    }
+
     enum class RunEnvironment(val profile: String) {
         DEFAULT("main"),
-        PRODUCTION("production"),
+        PRODUCTION("prod"),
         LOCAL("local"),
         TEST("test"),
         INTEGRATION_TEST("integration-test");
