@@ -1,14 +1,18 @@
 package net.nostalogic.users.controllers
 
+import io.mockk.every
 import net.nostalogic.config.DatabaseLoader
+import net.nostalogic.constants.AuthenticationType
 import net.nostalogic.constants.NoStrings
 import net.nostalogic.datamodel.ErrorResponse
+import net.nostalogic.datamodel.NoDate
 import net.nostalogic.datamodel.NoPageResponse
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.entities.EntitySignature
 import net.nostalogic.entities.EntityStatus
 import net.nostalogic.entities.NoEntity
 import net.nostalogic.security.grants.ConfirmationGrant
+import net.nostalogic.security.models.SessionSummary
 import net.nostalogic.security.utils.TokenEncoder
 import net.nostalogic.users.UsersApplication
 import net.nostalogic.users.datamodel.users.RegistrationAvailability
@@ -27,6 +31,7 @@ import org.springframework.core.ParameterizedTypeReference
 import org.springframework.http.*
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
+import java.time.temporal.ChronoUnit
 
 @Suppress("FunctionName")
 @ActiveProfiles(profiles = ["integration-test"])
@@ -303,6 +308,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
 
     @Test
     fun `Get current profile`() {
+        every { accessComms.verifySession(ofType(String::class)) } answers {
+            SessionSummary(EntityUtils.uuid(), ownerId, AuthenticationType.USERNAME, NoDate(), NoDate.plus(5L, ChronoUnit.DAYS), null, "token") }
         val exchange = exchange(
                 entity = HttpEntity<Unit>(testHeaders(ownerId)),
                 responseType = object : ParameterizedTypeReference<User>() {},

@@ -43,7 +43,7 @@ client:
 
 email:
   ses:
-    enabled: true
-    access-key: AKIA6LEGPLTYM3FZEBVB
-    secret-key: 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
+    enabled: false
+    access-key:
+    secret-key:
   reply-address: noreply@nostalogic.net
