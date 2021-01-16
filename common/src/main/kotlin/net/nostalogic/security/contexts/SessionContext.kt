@@ -1,9 +1,11 @@
 package net.nostalogic.security.contexts
 
 import net.nostalogic.comms.AccessComms
+import net.nostalogic.comms.Comms
 import net.nostalogic.config.Config
 import net.nostalogic.constants.NoLocale
 import net.nostalogic.constants.NoStrings
+import net.nostalogic.datamodel.NoDate
 import net.nostalogic.exceptions.NoAuthException
 import net.nostalogic.security.grants.*
 import org.springframework.context.i18n.LocaleContextHolder
@@ -31,7 +33,7 @@ open class SessionContext (
         }
 
         fun isLoggedIn(): Boolean {
-            return getToken() != null
+            return getToken()?.let { Comms.access().verifySession(it) }?.end?.isAfter(NoDate()) == true
         }
 
         private fun getSession(): SessionContext {
