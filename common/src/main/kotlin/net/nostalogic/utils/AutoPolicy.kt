@@ -17,7 +17,7 @@ object AutoPolicy {
         return Comms.access().createPolicy(Policy(
                 status = EntityStatus.ACTIVE,
                 name = autoPolicyName(resource, action),
-                priority = PolicyPriority.ONE_AUTO,
+                priority = PolicyPriority.TWO_STANDARD,
                 resources = hashSetOf(resource.toString()),
                 subjects = subjects.map { it.toString() }.toHashSet(),
                 permissions = CollUtils.enumMapOf(Pair(action, allow)),
@@ -27,7 +27,7 @@ object AutoPolicy {
     fun retrieve(resource: EntitySignature, actions: Collection<PolicyAction>): Collection<Policy> {
         val expectedNames = actions.map { autoPolicyName(resource, it) }.toHashSet()
         val policies = Comms.access().retrievePolicies(resources = setOf(resource.toString()), status = EntityStatus.values().toSet(),
-                priority = setOf(PolicyPriority.ONE_AUTO), actions = actions.toHashSet())
+                priority = setOf(PolicyPriority.TWO_STANDARD), actions = actions.toHashSet())
                 ?: throw NoAccessException(101004, "Unable to retrieve auto policies for $resource")
         policies.toHashSet().removeIf { !expectedNames.contains(it.name) }
         return policies
@@ -56,7 +56,7 @@ object AutoPolicy {
                 policy.status = EntityStatus.ACTIVE
                 policy.resources = hashSetOf(resource.toString())
                 policy.name = autoPolicyName(resource, action)
-                policy.priority = PolicyPriority.ONE_AUTO
+                policy.priority = PolicyPriority.TWO_STANDARD
                 policy.subjects = subjectsForPermission(permissionsByAction[action]!!).map { it.toString() }.toHashSet()
                 updatePolicy(policy)
                 permissionsByAction.remove(action)

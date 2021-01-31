@@ -1,4 +1,4 @@
-package net.nostalogic.content.datamodel
+package net.nostalogic.content.datamodel.navigations
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 

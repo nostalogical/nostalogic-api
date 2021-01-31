@@ -4,6 +4,7 @@
 *.log*
 *.class*
 */build/*
+/build/*
 */out*
 */.gradle
 /.gradle/

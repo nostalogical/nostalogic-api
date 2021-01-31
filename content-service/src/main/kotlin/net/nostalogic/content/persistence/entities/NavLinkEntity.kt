@@ -1,6 +1,6 @@
 package net.nostalogic.content.persistence.entities
 
-import net.nostalogic.content.datamodel.NavType
+import net.nostalogic.content.datamodel.navigations.NavType
 import net.nostalogic.entities.EntityStatus
 import net.nostalogic.persistence.entities.AbstractCoreEntity
 import javax.persistence.Entity

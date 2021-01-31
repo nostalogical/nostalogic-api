@@ -1,5 +1,7 @@
 package net.nostalogic.content.datamodel
 
+import net.nostalogic.content.datamodel.navigations.Nav
+
 data class Content<T>(
     val path: String,
     val breadcrumbs: List<String>,

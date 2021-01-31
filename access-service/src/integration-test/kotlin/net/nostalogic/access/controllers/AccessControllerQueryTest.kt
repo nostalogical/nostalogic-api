@@ -86,7 +86,7 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
     fun `Confirm read access on navs`() {
         val contexts = analyse(AccessQuery(hashSetOf(TEST_USER.toString()), hashMapOf(Pair(NoEntity.NAV.name, hashSetOf(PolicyAction.READ)))))
         val context = assertSingleContext(contexts)
-        assertContext(context, EntityReference(entity = NoEntity.NAV), PolicyAction.READ, PolicyPriority.TWO_STANDARD, true)
+        assertContext(context, EntityReference(entity = NoEntity.NAV), PolicyAction.READ, PolicyPriority.ONE_AUTO, true)
         assertPolicyApplied(context, "6aac60f8-1b4d-430e-911f-a86caa8ec1ba", "Default Read", false, "ALL")
 
         val report = query(AccessQuery(hashSetOf(TEST_USER.toString()), hashMapOf(Pair(NoEntity.NAV.name, hashSetOf(PolicyAction.READ)))))
@@ -179,7 +179,7 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
                 contextCount += 1
                 continue
             } else if (context.resource == email1 && context.action == PolicyAction.READ) {
-                assertContext(context, email1, PolicyAction.READ, PolicyPriority.TWO_STANDARD, true)
+                assertContext(context, email1, PolicyAction.READ, PolicyPriority.ONE_AUTO, true)
                 assertPolicyApplied(context, "6aac60f8-1b4d-430e-911f-a86caa8ec1ba", "Default Read", false)
                 contextCount += 1
                 continue

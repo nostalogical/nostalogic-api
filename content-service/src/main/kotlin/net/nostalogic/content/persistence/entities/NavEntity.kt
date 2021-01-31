@@ -10,6 +10,7 @@ import javax.persistence.Enumerated
 class NavEntity(
     var urn: String,
     var fullUrn: String,
+    var parentId: String? = null,
     var icon: String,
     var text: String,
     val system: Boolean = false,

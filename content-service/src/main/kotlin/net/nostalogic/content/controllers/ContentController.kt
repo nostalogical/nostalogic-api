@@ -17,11 +17,17 @@ import javax.servlet.http.HttpServletRequest
 class ContentController(@Autowired private val contentService: ContentService) {
 
     companion object {
-        const val CONTENT_ENDPOINT = "/api/v${ContentApplication.MAJOR}/content"
+        const val CONTENT_ENDPOINT = "/api/v${ContentApplication.MAJOR}/cms"
     }
 
-    @RequestMapping(method = [RequestMethod.GET], path = ["**"])
+    @RequestMapping(method = [RequestMethod.GET], path = ["/content/**"])
     fun getContent(request: HttpServletRequest): Content<*> {
+        return contentService.getContentAtNavigation(request.requestURI.substringAfter("$CONTENT_ENDPOINT/content"))
+    }
+
+    @RequestMapping(method = [RequestMethod.PUT], path = ["/containers"])
+    fun setContent(request: HttpServletRequest): Content<*> {
+        //
         return contentService.getContentAtNavigation(request.requestURI.substringAfter(CONTENT_ENDPOINT))
     }
 }

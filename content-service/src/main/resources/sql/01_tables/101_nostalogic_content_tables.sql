@@ -56,6 +56,8 @@ CREATE TABLE IF NOT EXISTS article (
 
   name VARCHAR(100) NOT NULL,
   contents VARCHAR(10000),
+  last_updated TIMESTAMP NOT NULL DEFAULT now(),
+  last_updater_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
 );
 
@@ -68,6 +70,7 @@ CREATE TABLE IF NOT EXISTS article_revision (
   article_id CHAR(36) NOT NULL REFERENCES article(id),
   name VARCHAR(100) NOT NULL UNIQUE,
   contents VARCHAR(10000),
+  last_updated TIMESTAMP NOT NULL DEFAULT now(),
   committed boolean NOT NULL DEFAULT FALSE,
   discarded boolean NOT NULL DEFAULT FALSE
 );

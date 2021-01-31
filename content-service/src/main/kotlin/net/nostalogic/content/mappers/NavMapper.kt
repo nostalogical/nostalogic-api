@@ -1,10 +1,12 @@
 package net.nostalogic.content.mappers
 
-import net.nostalogic.content.datamodel.Nav
-import net.nostalogic.content.datamodel.NavDetails
-import net.nostalogic.content.datamodel.NavType
+import net.nostalogic.content.datamodel.navigations.Nav
+import net.nostalogic.content.datamodel.navigations.NavDetails
+import net.nostalogic.content.datamodel.navigations.NavType
 import net.nostalogic.content.persistence.entities.NavEntity
 import net.nostalogic.content.persistence.entities.NavLinkEntity
+import net.nostalogic.entities.EntityStatus
+import net.nostalogic.security.contexts.SessionContext
 
 object NavMapper {
 
@@ -17,9 +19,9 @@ object NavMapper {
             if (!mappedEntities.containsKey(navLink.childId))
                 continue
             if (navLink.type == NavType.TOP)
-                topLinks.add(entityToDto(mappedEntities[navLink.childId]!!))
+                topLinks.add(entityToDto(mappedEntities[navLink.childId]!!, includeDetails = false))
             else
-                sideLinks.add(entityToDto(mappedEntities[navLink.childId]!!))
+                sideLinks.add(entityToDto(mappedEntities[navLink.childId]!!, includeDetails = false))
         }
         return NavDetails(
             navId = navEntity.id,
@@ -31,11 +33,39 @@ object NavMapper {
             system = navEntity.system)
     }
 
-    private fun entityToDto(navEntity: NavEntity): Nav {
-        return Nav(
+    fun dtoToEntity(nav: Nav): NavEntity {
+        return NavEntity(
+            urn = nav.path!!.split("/").last(),
+            fullUrn = nav.path!!,
+            icon = nav.icon!!,
+            text = nav.text!!,
+            status = nav.status ?: EntityStatus.INACTIVE,
+            creatorId = SessionContext.getUserId()
+        )
+    }
+
+    fun updateEntity(nav: Nav, navEntity: NavEntity) {
+        if (nav.path != null) {
+            navEntity.fullUrn = nav.path!!
+            navEntity.urn = nav.path!!.split("/").last()
+        }
+        if (nav.icon != null)
+            navEntity.icon = nav.icon!!
+        if (nav.text != null)
+            navEntity.text = nav.text!!
+    }
+
+    fun entityToDto(navEntity: NavEntity, includeDetails: Boolean = true): Nav {
+        val nav = Nav(
             text = navEntity.text,
             icon = navEntity.icon,
             path = navEntity.fullUrn)
+        if (includeDetails) {
+            nav.id = navEntity.id
+            nav.status = navEntity.status
+            nav.parentId = navEntity.parentId
+        }
+        return nav
     }
 
 }

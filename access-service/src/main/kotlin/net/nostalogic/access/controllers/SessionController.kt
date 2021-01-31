@@ -9,6 +9,7 @@ import net.nostalogic.security.models.SessionSummary
 import org.springframework.web.bind.annotation.*
 
 @RestController
+@CrossOrigin
 @RequestMapping(SESSIONS_ENDPOINT)
 class SessionController(private val sessionService: SessionService) {
 

@@ -8,5 +8,6 @@ enum class NoEntity {
     SESSION,
     NAV,
     ARTICLE,
-    EMAIL
+    EMAIL,
+    SETTING
 }

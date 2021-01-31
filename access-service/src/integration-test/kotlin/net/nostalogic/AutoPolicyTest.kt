@@ -57,7 +57,7 @@ class AutoPolicyTest(@Autowired val dbLoader: DatabaseLoader) {
         val policy = AutoPolicy.generate(TEST_GROUP, TEST_USER.id, PolicyAction.READ, setOf(TEST_GROUP.toEntityReference()), true)
         Assertions.assertNotNull(policy)
         Assertions.assertEquals("AUTO - ${TEST_GROUP} - READ", policy.name)
-        Assertions.assertEquals(PolicyPriority.ONE_AUTO, policy.priority)
+        Assertions.assertEquals(PolicyPriority.TWO_STANDARD, policy.priority)
         Assertions.assertEquals(1, policy.resources!!.size)
         Assertions.assertEquals(TEST_GROUP.toString(), policy.resources!!.iterator().next())
         Assertions.assertEquals(1, policy.subjects!!.size)

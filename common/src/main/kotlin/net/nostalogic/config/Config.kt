@@ -85,7 +85,7 @@ class Config(private val context: ApplicationContext,
         }
 
         fun excommUrl(): String {
-            return getSetting(API_EXCOMM_URL) + getSetting(EXCOMM_PORT)
+            return getSetting(API_EXCOMM_URL) + getSetting(EXCOMM_PORT, true)
         }
 
         fun frontendUrl(): String {
