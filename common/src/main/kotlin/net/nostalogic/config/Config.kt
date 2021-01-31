@@ -89,7 +89,7 @@ class Config(private val context: ApplicationContext,
         }
 
         fun frontendUrl(): String {
-            return getSetting(CLIENT_BASE_URL) + getSetting(CLIENT_PORT)
+            return getSetting(CLIENT_BASE_URL) + getSetting(CLIENT_PORT, true)
         }
 
         fun getSetting(key: String, allowEmpty: Boolean = false): String {

@@ -27,17 +27,24 @@ abstract class EmailService {
     abstract fun sendEmail(messageOutline: MessageOutline): EmailEntity
 
     protected fun createEmailEntity(messageOutline: MessageOutline): EmailEntity {
-        EmailValidator.validate(messageOutline)
-        val template = getEmailTemplate(messageOutline.type, messageOutline.locale)
-        val entity = EmailEntity(
+        try {
+            EmailValidator.validate(messageOutline)
+            val template = getEmailTemplate(messageOutline.type, messageOutline.locale)
+            val entity = EmailEntity(
                 recipientId = messageOutline.recipientId,
                 recipientEmailAddress = messageOutline.recipientEmailAddress,
                 fromEmailAddress = template.fromEmailAddress,
                 subject = ParameterUtils.setParameters(template.subject, messageOutline.parameters),
                 bodyHtml = ParameterUtils.setParameters(template.bodyHtml, messageOutline.parameters),
                 bodyPlain = ParameterUtils.setParameters(template.bodyPlain, messageOutline.parameters),
-                type = messageOutline.type)
-        return saveEmail(entity)
+                type = messageOutline.type
+            )
+            return saveEmail(entity)
+        } catch (e: Exception) {
+            if (e !is NoSaveException)
+                logger.error("Failed to create email", e)
+            throw e
+        }
     }
 
     protected fun saveEmail(emailEntity: EmailEntity): EmailEntity {
