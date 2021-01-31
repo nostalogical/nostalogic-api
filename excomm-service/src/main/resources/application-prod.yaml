@@ -39,6 +39,7 @@ microservices:
 
 client:
   base-url: https://nostalogic.net
+  port:
 
 email:
   ses:
