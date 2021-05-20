@@ -6,9 +6,9 @@ import net.nostalogic.entities.EntityStatus
 data class Nav(
     var id: String? = null,
     var parentId: String? = null,
-    var text: String?,
-    var icon: String?,
-    var path: String?,
+    var text: String? = null,
+    var icon: String? = null,
+    var path: String? = null,
     var status: EntityStatus? = EntityStatus.INACTIVE,
     var container: Container? = null
 )

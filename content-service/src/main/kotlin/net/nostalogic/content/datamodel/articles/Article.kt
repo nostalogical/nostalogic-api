@@ -7,14 +7,14 @@ import net.nostalogic.entities.EntityStatus
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class Article(
-    var id: String?,
+    var id: String? = null,
     var revision: String? = null,
-    var title: String?,
-    var body: String?,
+    var title: String? = null,
+    var body: String? = null,
     var status: EntityStatus? = null,
     var revisionStatus: EntityStatus? = null,
-    var created: NoDate?,
-    var creatorId: String?,
+    var created: NoDate? = null,
+    var creatorId: String? = null,
     var lastUpdated: NoDate? = null,
     var lastUpdaterId: String? = null,
     var containers: List<Container>? = null

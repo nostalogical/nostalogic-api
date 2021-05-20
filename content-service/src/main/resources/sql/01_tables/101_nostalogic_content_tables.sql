@@ -68,9 +68,8 @@ CREATE TABLE IF NOT EXISTS article_revision (
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
 
   article_id CHAR(36) NOT NULL REFERENCES article(id),
-  name VARCHAR(100) NOT NULL UNIQUE,
+  name VARCHAR(100) NOT NULL,
   contents VARCHAR(10000),
   last_updated TIMESTAMP NOT NULL DEFAULT now(),
-  committed boolean NOT NULL DEFAULT FALSE,
-  discarded boolean NOT NULL DEFAULT FALSE
+  status VARCHAR(20) NOT NULL DEFAULT 'INACTIVE'
 );

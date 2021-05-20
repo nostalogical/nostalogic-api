@@ -113,7 +113,7 @@ class ArticleService(
             throw NoAccessException(501002, "Missing rights to view article revisions")
         articleRepository.findByIdOrNull(articleId)
             ?: throw NoRetrieveException(504002, "Article", "Article ${articleId} not found in database")
-        val revisions = revisionRepository.getAllByArticleIdOrderByCreated(articleId)
+        val revisions = revisionRepository.getAllByArticleIdAndStatusInOrderByCreated(articleId, hashSetOf(EntityStatus.ACTIVE, EntityStatus.INACTIVE))
         return revisions.map { ArticleMapper.revisionEntityToDto(it) }.toList()
     }
 
@@ -123,8 +123,8 @@ class ArticleService(
             .addQuery(null, NoEntity.ARTICLE, PolicyAction.EDIT)
             .addQuery(null, NoEntity.ARTICLE, PolicyAction.EDIT_OWN)
         if (searchCriteria.articleIds.isNotEmpty()) {
-            query.addQuery(searchCriteria.articleIds, NoEntity.USER, PolicyAction.READ)
-            query.addQuery(searchCriteria.articleIds, NoEntity.USER, PolicyAction.EDIT)
+            query.addQuery(searchCriteria.articleIds, NoEntity.ARTICLE, PolicyAction.READ)
+            query.addQuery(searchCriteria.articleIds, NoEntity.ARTICLE, PolicyAction.EDIT)
         }
         val report = query.toReport()
 
@@ -133,13 +133,13 @@ class ArticleService(
         else report.filterByPermitted(searchCriteria.articleIds, NoEntity.ARTICLE, PolicyAction.READ)
 
         val status = searchCriteria.status.map { it.name }.toSet()
-        val names = searchCriteria.name.toSet()
-        val contents = searchCriteria.contents.toSet()
+        val names = if (searchCriteria.name.isEmpty()) "" else "%${searchCriteria.name.joinToString("%,%")}%"
+        val contents = if (searchCriteria.contents.isEmpty()) "" else "%${searchCriteria.contents.joinToString("%,%")}%"
         val page = searchCriteria.page.toQuery()
 
         val articleEntity =
             when {
-                articleIds.isEmpty() && names.isEmpty() && contents.isEmpty() -> articleRepository.searchArticles(status, page)
+                articleIds.isEmpty() && names.isBlank() && contents.isBlank() -> articleRepository.searchArticles(status, page)
                 else -> articleRepository.searchArticlesByFields(articleIds, names, contents, status, page)
             }
         searchCriteria.page.setResponseMetadata(articleEntity)

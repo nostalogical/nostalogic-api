@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface ArticleRevisionRepository: JpaRepository<ArticleRevisionEntity, String> {
 
-    fun getAllByArticleIdOrderByCreated(articleId: String): List<ArticleRevisionEntity>
+    fun getAllByArticleIdAndStatusInOrderByCreated(articleId: String, status: Collection<EntityStatus>): List<ArticleRevisionEntity>
     fun getFirstByArticleIdAndCreatorIdAndStatusEquals(articleId: String, creatorId: String, status: EntityStatus): ArticleRevisionEntity?
 
 }

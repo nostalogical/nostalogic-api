@@ -5,7 +5,6 @@ import org.apache.commons.lang3.StringUtils
 
 object PathUtils {
 
-    val ALLOWED_URN_SYMBOLS = setOf("_", "-", "+")
     private val VALID_URN = "^[\\da-zA-Z+_-]+$".toRegex()
     private val VALID_PATH = "^[/\\da-z+_-]+$".toRegex()
 

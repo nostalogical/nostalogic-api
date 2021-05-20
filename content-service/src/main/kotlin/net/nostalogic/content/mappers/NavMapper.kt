@@ -23,11 +23,13 @@ object NavMapper {
             else
                 sideLinks.add(entityToDto(mappedEntities[navLink.childId]!!, includeDetails = false))
         }
+        val urnSplit = navEntity.fullUrn.split("/")
+        val breadcrumbs = if (urnSplit.size == 1 && urnSplit[0] == "") emptyList() else urnSplit
         return NavDetails(
             navId = navEntity.id,
             fullPath = navEntity.fullUrn,
             urn = navEntity.urn,
-            breadcrumbs = navEntity.fullUrn.split("/"),
+            breadcrumbs = breadcrumbs,
             topLinks = topLinks,
             sideLinks = sideLinks,
             system = navEntity.system)
@@ -37,6 +39,7 @@ object NavMapper {
         return NavEntity(
             urn = nav.path!!.split("/").last(),
             fullUrn = nav.path!!,
+            parentId = nav.parentId,
             icon = nav.icon!!,
             text = nav.text!!,
             status = nav.status ?: EntityStatus.INACTIVE,

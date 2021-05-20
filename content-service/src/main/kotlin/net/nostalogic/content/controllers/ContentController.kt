@@ -3,6 +3,7 @@ package net.nostalogic.content.controllers
 import net.nostalogic.content.ContentApplication
 import net.nostalogic.content.controllers.ContentController.Companion.CONTENT_ENDPOINT
 import net.nostalogic.content.datamodel.Content
+import net.nostalogic.content.datamodel.containers.Container
 import net.nostalogic.content.services.ContentService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.CrossOrigin
@@ -26,8 +27,7 @@ class ContentController(@Autowired private val contentService: ContentService) {
     }
 
     @RequestMapping(method = [RequestMethod.PUT], path = ["/containers"])
-    fun setContent(request: HttpServletRequest): Content<*> {
-        //
-        return contentService.getContentAtNavigation(request.requestURI.substringAfter(CONTENT_ENDPOINT))
+    fun setContent(container: Container): Container {
+        return contentService.setContent(container)
     }
 }

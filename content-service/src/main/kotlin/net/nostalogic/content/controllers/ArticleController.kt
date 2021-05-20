@@ -41,6 +41,11 @@ class ArticleController(@Autowired private val articleService: ArticleService) {
         return articleService.getArticle(articleId)
     }
 
+    @RequestMapping(method = [RequestMethod.GET], path = ["/{articleId}/revisions"])
+    fun getArticleRevisions(@PathVariable articleId: String): List<Article> {
+        return articleService.getArticleRevisions(articleId)
+    }
+
     @RequestMapping(method = [RequestMethod.GET])
     fun searchArticles(@RequestParam(defaultValue = "1") page: Int, @RequestParam(defaultValue = "20") size: Int,
                        @RequestParam id: Set<String>?,
