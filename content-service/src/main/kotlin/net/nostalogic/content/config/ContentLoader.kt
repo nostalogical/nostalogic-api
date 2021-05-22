@@ -6,12 +6,16 @@ import org.springframework.core.io.support.ResourcePatternUtils
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.stereotype.Component
 import java.io.IOException
+import java.sql.Connection
 
 @Component(value = "ContentLoader")
 @DependsOn(value = ["DatabaseLoader"])
 class ContentLoader(private val resourceLoader: ResourceLoader,
-                    private val jdbcTemplate: JdbcTemplate
+                    jdbcTemplate: JdbcTemplate
 ) {
+
+    private val connection: Connection? = if (jdbcTemplate.dataSource != null && jdbcTemplate.dataSource?.connection != null)
+        jdbcTemplate.dataSource?.connection else null
 
     companion object {
         private const val PAGES_PATTERN = "classpath*:preset_pages/**/*.md"
@@ -22,8 +26,6 @@ class ContentLoader(private val resourceLoader: ResourceLoader,
     }
 
     fun runResourceScripts() {
-        val connection = if (jdbcTemplate.dataSource != null && jdbcTemplate.dataSource?.connection != null)
-            jdbcTemplate.dataSource?.connection else null
         if (connection == null)
             return
 
@@ -36,10 +38,11 @@ class ContentLoader(private val resourceLoader: ResourceLoader,
         for (file in pageFiles) {
             val urn = file.filename!!.replace(".md", "")
             val contents = file.file.inputStream().readBytes().toString(Charsets.UTF_8)
-            val statement = connection.prepareStatement("UPDATE article SET contents = ?, last_updated = now() WHERE name ilike ?")
-            statement.setString(1, contents)
-            statement.setString(2, urn)
-            statement.execute()
+            connection.prepareStatement("UPDATE article SET contents = ?, last_updated = now() WHERE name ilike ?").use {
+                it.setString(1, contents)
+                it.setString(2, urn)
+                it.execute()
+            }
         }
     }
 
