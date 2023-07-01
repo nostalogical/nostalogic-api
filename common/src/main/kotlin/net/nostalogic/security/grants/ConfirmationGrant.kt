@@ -9,6 +9,6 @@ class ConfirmationGrant(
 ) : NoGrant(
         subject,
         null,
-        AuthenticationType.REG_CONFIRM,
+        AuthenticationType.CONFIRMATION,
         created = created
 )

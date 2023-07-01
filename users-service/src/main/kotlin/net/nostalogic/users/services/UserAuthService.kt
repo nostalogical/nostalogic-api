@@ -3,10 +3,7 @@ package net.nostalogic.users.services
 import net.nostalogic.comms.Comms
 import net.nostalogic.comms.ExcommComms
 import net.nostalogic.config.i18n.Translator
-import net.nostalogic.constants.AuthenticationType
-import net.nostalogic.constants.ErrorStrings
-import net.nostalogic.constants.MessageType
-import net.nostalogic.constants.NoStrings
+import net.nostalogic.constants.*
 import net.nostalogic.crypto.encoders.EncoderType
 import net.nostalogic.crypto.encoders.PasswordEncoder
 import net.nostalogic.datamodel.access.AccessQuery
@@ -21,6 +18,7 @@ import net.nostalogic.security.grants.ImpersonationGrant
 import net.nostalogic.security.grants.LoginGrant
 import net.nostalogic.security.grants.PasswordResetGrant
 import net.nostalogic.security.models.SessionPrompt
+import net.nostalogic.security.models.SessionSummary
 import net.nostalogic.security.utils.TokenEncoder
 import net.nostalogic.users.datamodel.authentication.AuthenticationResponse
 import net.nostalogic.users.datamodel.authentication.ImpersonationRequest
@@ -49,15 +47,13 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
 
     fun login(loginRequest: LoginRequest): AuthenticationResponse {
         val userEntity = getUserFromLogin(loginRequest)
+            ?: return createStandardLoginResponse()
+
         val authEntity = getAuthForUser(userEntity)
         if (authEntity == null) {
             logger.error("No authentication entries found for user ${userEntity.id}")
-            throw NoRetrieveException(304004, "Login", "No password information found for this user. Use reset password reset to resolve this problem.")
+            return createStandardLoginResponse()
         }
-        if (authEntity.invalid)
-            throw NoAuthException(302004, "Account password has been invalidated. Reset is required via a password reset email.", ErrorStrings.PASSWORD_EXPIRED)
-        if (authEntity.expired)
-            throw NoAuthException(302005, "Account password has expired. Reset is required via secure update or password reset email.", ErrorStrings.PASSWORD_EXPIRED)
 
         val loggedIn = PasswordEncoder.verifyPassword(UserAuthentication(
                 password = loginRequest.password!!,
@@ -66,17 +62,28 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
                 encoder = authEntity.encoder,
                 iterations = authEntity.iterations))
 
+        if (!loggedIn) return createStandardLoginResponse()
+
+        if (authEntity.invalid || authEntity.expired) {
+            val errorString = if (authEntity.invalid) ErrorStrings.PASSWORD_INVALID else ErrorStrings.PASSWORD_EXPIRED
+            return AuthenticationResponse(authenticated = false, message = Translator.translate(errorString))
+        }
+
         val loginType = if (EMAIL_PATTERN.matcher(loginRequest.username!!).find()) AuthenticationType.EMAIL else AuthenticationType.USERNAME
         val session = Comms.accessComms.createSession(SessionPrompt(userEntity.id, membershipService.getGroupsForUserRights(userEntity.id), loginType))
                 ?: throw NoAccessException(302006, "Failed to create session internally", Translator.translate(ErrorStrings.COMMS_ERROR))
 
         SessionContext.getToken()?.let { Comms.accessComms.endSession(it) }
 
+        return createStandardLoginResponse(true, session)
+    }
+
+    private fun createStandardLoginResponse(loggedIn: Boolean = false, session: SessionSummary? = null): AuthenticationResponse {
         return AuthenticationResponse(
-                authenticated = loggedIn,
-                message = if (loggedIn) NoStrings.authGranted() else NoStrings.passwordNotVerified(),
-                token = session.token,
-                expiration = session.end)
+            authenticated = loggedIn,
+            message = if (loggedIn) NoStrings.authGranted() else NoStrings.passwordNotVerified(),
+            token = session?.accessToken,
+            expiration = session?.end)
     }
 
     fun logout(): AuthenticationResponse {
@@ -95,26 +102,32 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
         } else {
             val summary = Comms.accessComms.refreshSession(token)
                     ?: throw NoAccessException(302007, "Failed to refresh session internally", NoStrings.authRefreshDenied())
-            val refreshed = summary.token != null
+            val refreshed = summary.accessToken != null
             AuthenticationResponse(
                     authenticated = refreshed,
                     message = if (refreshed) NoStrings.authGranted() else NoStrings.authRefreshDenied(),
-                    token = summary.token,
+                    token = summary.accessToken,
                     expiration = summary.end)
         }
     }
 
+    /**
+     * Handles resetting a password with no credentials (trigger a reset email), with the token from an email
+     * (PasswordResetGrant), or an existing valid password.
+     */
     fun resetPassword(loginRequest: LoginRequest): AuthenticationResponse {
         val grant = SessionContext.getGrant()
         if (grant is PasswordResetGrant)
             return createNewPasswordWithGrant(loginRequest, grant)
 
+        // This response will be untrue if the user doesn't exist, but it prevents user enumeration
         val userEntity = getUserFromLogin(loginRequest, requirePassword = false)
+            ?: return AuthenticationResponse(false, NoStrings.passwordEmailSent())
         val authEntity = getAuthForUser(userEntity)
 
+
         return if (StringUtils.isNotBlank(loginRequest.newPassword) && (authEntity == null || authEntity.invalid))
-            throw NoAuthException(301003, "No valid password exists so a new password cannot be set from the previous password",
-                    Translator.translate(ErrorStrings.PASSWORD_INVALID))
+            AuthenticationResponse(false, Translator.translate(ErrorStrings.PASSWORD_INVALID))
         else if (StringUtils.isNotBlank(loginRequest.password) && StringUtils.isNotBlank(loginRequest.newPassword)) {
             createNewPasswordWithExpiredPassword(loginRequest, userEntity, authEntity!!)
         } else {
@@ -124,7 +137,7 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
 
     private fun createNewPasswordWithGrant(loginRequest: LoginRequest, grant: PasswordResetGrant): AuthenticationResponse {
         val userEntity = userRepository.findByIdEquals(grant.subject)
-                ?: throw NoRetrieveException(304005, "User", "Supplied token is valid but no user matching subject ID ${grant.subject} exists")
+                ?: throw NoAuthException(302004, "Password reset token cannot be verified")
 
         PasswordValidator.validate(loginRequest.newPassword)
         authRepository.findTopByUserIdEqualsOrderByCreatedDesc(userEntity.id)?.let { expirePassword(it, true, "A new password was set") }
@@ -133,9 +146,9 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
         val session = Comms.accessComms.createSession(SessionPrompt(userEntity.id, membershipService.getGroupsForUserRights(userEntity.id), AuthenticationType.PASSWORD_RESET, reset = true))
                 ?: throw NoAccessException(302011, "Failed to create session internally", Translator.translate(ErrorStrings.COMMS_ERROR))
         return AuthenticationResponse(
-                authenticated = session.token != null,
-                message = if (session.token != null) NoStrings.passwordChanged() else NoStrings.sessionCreateFail(),
-                token = session.token,
+                authenticated = session.accessToken != null,
+                message = if (session.accessToken != null) NoStrings.passwordChanged() else NoStrings.sessionCreateFail(),
+                token = session.accessToken,
                 expiration = session.end)
     }
 
@@ -164,9 +177,9 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
                     ?: throw NoAccessException(302011, "Failed to create session internally", Translator.translate(ErrorStrings.COMMS_ERROR))
 
             return AuthenticationResponse(
-                    authenticated = session.token != null,
-                    message = if (session.token != null) NoStrings.passwordChanged() else NoStrings.sessionCreateFail(),
-                    token = session.token,
+                    authenticated = session.accessToken != null,
+                    message = if (session.accessToken != null) NoStrings.passwordChanged() else NoStrings.sessionCreateFail(),
+                    token = session.accessToken,
                     expiration = session.end)
         } else
             return AuthenticationResponse(
@@ -182,10 +195,6 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
             else -> throw NoAccessException(301002, "Only a logged in user can impersonate another user", NoStrings.impersonationDenied())
         }
         val alternates = HashSet<String>()
-        if (grant is ImpersonationGrant) {
-            alternates.addAll(grant.alternateSubjects)
-            alternates.add(grant.subject)
-        }
 
         if (impRequest.userId == originalUserId)
             throw NoAccessException(302009, "A user cannot impersonate themselves", NoStrings.impersonationDenied())
@@ -195,17 +204,17 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
         val session = Comms.accessComms.createSession(SessionPrompt(
                 userId = impRequest.userId,
                 additional = membershipService.getGroupsForUserRights(impRequest.userId),
-                type = AuthenticationType.IMPERSONATION,
+                type = AuthenticationSource.IMPERSONATION,
                 originalUserId = originalUserId,
                 alternates = alternates))
                 ?: throw NoAccessException(302008, "Failed to create impersonation session internally", Translator.translate(ErrorStrings.COMMS_ERROR))
-        val loggedIn = session.token != null
+        val loggedIn = session.accessToken != null
 
         return AuthenticationResponse(
                 authenticated = loggedIn,
                 message = if (loggedIn) NoStrings.authGranted() else NoStrings.passwordNotVerified(),
-                token = session.token,
-                expiration = session.end)
+                accessToken = session.accessToken,
+            )
     }
 
     fun setNewPassword(userId: String, password: String?) {
@@ -228,15 +237,13 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
         authRepository.save(authEntity)
     }
 
-    private fun getUserFromLogin(loginRequest: LoginRequest, requirePassword: Boolean = true): UserEntity {
+    private fun getUserFromLogin(loginRequest: LoginRequest, requirePassword: Boolean = true): UserEntity? {
         LoginValidator.validate(loginRequest, requirePassword)
         var userEntity = userRepository.findByEmailEquals(loginRequest.username!!)
         if (userEntity == null)
             userEntity = userRepository.findByUsernameEquals(loginRequest.username)
         if (userEntity == null)
             userEntity = userRepository.findByIdEquals(loginRequest.username)
-        if (userEntity == null)
-            throw NoRetrieveException(304003, "User", "Supplied username does not match any registered username or email")
         return userEntity
     }
 

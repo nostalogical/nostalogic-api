@@ -7,6 +7,34 @@ CREATE TABLE IF NOT EXISTS "user" (
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
   username VARCHAR(500) NOT NULL UNIQUE,
+  tag VARCHAR(30),
+  email VARCHAR(500) NOT NULL UNIQUE,
+  status VARCHAR(20) NOT NULL DEFAULT 'INACTIVE',
+  locale CHAR(5) NOT NULL DEFAULT 'en_GB',
+  details JSON DEFAULT '{}',
+  UNIQUE(tenant, username),
+  UNIQUE(tenant, email)
+);
+
+CREATE TABLE IF NOT EXISTS username (
+  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  created TIMESTAMP NOT NULL DEFAULT now(),
+  creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
+  id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  username VARCHAR(500) NOT NULL,
+  display_name VARCHAR(500) NOT NULL,
+  tag VARCHAR(30) NOT NULL,
+  active BOOLEAN NOT NULL DEFAULT FALSE,
+  expiration TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS email (
+  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  created TIMESTAMP NOT NULL DEFAULT now(),
+  creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
+  id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  username VARCHAR(500) NOT NULL UNIQUE,
+  tag VARCHAR(500),
   email VARCHAR(500) NOT NULL UNIQUE,
   status VARCHAR(20) NOT NULL DEFAULT 'INACTIVE',
   locale CHAR(5) NOT NULL DEFAULT 'en_GB'
@@ -37,7 +65,8 @@ CREATE TABLE IF NOT EXISTS "group" (
   name VARCHAR(100) NOT NULL UNIQUE,
   description VARCHAR(3000),
   type VARCHAR(20) NOT NULL DEFAULT 'SYSTEM',
-  status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE'
+  status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
+  details JSON DEFAULT '{}'
 );
 
 CREATE TABLE IF NOT EXISTS details (

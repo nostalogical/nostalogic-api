@@ -1,6 +1,7 @@
 package net.nostalogic.crypto.encoders
 
 import net.nostalogic.crypto.algorithms.RngAlgorithm
+import net.nostalogic.datamodel.authentication.EncodingDetails
 import net.nostalogic.datamodel.authentication.UserAuthentication
 
 abstract class PasswordEncoder {
@@ -21,10 +22,21 @@ abstract class PasswordEncoder {
                 SHAEncoder.encodePassword(password)
         }
 
+        fun encodePassword(encodingDetails: EncodingDetails, encoderType: EncoderType): UserAuthentication {
+            return if (encoderType == EncoderType.PBKDF2)
+                PBKDF2Encoder.encodePassword(encodingDetails)
+            else
+                SHAEncoder.encodePassword(encodingDetails)
+        }
+
     }
 
-    abstract fun encodePassword(password: String): UserAuthentication
+    abstract fun encodePassword(encodingDetails: EncodingDetails): UserAuthentication
     abstract fun verifyPassword(auth: UserAuthentication): Boolean
+
+    fun encodePassword(password: String): UserAuthentication {
+        return PBKDF2Encoder.encodePassword(EncodingDetails(password = password))
+    }
 
     fun getSalt(): ByteArray {
         val sr = RngAlgorithm.SHA1PRNG.getSecureRandom()

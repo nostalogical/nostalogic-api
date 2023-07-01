@@ -24,7 +24,6 @@ class UserController(@Autowired val userService: UserService) {
         const val CONFIRM_URI = "/confirm"
         const val PROFILE_URI = "/profile"
         const val SECURE_URI = "/secure"
-        const val RIGHTS_URI = "/rights"
     }
 
     @RequestMapping(method = [RequestMethod.POST])
@@ -33,11 +32,13 @@ class UserController(@Autowired val userService: UserService) {
         return userService.createUser(userRegistration)
     }
 
+    // TODO: Probably no longer want to return the user here
     @RequestMapping(method = [RequestMethod.POST], path = [REGISTER_URI])
-    fun register(@RequestBody userRegistration: UserRegistration): User {
+    fun register(@RequestBody userRegistration: UserRegistration): RegistrationResponse {
         return userService.registerUser(userRegistration)
     }
 
+    // TODO: Completely deprecate, no longer want to expose this
     @RequestMapping(method = [RequestMethod.POST], path = [REGISTER_URI + AVAILABLE_URI])
     fun availableCheck(@RequestBody userRegistration: UserRegistration): RegistrationAvailability {
         return userService.checkRegistrationAvailable(userRegistration)

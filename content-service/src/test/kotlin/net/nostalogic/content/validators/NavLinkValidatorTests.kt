@@ -1,6 +1,6 @@
 package net.nostalogic.content.validators
 
-import net.nostalogic.content.datamodel.navigations.Nav
+import net.nostalogic.content.datamodel.navigations.NavLink
 import net.nostalogic.exceptions.NoValidationException
 import net.nostalogic.utils.EntityUtils
 import org.junit.jupiter.api.Test
@@ -11,10 +11,10 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 
 @ActiveProfiles(profiles = ["test"])
 @ExtendWith(SpringExtension::class)
-class NavValidatorTests {
+class NavLinkValidatorTests {
 
-    private fun navigation(): Nav {
-        return Nav(id = null,
+    private fun navigation(): NavLink {
+        return NavLink(id = null,
         parentId = null,
         text = "Text",
         icon = "Icon",

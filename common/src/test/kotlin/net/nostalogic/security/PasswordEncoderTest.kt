@@ -33,8 +33,11 @@ class PasswordEncoderTest {
         for (encoder in encoders) {
             for (password in testPasswords) {
                 val auth = PasswordEncoder.encodePassword(password, encoder)
-                val invalidPassword = password + RandomStringUtils.random(5)
-                Assertions.assertFalse(PasswordEncoder.verifyPassword(UserAuthentication(invalidPassword, auth.hash, auth.salt, auth.encoder, auth.iterations)))
+                val invalidPassword = password + RandomStringUtils.randomAlphanumeric(5)
+                Assertions.assertFalse(
+                    PasswordEncoder.verifyPassword(UserAuthentication(invalidPassword, auth.hash, auth.salt, auth.encoder, auth.iterations)),
+                    "Encoder '${encoder.name}' failed with password '${password}' and invalid password '${invalidPassword}'"
+                )
             }
         }
     }

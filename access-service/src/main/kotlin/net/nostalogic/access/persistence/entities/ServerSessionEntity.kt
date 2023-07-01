@@ -12,10 +12,10 @@ import javax.persistence.Enumerated
 class ServerSessionEntity(
         id: String,
         val userId: String,
-        var additional: String?,
         val startDateTime: Timestamp,
         var endDateTime: Timestamp,
         @Enumerated(EnumType.STRING) val type: AuthenticationType,
-        val details: String?,
+        var refreshKey: String? = null,
+        val notes: String? = null,
         creatorId : String = EntityUtils.SYSTEM_ID
 ) : AbstractCoreEntity(id = id, creatorId =  creatorId)

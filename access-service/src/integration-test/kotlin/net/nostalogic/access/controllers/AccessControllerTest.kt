@@ -1,6 +1,7 @@
 package net.nostalogic.access.controllers
 
 import net.nostalogic.access.AccessApplication
+import net.nostalogic.access.config.TestPostgresContainer
 import net.nostalogic.access.testutils.TestUtils
 import net.nostalogic.config.DatabaseLoader
 import net.nostalogic.datamodel.ErrorResponse
@@ -11,7 +12,11 @@ import net.nostalogic.datamodel.access.PolicyPriority
 import net.nostalogic.entities.EntityStatus
 import net.nostalogic.utils.CollUtils
 import net.nostalogic.utils.EntityUtils
+import org.junit.ClassRule
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,6 +27,7 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
+import org.testcontainers.containers.PostgreSQLContainer
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
@@ -31,6 +37,18 @@ import kotlin.collections.HashSet
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [AccessApplication::class])
 open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseControllerTest(dbLoader) {
+
+    companion object {
+        @JvmField
+        @ClassRule
+        var postgreSQLContainer: PostgreSQLContainer<*> = TestPostgresContainer.getInstance("test_nostalogic_access")
+
+        @JvmStatic
+        @BeforeAll
+        fun beforeAll(): Unit {
+            postgreSQLContainer.start()
+        }
+    }
 
     @Test
     fun `Create a policy`() {
@@ -54,9 +72,9 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val response = exchange(entity = HttpEntity(Policy()),
                 responseType = object: ParameterizedTypeReference<ErrorResponse> () {},
                 method = HttpMethod.POST, url = policyUrl())
-        Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
-        Assertions.assertTrue(response.body!!.userMessage.contains("name"))
-        Assertions.assertTrue(response.body!!.userMessage.contains("priority"))
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        assertTrue(response.body!!.userMessage.contains("name"))
+        assertTrue(response.body!!.userMessage.contains("priority"))
     }
 
     @Test
@@ -65,7 +83,7 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val response = exchange(entity = HttpEntity(policy),
                 responseType = object: ParameterizedTypeReference<Policy> () {},
                 method = HttpMethod.PUT, url = policyUrl() + "/${policy.id}")
-        Assertions.assertEquals(HttpStatus.OK, response.statusCode)
+        assertEquals(HttpStatus.OK, response.statusCode)
         TestUtils.assertPoliciesEqual(policy, response.body!!)
     }
 
@@ -74,7 +92,7 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val response = exchange(entity = HttpEntity(testPolicy()),
                 responseType = object: ParameterizedTypeReference<ErrorResponse> () {},
                 method = HttpMethod.PUT, url = policyUrl() + "/${EntityUtils.uuid()}")
-        Assertions.assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
     }
 
     @Test
@@ -84,7 +102,7 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val response = exchange(entity = HttpEntity(edit),
                 responseType = object: ParameterizedTypeReference<Policy> () {},
                 method = HttpMethod.PUT, url = policyUrl() + "/${policy.id}")
-        Assertions.assertEquals(HttpStatus.OK, response.statusCode)
+        assertEquals(HttpStatus.OK, response.statusCode)
         policy.status = EntityStatus.INACTIVE
         TestUtils.assertPoliciesEqual(policy, response.body!!)
     }
@@ -96,15 +114,15 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val response = exchange(entity = HttpEntity(policy),
                 responseType = object: ParameterizedTypeReference<ErrorResponse> () {},
                 method = HttpMethod.PUT, url = policyUrl() + "/${policy.id}")
-        Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
-        Assertions.assertEquals(response.body!!.errorCode, 207002)
+        assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
+        assertEquals(response.body!!.errorCode, 207002)
     }
 
     private fun assertPolicyUpdate(policy: Policy) {
         val update = exchange(entity = HttpEntity(policy),
                 responseType = object: ParameterizedTypeReference<Policy> () {},
                 method = HttpMethod.PUT, url = policyUrl() + "/${policy.id}")
-        Assertions.assertEquals(HttpStatus.OK, update.statusCode)
+        assertEquals(HttpStatus.OK, update.statusCode)
         Assertions.assertNotNull(update.body)
         TestUtils.assertPoliciesEqual(policy, update.body!!)
         val retrieve = createTemplate().exchange(policyUrl() + "/${policy.id}", HttpMethod.GET, null, Policy::class.java)
@@ -135,15 +153,15 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
     fun `Delete a policy`() {
         val policy = createPolicy(testPolicy())
         val response = createTemplate().exchange(policyUrl() + "/${policy.id}", HttpMethod.DELETE, null, Object::class.java)
-        Assertions.assertEquals(HttpStatus.OK, response.statusCode)
+        assertEquals(HttpStatus.OK, response.statusCode)
         val secondDelete = createTemplate().exchange(policyUrl() + "/${policy.id}", HttpMethod.DELETE, null, Object::class.java)
-        Assertions.assertEquals(HttpStatus.OK, secondDelete.statusCode)
+        assertEquals(HttpStatus.OK, secondDelete.statusCode)
     }
 
     @Test
     fun `Delete a nonexistent policy`() {
         val response = createTemplate().exchange(policyUrl() + "/${EntityUtils.uuid()}", HttpMethod.DELETE, null, Object::class.java)
-        Assertions.assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
+        assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
     }
 
     private fun createPolicies(count: Int): List<Policy> {
@@ -156,7 +174,7 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
     private fun doSearch(params: String): NoPageResponse<Policy> {
         val response = createTemplate().exchange(policyUrl() + "/search${params}", HttpMethod.GET, null,
                 object: ParameterizedTypeReference<NoPageResponse<Policy>>() {})
-        Assertions.assertEquals(HttpStatus.OK, response.statusCode)
+        assertEquals(HttpStatus.OK, response.statusCode)
         Assertions.assertNotNull(response.body)
         return response.body!!
     }
@@ -164,7 +182,7 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
     private fun doFilter(params: String): NoPageResponse<Policy> {
         val response = createTemplate().exchange(policyUrl() + "/${params}", HttpMethod.GET, null,
                 object: ParameterizedTypeReference<NoPageResponse<Policy>>() {})
-        Assertions.assertEquals(HttpStatus.OK, response.statusCode)
+        assertEquals(HttpStatus.OK, response.statusCode)
         Assertions.assertNotNull(response.body)
         return response.body!!
     }
@@ -173,8 +191,8 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
     fun `Filter all policies`() {
         createPolicies(5)
         val pages = doFilter("")
-        Assertions.assertTrue(pages.size > 5, "Expected more than 5 policies to exist by default")
-        Assertions.assertEquals(pages.size, pages.content.size, "The page size should be the content size")
+        assertTrue(pages.size > 5, "Expected more than 5 policies to exist by default")
+        assertEquals(pages.size, pages.content.size, "The page size should be the content size")
     }
 
     @Test
@@ -183,9 +201,9 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val ids = policies.values.map { it.resources!!.iterator().next() }.toHashSet()
         ids.add(rndResource())
         val pages = doFilter("?resources=${ids.joinToString(",")}")
-        Assertions.assertEquals(policies.size, pages.content.size)
+        assertEquals(policies.size, pages.content.size)
         for (policy in pages.content) {
-            Assertions.assertTrue(policies.containsKey(policy.id))
+            assertTrue(policies.containsKey(policy.id))
             TestUtils.assertPoliciesEqual(policy, policies[policy.id] ?: error("Policy missing"))
         }
     }
@@ -196,9 +214,9 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val ids = policies.values.map { it.subjects!!.iterator().next() }.toHashSet()
         ids.add(rndSubject())
         val pages = doFilter("?subjects=${ids.joinToString(",")}")
-        Assertions.assertEquals(policies.size, pages.content.size)
+        assertEquals(policies.size, pages.content.size)
         for (policy in pages.content) {
-            Assertions.assertTrue(policies.containsKey(policy.id))
+            assertTrue(policies.containsKey(policy.id))
             TestUtils.assertPoliciesEqual(policy, policies[policy.id] ?: error("Policy missing"))
         }
     }
@@ -207,7 +225,7 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
     fun `Confirm resource-subject filter overlap`() {
         val p1 = createPolicy(testPolicy())
         val pages = doFilter("?subjects=${p1.subjects!!.iterator().next()}&resources=${p1.resources!!.iterator().next()}")
-        Assertions.assertEquals(1, pages.content.size)
+        assertEquals(1, pages.content.size)
         TestUtils.assertPoliciesEqual(p1, pages.content[0])
     }
 
@@ -216,24 +234,24 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val p1 = createPolicy(testPolicy())
         val p2 = createPolicy(testPolicy())
         val pages = doFilter("?subjects=${p1.subjects!!.iterator().next()}&resources=${p2.resources!!.iterator().next()}")
-        Assertions.assertEquals(0, pages.content.size)
+        assertEquals(0, pages.content.size)
     }
 
     @Test
     fun `Open policy search`() {
         createPolicies(5)
         val pages = doSearch("")
-        Assertions.assertTrue(pages.size > 5, "Expected more than 5 policies to exist by default")
-        Assertions.assertEquals(pages.size, pages.content.size, "The page size should be the content size")
+        assertTrue(pages.size > 5, "Expected more than 5 policies to exist by default")
+        assertEquals(pages.size, pages.content.size, "The page size should be the content size")
     }
 
     @Test
     fun `Test policy search pagination`() {
         createPolicies(5)
         val pages = doSearch("?page=2&size=2")
-        Assertions.assertEquals(2, pages.page, "Page of response should be the page specified in the request")
-        Assertions.assertEquals(2, pages.size, "This page should (probably) be full")
-        Assertions.assertTrue(pages.hasNext!!, "Expected more than 4 policies")
+        assertEquals(2, pages.page, "Page of response should be the page specified in the request")
+        assertEquals(2, pages.size, "This page should (probably) be full")
+        assertTrue(pages.hasNext!!, "Expected more than 4 policies")
     }
 
     @Test
@@ -242,9 +260,9 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val ids = HashSet(policies.keys)
         ids.add(EntityUtils.uuid())
         val pages = doSearch("?policies=${ids.joinToString(",")}")
-        Assertions.assertEquals(policies.size, pages.content.size)
+        assertEquals(policies.size, pages.content.size)
         for (policy in pages.content) {
-            Assertions.assertTrue(policies.containsKey(policy.id))
+            assertTrue(policies.containsKey(policy.id))
             TestUtils.assertPoliciesEqual(policy, policies[policy.id] ?: error("Policy missing"))
         }
     }
@@ -255,9 +273,9 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val ids = policies.values.map { it.resources!!.iterator().next() }.toHashSet()
         ids.add(rndResource())
         val pages = doSearch("?resources=${ids.joinToString(",")}")
-        Assertions.assertEquals(policies.size, pages.content.size)
+        assertEquals(policies.size, pages.content.size)
         for (policy in pages.content) {
-            Assertions.assertTrue(policies.containsKey(policy.id))
+            assertTrue(policies.containsKey(policy.id))
             TestUtils.assertPoliciesEqual(policy, policies[policy.id] ?: error("Policy missing"))
         }
     }
@@ -268,9 +286,9 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val ids = policies.values.map { it.subjects!!.iterator().next() }.toHashSet()
         ids.add(rndSubject())
         val pages = doSearch("?subjects=${ids.joinToString(",")}")
-        Assertions.assertEquals(policies.size, pages.content.size)
+        assertEquals(policies.size, pages.content.size)
         for (policy in pages.content) {
-            Assertions.assertTrue(policies.containsKey(policy.id))
+            assertTrue(policies.containsKey(policy.id))
             TestUtils.assertPoliciesEqual(policy, policies[policy.id] ?: error("Policy missing"))
         }
     }
@@ -281,9 +299,9 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val p2 = createPolicy(testPolicy())
         val policies = mapOf(Pair(p1.id, p1), Pair(p2.id, p2))
         val pages = doSearch("?subjects=${p1.subjects!!.iterator().next()}&resources=${p2.resources!!.iterator().next()}")
-        Assertions.assertEquals(policies.size, pages.content.size)
+        assertEquals(policies.size, pages.content.size)
         for (policy in pages.content) {
-            Assertions.assertTrue(policies.containsKey(policy.id))
+            assertTrue(policies.containsKey(policy.id))
             TestUtils.assertPoliciesEqual(policy, policies[policy.id] ?: error("Policy missing"))
         }
     }
@@ -294,9 +312,9 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val p2 = createPolicy(testPolicy())
         val policies = mapOf(Pair(p1.id, p1), Pair(p2.id, p2))
         val pages = doSearch("?policies=${p1.id}&resources=${p2.resources!!.iterator().next()}")
-        Assertions.assertEquals(policies.size, pages.content.size)
+        assertEquals(policies.size, pages.content.size)
         for (policy in pages.content) {
-            Assertions.assertTrue(policies.containsKey(policy.id))
+            assertTrue(policies.containsKey(policy.id))
             TestUtils.assertPoliciesEqual(policy, policies[policy.id] ?: error("Policy missing"))
         }
     }
@@ -307,9 +325,9 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val p2 = createPolicy(testPolicy())
         val policies = mapOf(Pair(p1.id, p1), Pair(p2.id, p2))
         val pages = doSearch("?policies=${p1.id}&subjects=${p2.subjects!!.iterator().next()}")
-        Assertions.assertEquals(policies.size, pages.content.size)
+        assertEquals(policies.size, pages.content.size)
         for (policy in pages.content) {
-            Assertions.assertTrue(policies.containsKey(policy.id))
+            assertTrue(policies.containsKey(policy.id))
             TestUtils.assertPoliciesEqual(policy, policies[policy.id] ?: error("Policy missing"))
         }
     }
@@ -322,8 +340,8 @@ open class AccessControllerTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         p2 = createPolicy(p2)
         val ids = hashSetOf(p1.id, p2.id)
         val pages = doSearch("?policies=${ids.joinToString(",")}&status=${EntityStatus.INACTIVE.name}")
-        Assertions.assertEquals(1, pages.content.size)
-        Assertions.assertEquals(p2, pages.content[0])
+        assertEquals(1, pages.content.size)
+        assertEquals(p2, pages.content[0])
     }
 
 }

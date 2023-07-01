@@ -1,7 +1,9 @@
 security:
   jwt:
     key: ${JWT_KEY}
-    duration-minutes: 525600
+  session:
+    access-duration-minutes: 60
+    duration-minutes: 86400
 
 spring:
   application:

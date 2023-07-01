@@ -97,7 +97,7 @@ class AccessServiceTest(
         val policyIds = policies.map { p -> p.id!! }.toHashSet()
         entities.forEach {
             val policy = it.policy
-            every { policyRepository.getOne(policy.id) } answers { policy } }
+            every { policyRepository.getById(policy.id) } answers { policy } }
         every { policyRepository.findAllByIdInAndStatusInAndPriorityIn(policyIds, any(), any(), any()) } answers {policyMock}
         every { policyMock.hasNext() } answers { false }
         every { policyMock.totalPages } answers { 1 }

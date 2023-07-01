@@ -30,7 +30,7 @@ class JwtTest {
 
     @Test
     fun `JWT util should generate unique keys`() {
-        val key = JwtUtil.generateJwtKey();
+        val key = JwtUtil.generateJwtKey()
         Assertions.assertNotNull(key)
         Assertions.assertEquals(64, key.length)
         Assertions.assertNotEquals(key, JwtUtil.generateJwtKey())
@@ -48,8 +48,7 @@ class JwtTest {
 
     @Test
     fun `Encode and decode a login grant as a JWT token`() {
-        val grant = LoginGrant(subject, setOf(groupOne, groupTwo),
-                NoDate.plus(5L, ChronoUnit.DAYS), sessionId, AuthenticationType.EMAIL)
+        val grant = LoginGrant(subject, NoDate.plus(5L, ChronoUnit.DAYS), sessionId)
         val token = TokenEncoder.encodeLoginGrant(grant)
         Assertions.assertTrue(StringUtils.isNoneBlank(token))
         val decodedGrant = TokenDecoder.decodeToken(token)
@@ -58,7 +57,6 @@ class JwtTest {
         Assertions.assertEquals(grant.expiration, decodedGrant.expiration)
         Assertions.assertEquals(grant.type, decodedGrant.type)
         Assertions.assertEquals(grant.sessionId, (decodedGrant as LoginGrant).sessionId)
-        Assertions.assertEquals(grant.additional, decodedGrant.additional)
     }
 
     @Test
@@ -71,8 +69,7 @@ class JwtTest {
 
     @Test
     fun `Attempt to decode an expired JWT token`() {
-        val grant = LoginGrant(subject, setOf(groupOne, groupTwo),
-                NoDate.plus(-1L, ChronoUnit.DAYS), sessionId, AuthenticationType.EMAIL)
+        val grant = LoginGrant(subject, NoDate.plus(-1L, ChronoUnit.DAYS), sessionId)
         val token = TokenEncoder.encodeLoginGrant(grant)
         Assertions.assertTrue(StringUtils.isNoneBlank(token))
         Assertions.assertThrows(NoAuthException::class.java) {

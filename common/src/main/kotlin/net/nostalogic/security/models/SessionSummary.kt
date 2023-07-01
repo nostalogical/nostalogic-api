@@ -10,5 +10,6 @@ class SessionSummary(
         var start: NoDate,
         var end: NoDate,
         var description: String?,
-        var token: String?
+        var accessToken: TokenDetails?,
+        var refreshToken: TokenDetails?
 )

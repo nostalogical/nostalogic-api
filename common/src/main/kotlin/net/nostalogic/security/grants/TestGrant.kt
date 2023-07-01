@@ -7,7 +7,7 @@ import java.time.temporal.ChronoUnit
 /**
  * Used to bypass the access service and mock rights for tests. Should never be generated outside a test profile.
  */
-class TestGrant() : NoGrant(
+class TestGrant : NoGrant(
         subject = TEST_SUBJECT,
         expiration = NoDate.plus(2, ChronoUnit.MINUTES),
         type = AuthenticationType.TEST,

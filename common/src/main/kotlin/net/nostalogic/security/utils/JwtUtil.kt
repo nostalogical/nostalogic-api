@@ -29,7 +29,7 @@ object JwtUtil {
     }
 
     fun generateJwtKey(length: Int = 64) : String {
-        return RandomStringUtils.random(length, true, false);
+        return RandomStringUtils.random(length, true, false)
     }
 
     fun getTokenBuilder() : JWTCreator.Builder {

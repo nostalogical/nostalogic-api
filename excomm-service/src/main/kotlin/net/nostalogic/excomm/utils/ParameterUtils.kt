@@ -6,8 +6,8 @@ object ParameterUtils {
 
     private const val PARAM_BASE_URL = "base_url"
 
-    fun keyToParameter(key: String): String {
-        return "{{${key.trim().toLowerCase()}}}"
+    private fun keyToParameter(key: String): String {
+        return "{{${key.trim().lowercase()}}}"
     }
 
     private fun getGlobalParameters(): Map<String, String> {

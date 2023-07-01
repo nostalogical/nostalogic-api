@@ -12,9 +12,10 @@ object TokenDecoder {
         val decodedJWT = JwtUtil.verifyJwtToken(token) ?: throw NoAuthException(102001,
                 "The supplied token cannot be verified or decoded")
         return when (decodedJWT.getClaim(TokenEncoder.GRANT_TYPE).asString()) {
-            AuthenticationType.USERNAME.name, AuthenticationType.EMAIL.name -> decodeLoginToken(decodedJWT)
+            AuthenticationType.LOGIN.name -> decodeLoginToken(decodedJWT)
+            AuthenticationType.REFRESH.name -> decodeRefreshToken(decodedJWT)
             AuthenticationType.IMPERSONATION.name -> decodeImpersonationToken(decodedJWT)
-            AuthenticationType.REG_CONFIRM.name -> decodeRegistrationToken(decodedJWT)
+            AuthenticationType.CONFIRMATION.name -> decodeConfirmationToken(decodedJWT)
             AuthenticationType.PASSWORD_RESET.name -> decodePasswordResetToken(decodedJWT)
             else -> throw NoAuthException(102002, "The supplied token has an unknown authentication type")
         }
@@ -23,28 +24,34 @@ object TokenDecoder {
 
     private fun decodeLoginToken(jwt: DecodedJWT): LoginGrant {
         return LoginGrant(
-                jwt.subject,
-                jwt.getClaim(TokenEncoder.ADDITIONAL_SUBJECTS).asArray(String::class.java).toSet(),
-                NoDate(jwt.expiresAt),
-                jwt.getClaim(TokenEncoder.SESSION).asString(),
-                AuthenticationType.valueOf(jwt.getClaim(TokenEncoder.GRANT_TYPE).asString()),
-                created = NoDate(jwt.issuedAt)
+            jwt.subject,
+            NoDate(jwt.expiresAt),
+            jwt.getClaim(TokenEncoder.SESSION).asString(),
+            created = NoDate(jwt.issuedAt)
+        )
+    }
+
+    private fun decodeRefreshToken(jwt: DecodedJWT): RefreshGrant {
+        return RefreshGrant(
+            jwt.subject,
+            NoDate(jwt.expiresAt),
+            jwt.getClaim(TokenEncoder.SESSION).asString(),
+            created = NoDate(jwt.issuedAt),
+            refreshHash = jwt.getClaim(TokenEncoder.TOKEN_HASH).asString(),
         )
     }
 
     private fun decodeImpersonationToken(jwt: DecodedJWT): ImpersonationGrant {
         return ImpersonationGrant(
                 jwt.subject,
-                jwt.getClaim(TokenEncoder.ADDITIONAL_SUBJECTS).asArray(String::class.java).toSet(),
                 NoDate(jwt.expiresAt),
                 jwt.getClaim(TokenEncoder.SESSION).asString(),
                 jwt.getClaim(TokenEncoder.ORIGINAL_USER).asString(),
-                jwt.getClaim(TokenEncoder.ALTERNATE_IMPERSONATIONS).asArray(String::class.java).toSet(),
                 created = NoDate(jwt.issuedAt)
         )
     }
 
-    private fun decodeRegistrationToken(jwt: DecodedJWT): ConfirmationGrant {
+    private fun decodeConfirmationToken(jwt: DecodedJWT): ConfirmationGrant {
         return ConfirmationGrant(
                 jwt.subject,
                 created = NoDate(jwt.issuedAt)

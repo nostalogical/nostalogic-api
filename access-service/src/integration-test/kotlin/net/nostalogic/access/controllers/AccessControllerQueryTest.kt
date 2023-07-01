@@ -1,6 +1,7 @@
 package net.nostalogic.access.controllers
 
 import net.nostalogic.access.AccessApplication
+import net.nostalogic.access.config.TestPostgresContainer
 import net.nostalogic.access.datamodel.ResourcePermissionContext
 import net.nostalogic.access.testutils.TestUtils
 import net.nostalogic.config.DatabaseLoader
@@ -11,7 +12,11 @@ import net.nostalogic.datamodel.access.PolicyPriority
 import net.nostalogic.entities.EntityReference
 import net.nostalogic.entities.EntitySignature
 import net.nostalogic.entities.NoEntity
+import org.junit.ClassRule
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -22,12 +27,25 @@ import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
+import org.testcontainers.containers.PostgreSQLContainer
 
 @Suppress("FunctionName")
 @ActiveProfiles(profiles = ["integration-test"])
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [AccessApplication::class])
 class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseControllerTest(dbLoader) {
+
+    companion object {
+        @JvmField
+        @ClassRule
+        var postgreSQLContainer: PostgreSQLContainer<*> = TestPostgresContainer.getInstance("test_nostalogic_access")
+
+        @JvmStatic
+        @BeforeAll
+        fun beforeAll() {
+            postgreSQLContainer.start()
+        }
+    }
 
     private fun analyseUrl(): String {
         return baseApiUrl + AccessController.ACCESS_ENDPOINT + AccessController.ANALYSE_URI
@@ -41,7 +59,7 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val exchange = exchange(entity = HttpEntity(query),
                 responseType = object: ParameterizedTypeReference<HashSet<ResourcePermissionContext>> () {},
                 method = HttpMethod.POST, url = analyseUrl())
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
         Assertions.assertNotNull(exchange.body)
         return exchange.body!!
     }
@@ -50,35 +68,35 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
         val exchange = exchange(entity = HttpEntity(query),
                 responseType = object: ParameterizedTypeReference<AccessReport> () {},
                 method = HttpMethod.POST, url = queryUrl())
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
         Assertions.assertNotNull(exchange.body)
         return exchange.body!!
     }
 
     private fun assertPolicyApplied(context: ResourcePermissionContext, policyId: String, name: String, signatureLevel: Boolean, vararg subjects: String) {
-        Assertions.assertTrue(context.policies.containsKey(policyId))
+        assertTrue(context.policies.containsKey(policyId))
         val details = context.policies[policyId]
-        Assertions.assertEquals(name, details!!.name)
+        assertEquals(name, details!!.name)
         if (signatureLevel)
-            Assertions.assertTrue(details.resources.contains(context.resource.toString()))
+            assertTrue(details.resources.contains(context.resource.toString()))
         else
-            Assertions.assertTrue(details.resources.contains(context.resource.entity.name) || details.resources.contains(NoEntity.ALL.name))
+            assertTrue(details.resources.contains(context.resource.entity.name) || details.resources.contains(NoEntity.ALL.name))
         for (sub in subjects)
-            Assertions.assertTrue(details.subjects.contains(sub), "Expected the policy subjects to include $sub")
+            assertTrue(details.subjects.contains(sub), "Expected the policy subjects to include $sub")
     }
 
     private fun assertContext(context: ResourcePermissionContext, resource: EntityReference,
                               action: PolicyAction, priority: PolicyPriority?, allow: Boolean) {
-        Assertions.assertEquals(resource, context.resource)
-        Assertions.assertEquals(action, context.action)
-        Assertions.assertEquals(allow, context.allow)
-        Assertions.assertEquals(priority, context.priority)
+        assertEquals(resource, context.resource)
+        assertEquals(action, context.action)
+        assertEquals(allow, context.allow)
+        assertEquals(priority, context.priority)
     }
 
 
 
     private fun assertSingleContext(contexts: HashSet<ResourcePermissionContext>): ResourcePermissionContext {
-        Assertions.assertEquals(1, contexts.size)
+        assertEquals(1, contexts.size)
         return contexts.iterator().next()
     }
 
@@ -153,7 +171,7 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
                 hashMapOf(Pair(multipleSubjects.toString(), hashSetOf(PolicyAction.DELETE)))))
         val context = assertSingleContext(contexts)
         assertContext(context, multipleSubjects, PolicyAction.DELETE, null, false)
-        Assertions.assertTrue(context.policies.isEmpty())
+        assertTrue(context.policies.isEmpty())
 
         val report = query(AccessQuery(hashSetOf(TEST_USER.toString(), TEST_USER_GROUP.toString()),
                 hashMapOf(Pair(multipleSubjects.toString(), hashSetOf(PolicyAction.DELETE)))))
@@ -190,7 +208,7 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
                 continue
             }
         }
-        Assertions.assertEquals(3, contextCount)
+        assertEquals(3, contextCount)
 
         val report = query(AccessQuery(hashSetOf(TEST_USER.toString(), TEST_USER_GROUP.toString()),
                 hashMapOf(

@@ -12,5 +12,5 @@ open class AbstractCoreEntity(
         @Id val id: String = EntityUtils.uuid(),
         val created: Timestamp = Timestamp.from(Instant.now()),
         val creatorId: String = EntityUtils.SYSTEM_ID,
-        val tenant: String = Tenant.NOSTALOGIC.name.toLowerCase()
+        val tenant: String = Tenant.NOSTALOGIC.name.lowercase()
 )

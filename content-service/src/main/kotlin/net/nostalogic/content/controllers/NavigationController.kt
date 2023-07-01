@@ -2,7 +2,7 @@ package net.nostalogic.content.controllers
 
 import net.nostalogic.content.ContentApplication
 import net.nostalogic.content.controllers.NavigationController.Companion.NAV_ENDPOINT
-import net.nostalogic.content.datamodel.navigations.Nav
+import net.nostalogic.content.datamodel.navigations.NavLink
 import net.nostalogic.content.datamodel.navigations.NavDetails
 import net.nostalogic.content.datamodel.navigations.NavigationSearchCriteria
 import net.nostalogic.content.services.NavService
@@ -28,18 +28,18 @@ class NavigationController(@Autowired private val navService: NavService) {
     }
 
     @RequestMapping(method = [RequestMethod.POST], path = ["/navigations"])
-    fun createNav(@RequestBody nav: Nav): Nav {
+    fun createNav(@RequestBody nav: NavLink): NavLink {
         return navService.createNav(nav)
     }
 
     @RequestMapping(method = [RequestMethod.PUT], path = ["/navigations/{navigationId}"])
-    fun editNav(@PathVariable navigationId: String, @RequestBody nav: Nav): Nav {
+    fun editNav(@PathVariable navigationId: String, @RequestBody nav: NavLink): NavLink {
         nav.id = navigationId
         return navService.editNav(nav)
     }
 
     @RequestMapping(method = [RequestMethod.GET], path = ["/navigations/{navigationId}"])
-    fun getNav(@PathVariable navigationId: String): Nav {
+    fun getNav(@PathVariable navigationId: String): NavLink {
         return navService.getNav(navigationId)
     }
 
@@ -57,8 +57,8 @@ class NavigationController(@Autowired private val navService: NavService) {
                    @RequestParam id: Set<String>?,
                    @RequestParam urn: Set<String>?,
                    @RequestParam text: Set<String>?,
-                   @RequestParam status: Set<EntityStatus>?): NoPageResponse<Nav> {
-        val pageable = NoPageable<Nav>(page, size, *NavigationSearchCriteria.DEFAULT_SORT_FIELDS)
+                   @RequestParam status: Set<EntityStatus>?): NoPageResponse<NavLink> {
+        val pageable = NoPageable<NavLink>(page, size, *NavigationSearchCriteria.DEFAULT_SORT_FIELDS)
         val result = navService.searchNavs(NavigationSearchCriteria(navIds = id, urns = urn, texts = text, status = status, page = pageable))
         return pageable.toResponse(result)
     }

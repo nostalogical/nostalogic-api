@@ -77,7 +77,7 @@ class MembershipController(@Autowired private val membershipService: MembershipS
         return membershipService.removeUsersFromGroups(setOf(userId), groupIds)
     }
 
-    @RequestMapping(method = [RequestMethod.PUT], path = ["$GROUPS_ENDPOINT/{groupId}/$USERS_ENDPOINT/{userId}"])
+    @RequestMapping(method = [RequestMethod.PUT], path = ["$GROUPS_ENDPOINT/{groupId}$USERS_ENDPOINT/{userId}"])
     fun updateMembership(@PathVariable userId: String, @PathVariable groupId: String, @RequestBody update: Membership): Membership {
         return membershipService.updateMembership(update, userId, groupId)
     }

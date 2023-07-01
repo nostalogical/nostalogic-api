@@ -283,7 +283,7 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
         val exchange = exchange(
             entity = HttpEntity(membership, testHeaders()),
             responseType = object : ParameterizedTypeReference<Membership>() {},
-            method = HttpMethod.PUT, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}${MembershipController.GROUPS_ENDPOINT}/${baseGroupId}09/" +
+            method = HttpMethod.PUT, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}${MembershipController.GROUPS_ENDPOINT}/${baseGroupId}09" +
                     "${MembershipController.USERS_ENDPOINT}/${baseUserId}09")
         Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
         val updated = exchange.body!!

@@ -1,6 +1,7 @@
 package net.nostalogic.crypto.encoders
 
 import net.nostalogic.crypto.algorithms.SecretKeyAlgorithm
+import net.nostalogic.datamodel.authentication.EncodingDetails
 import net.nostalogic.datamodel.authentication.UserAuthentication
 import net.nostalogic.exceptions.NoValidationException
 import org.apache.commons.lang3.StringUtils
@@ -14,12 +15,13 @@ object PBKDF2Encoder : PasswordEncoder() {
     private const val HASH_LENGTH = 64 * 8
     private val PEPPER = HexEncoder.hexToBytes("c68b32da7a33063572f351939e058a5d")
 
-    override fun encodePassword(password: String): UserAuthentication {
+    override fun encodePassword(encodingDetails: EncodingDetails): UserAuthentication {
+        val password = encodingDetails.password
         if (StringUtils.isEmpty(password))
             throw NoValidationException(107003, "password", "Password cannot be empty")
 
-        val salt = SHAEncoder.getSalt()
-        val iterations = Random.nextInt(1000, 1500)
+        val salt = encodingDetails.salt?.toByteArray() ?: SHAEncoder.getSalt()
+        val iterations = encodingDetails.iterations ?: Random.nextInt(1000, 1500)
         val passwordBytes = createHash(password, salt, HASH_LENGTH, iterations)
 
         return UserAuthentication(

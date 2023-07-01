@@ -3,7 +3,7 @@ package net.nostalogic.content.datamodel.navigations
 import net.nostalogic.content.datamodel.containers.Container
 import net.nostalogic.entities.EntityStatus
 
-data class Nav(
+data class NavLink(
     var id: String? = null,
     var parentId: String? = null,
     var text: String? = null,

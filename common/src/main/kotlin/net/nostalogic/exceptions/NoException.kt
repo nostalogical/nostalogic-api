@@ -4,7 +4,7 @@ import net.nostalogic.datamodel.ErrorResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 
-abstract class NoException(private val errorCode: Int, cause: Exception?,
+abstract class NoException(val errorCode: Int, cause: Exception?,
                            status: HttpStatus?, val debugMessage: String?,
                            private val userMessage: String) : Exception(debugMessage, cause) {
 

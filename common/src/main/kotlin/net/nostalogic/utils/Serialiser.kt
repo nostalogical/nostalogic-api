@@ -20,16 +20,16 @@ object Serialiser {
         return gson.toJson(src)
     }
 
-    private fun <T> classDeserialise(src: String, clazz: Class<T>?): T? {
+    fun <T> classDeserialise(src: String, clazz: Class<T>?): T? {
         return try {
-            gson.fromJson<T>(src, clazz)
+            gson.fromJson(src, clazz)
         } catch (e: Exception) {
             logger.error("Failed to deserialise object", e)
             null
         }
     }
 
-    private fun <T> typeDeserialise(src: String, type: Type): T? {
+    fun <T> typeDeserialise(src: String, type: Type): T? {
         return try {
             gson.fromJson<T>(src, type)
         } catch (e: Exception) {

@@ -26,8 +26,8 @@ object AccessComms {
 
     fun query(accessQuery: AccessQuery): AccessReport {
         return try {
-            val response = khttp.post(url = Config.accessUrl() + ACCESS_ENDPOINT, json = Serialiser.toJson(accessQuery), headers = Comms.HEADERS)
-            Comms.parseResponse(response, AccessReport::class.java) ?: AccessReport()
+            Comms.autoPost(url = Config.accessUrl() + ACCESS_ENDPOINT, json = Serialiser.serialise(accessQuery),
+                headers = Comms.HEADERS, clazz = AccessReport::class.java) ?: AccessReport()
         } catch (e: Exception) {
             logger.error("Request to access service failed", e)
             throw NoAccessException(101002, "Failed to connect to access service", Translator.translate("permissionMissing"))
@@ -36,8 +36,7 @@ object AccessComms {
 
     fun createPolicy(policy: Policy): Policy? {
         return try {
-            val response = khttp.post(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_URN", json = Serialiser.toJson(policy), headers = Comms.HEADERS)
-            Comms.parseResponse(response, Policy::class.java, expectedCode = 201)
+            Comms.autoPost(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_URN", json = Serialiser.serialise(policy), headers = Comms.HEADERS, clazz = Policy::class.java)
         } catch (e: Exception) {
             logger.error("Internal request to update a session failed with an exception", e)
             null
@@ -54,8 +53,7 @@ object AccessComms {
             if (status.isNotEmpty()) params["status"] = status.joinToString(",")
             if (priority.isNotEmpty()) params["priority"] = priority.joinToString(",")
             if (actions.isNotEmpty()) params["actions"] = actions.joinToString(",")
-            val response = khttp.get(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_URN", params = params, headers = Comms.HEADERS)
-            return Comms.parsePagedResponse(response, type = object : TypeToken<NoPageResponse<Policy>>() {}.type)
+            return Comms.autoGetPaged(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_URN", params = params, headers = Comms.HEADERS, type = object : TypeToken<NoPageResponse<Policy>>() {}.type)
         } catch (e: Exception) {
             logger.error("Internal request to update a session failed with an exception", e)
             null
@@ -64,8 +62,7 @@ object AccessComms {
 
     fun deletePolicy(policyId: String, hard: Boolean = false) {
         return try {
-            val response = khttp.delete(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_URN/$policyId?hard=$hard", headers = Comms.HEADERS)
-            Comms.parseResponse(response, Unit::class.java)
+            Comms.autoDelete(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_URN/$policyId?hard=$hard", headers = Comms.HEADERS, clazz = Unit::class.java)
             return
         } catch (e: Exception) {
             logger.error("Internal request to update a session failed with an exception", e)
@@ -74,8 +71,7 @@ object AccessComms {
 
     fun updatePolicy(policy: Policy): Policy? {
         return try {
-            val response = khttp.put(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_URN/${policy.id}", json = Serialiser.toJson(policy), headers = Comms.HEADERS)
-            return Comms.parseResponse(response, Policy::class.java)
+            Comms.autoPut(url = Config.accessUrl() + "$ACCESS_ENDPOINT$POLICY_URN/${policy.id}", json = Serialiser.serialise(policy), headers = Comms.HEADERS, clazz = Policy::class.java)
         } catch (e: Exception) {
             logger.error("Internal request to update a session failed with an exception", e)
             null
@@ -83,9 +79,9 @@ object AccessComms {
     }
 
     fun createSession(prompt: SessionPrompt): SessionSummary? {
+        val url = Config.accessUrl() + SESSIONS_ENDPOINT
         return try {
-            val response = khttp.post(url = Config.accessUrl() + SESSIONS_ENDPOINT, json = Serialiser.toJson(prompt), headers = Comms.HEADERS)
-            Comms.parseResponse(response, SessionSummary::class.java)
+            Comms.autoPost(url = url, json = Serialiser.serialise(prompt), headers = Comms.HEADERS, clazz = SessionSummary::class.java)
         } catch (e: Exception) {
             logger.error("Internal request to create a session failed with an exception", e)
             null
@@ -94,8 +90,7 @@ object AccessComms {
 
     fun refreshSession(token: String): SessionSummary? {
         return try {
-            val response = khttp.put(url = Config.accessUrl() + SESSIONS_ENDPOINT, headers = headerWithToken(token))
-            Comms.parseResponse(response, SessionSummary::class.java)
+            Comms.autoPut(url = Config.accessUrl() + SESSIONS_ENDPOINT, headers = headerWithToken(token), clazz = SessionSummary::class.java)
         } catch (e: Exception) {
             logger.error("Internal request to refresh a session failed with an exception", e)
             null
@@ -104,8 +99,7 @@ object AccessComms {
 
     fun endSession(token: String): SessionSummary? {
         return try {
-            val response = khttp.delete(url = Config.accessUrl() + SESSIONS_ENDPOINT, headers = headerWithToken(token))
-            Comms.parseResponse(response, SessionSummary::class.java)
+            Comms.autoDelete(url = Config.accessUrl() + SESSIONS_ENDPOINT, headers = headerWithToken(token), clazz = SessionSummary::class.java)
         } catch (e: Exception) {
             logger.error("Internal request to end a session failed with an exception", e)
             null
@@ -114,8 +108,7 @@ object AccessComms {
 
     fun verifySession(token: String): SessionSummary? {
         return try {
-            val response = khttp.get(url = Config.accessUrl() + SESSIONS_ENDPOINT, headers = headerWithToken(token))
-            Comms.parseResponse(response, SessionSummary::class.java)
+            Comms.autoGet(url = Config.accessUrl() + SESSIONS_ENDPOINT, headers = headerWithToken(token), clazz = SessionSummary::class.java)
         } catch (e: Exception) {
             logger.error("Internal request to verify a session failed with an exception", e)
             null
@@ -124,8 +117,7 @@ object AccessComms {
 
     fun updateSession(groups: HashSet<String>, userId: String) {
         try {
-            val response = khttp.put(url = Config.accessUrl() + "$SESSIONS_ENDPOINT/update/$userId", data = Serialiser.serialise(groups), headers = Comms.HEADERS)
-            Comms.parseResponse(response, Unit::class.java)
+            Comms.autoPut(url = Config.accessUrl() + "$SESSIONS_ENDPOINT/update/$userId", json = Serialiser.serialise(groups), headers = Comms.HEADERS, clazz = Unit::class.java)
         } catch (e: Exception) {
             logger.error("Internal request to update a session failed with an exception", e)
         }

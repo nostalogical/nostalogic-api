@@ -115,7 +115,7 @@ open class AccessService(
 
     open fun savePolicy(policy: Policy, policyId: String? = null): Policy {
         val entities = PolicyMapper.dtoToEntities(policy,
-                if (policyId == null) null else policyRepository.getOne(policyId))
+                if (policyId == null) null else policyRepository.getById(policyId))
 
         policyRepository.save(entities.policy)
         entities.actions.forEach{ policyActionRepository.save(it) }

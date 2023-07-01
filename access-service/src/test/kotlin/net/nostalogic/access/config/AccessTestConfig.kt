@@ -27,6 +27,7 @@ open class AccessTestConfig {
     private val actionRepo = mockk<PolicyActionRepository>()
     private val resourceRepo = mockk<PolicyResourceRepository>()
     private val subjectRepo = mockk<PolicySubjectRepository>()
+    private val accessExtensionRepo = mockk<AccessExtensionRepository>()
     private val databaseLoader = mockk<DatabaseLoader>()
     private val accessQueryService = accessQueryService()
 
@@ -75,8 +76,13 @@ open class AccessTestConfig {
     }
 
     @Bean
+    open fun accessExtensionRepo(): AccessExtensionRepository {
+        return accessExtensionRepo
+    }
+
+    @Bean
     open fun sessionService(): SessionService {
-        return SessionService(sessionRepo, sessionEventRepo)
+        return SessionService(sessionRepo, sessionEventRepo, accessExtensionRepo)
     }
 
     @Bean

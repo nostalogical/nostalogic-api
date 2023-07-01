@@ -1,7 +1,8 @@
 security:
   jwt:
     key: ZqHPJkeRMjYRpNKFfFtUNZZPGnHzclYFpwnISiabFCddietCFUeiKBTNyMaLOsgQ
-    duration-minutes: 525600
+    access-duration-minutes: 60
+refresh-duration-minutes: 86400
 
 spring:
   application:

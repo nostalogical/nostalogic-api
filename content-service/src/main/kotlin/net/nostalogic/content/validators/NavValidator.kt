@@ -1,6 +1,6 @@
 package net.nostalogic.content.validators
 
-import net.nostalogic.content.datamodel.navigations.Nav
+import net.nostalogic.content.datamodel.navigations.NavLink
 import net.nostalogic.content.utils.PathUtils
 import net.nostalogic.validators.InvalidFieldsReport
 import org.apache.commons.lang3.StringUtils
@@ -11,7 +11,7 @@ object NavValidator {
     private const val PATH_MAX_LENGTH = 50
     private const val ICON_MAX_LENGTH = 20
 
-    fun validateNavigation(nav: Nav, create: Boolean = false) {
+    fun validateNavigation(nav: NavLink, create: Boolean = false) {
         val report = InvalidFieldsReport()
 
         if (nav.text.isNullOrBlank() && create)

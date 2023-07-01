@@ -5,7 +5,6 @@ import org.apache.commons.lang3.StringUtils
 
 class AuthenticationContext(val type: AuthenticationType) {
 
-    val additionalSubjects = HashSet<String>()
     var userId: String? = null
     var userName: String? = null
     var email: String? = null
@@ -13,7 +12,7 @@ class AuthenticationContext(val type: AuthenticationType) {
     var storedPassword: String? = null
 
     fun isVerifiable(): Boolean {
-        if (type == AuthenticationType.USERNAME || type == AuthenticationType.EMAIL) {
+        if (type == AuthenticationType.LOGIN) {
             return hasRequiredFields(listOf(userId, password, storedPassword))
         }
         return false

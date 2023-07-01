@@ -2,6 +2,7 @@ package net.nostalogic.content.utils
 
 import org.apache.commons.lang3.RegExUtils
 import org.apache.commons.lang3.StringUtils
+import java.util.*
 
 object PathUtils {
 
@@ -14,7 +15,8 @@ object PathUtils {
     fun sanitisePath(path: String): String {
         return RegExUtils.replacePattern(
             RegExUtils.replacePattern(path, "^/*|/*\$", "")
-            , "/+", "/").toLowerCase()
+            ,
+            "/+", "/").lowercase(Locale.getDefault())
     }
 
     fun isUrnValid(urn: String): Boolean {

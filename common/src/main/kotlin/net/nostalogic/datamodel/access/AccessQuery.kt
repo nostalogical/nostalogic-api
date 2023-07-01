@@ -16,11 +16,6 @@ data class AccessQuery(val subjects: HashSet<String> = HashSet(),
         return this
     }
 
-    fun addSubjects(subjects: Collection<EntityReference>): AccessQuery {
-        subjects.forEach { addSubject(it) }
-        return this
-    }
-
     fun currentSubject(): AccessQuery {
         addSubjects(SessionContext.getGrant())
         return this
@@ -29,10 +24,8 @@ data class AccessQuery(val subjects: HashSet<String> = HashSet(),
     private fun addSubjects(grant: NoGrant): AccessQuery {
         if (grant is LoginGrant) {
             addSubject(EntityReference(grant.subject, NoEntity.USER))
-            addSubjects(grant.additional.map { EntityReference(it, NoEntity.USER) })
         } else if (grant is ImpersonationGrant) {
             addSubject(EntityReference(grant.subject, NoEntity.USER))
-            addSubjects(grant.additional.map { EntityReference(it, NoEntity.USER) })
         }
         return this
     }

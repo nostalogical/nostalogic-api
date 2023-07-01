@@ -64,7 +64,7 @@ class UserService(
         return UserMapper.entityToDto(userEntity)
     }
 
-    fun registerUser(userRegistration: UserRegistration): User {
+    fun registerUser(userRegistration: UserRegistration): RegistrationResponse {
         RegistrationValidator.validateRegistration(userRegistration, checkRegistrationAvailable(userRegistration))
 
         val userEntity = saveUser(UserMapper.registrationToEntity(userRegistration = userRegistration))
@@ -77,8 +77,7 @@ class UserService(
                 type = MessageType.REGISTRATION_CONFIRM,
                 locale = userEntity.locale)
                 .setParameter("reg_code", regCode))
-        return UserMapper.entityToDto(userEntity)
-
+        return RegistrationResponse(userEntity.email, userEntity.username)
     }
 
     fun confirmRegistration(token: String?): User {
@@ -181,7 +180,7 @@ class UserService(
             val userEntity = userRepository.findByIdEquals(userId) ?: throw NoRetrieveException(304012, "User")
 
             val rights = if (!includeRights) null else {
-                val query = AccessQuery().currentSubject();
+                val query = AccessQuery().currentSubject()
                 for (entity in setOf(NoEntity.USER, NoEntity.GROUP, NoEntity.NAV, NoEntity.ARTICLE))
                     query.addQuery(entity, PolicyAction.READ, PolicyAction.CREATE, PolicyAction.EDIT)
                 val report = query.toReport()
@@ -295,7 +294,7 @@ class UserService(
     }
 
     fun checkRights(): EntityRights {
-        val userEntity = EntityReference(entity = NoEntity.USER);
+        val userEntity = EntityReference(entity = NoEntity.USER)
         val report = AccessQuery().currentSubject()
             .addQuery(userEntity, PolicyAction.CREATE, PolicyAction.DELETE, PolicyAction.EDIT)
             .toReport()

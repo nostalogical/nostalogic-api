@@ -13,15 +13,9 @@ object ExcommComms {
     fun send(messageOutline: MessageOutline): String? {
         logger.info("Sending ${messageOutline.type} to ${messageOutline.recipientId}")
         return try {
-            val response = khttp.post(url = Config.excommUrl() + EXCOMM_MESSAGE_ENDPOINT, json = Serialiser.toJson(messageOutline), headers = Comms.HEADERS)
-            if (response.statusCode != 200) {
-                logger.error("Excomm request returned non-OK response (${response.statusCode}): ${String(response.content)}")
-                null
-            } else {
-                val messageId = String(response.content)
-                logger.info("Sent ${messageOutline.type} to ${messageOutline.recipientId} as $messageId")
-                messageId
-            }
+            val messageId = Comms.autoPost(url = Config.excommUrl() + EXCOMM_MESSAGE_ENDPOINT, json = Serialiser.serialise(messageOutline), headers = Comms.HEADERS, expectedCode = 200, clazz = String::class.java)
+            logger.info("Sent ${messageOutline.type} to ${messageOutline.recipientId} as $messageId")
+            messageId
         } catch (e: Exception) {
             logger.error("Failed to send ${messageOutline.type} to ${messageOutline.recipientId}", e)
             null

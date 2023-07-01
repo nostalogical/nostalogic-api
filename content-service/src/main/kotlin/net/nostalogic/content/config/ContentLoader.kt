@@ -38,11 +38,10 @@ class ContentLoader(private val resourceLoader: ResourceLoader,
         for (file in pageFiles) {
             val urn = file.filename!!.replace(".md", "")
             val contents = file.file.inputStream().readBytes().toString(Charsets.UTF_8)
-            connection.prepareStatement("UPDATE article SET contents = ?, last_updated = now() WHERE name ilike ?").use {
-                it.setString(1, contents)
-                it.setString(2, urn)
-                it.execute()
-            }
+            val ps = connection.prepareStatement("UPDATE article SET contents = ?, last_updated = now() WHERE name ilike ?")
+            ps.setString(1, contents)
+            ps.setString(2, urn)
+            ps.execute()
         }
     }
 

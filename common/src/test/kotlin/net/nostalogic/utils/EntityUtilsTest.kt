@@ -16,19 +16,20 @@ import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.test.context.ActiveProfiles
+import java.util.*
 
 @ActiveProfiles(profiles = ["test"])
 class EntityUtilsTest {
 
     @Test
     fun `An entity from a lowercase name is valid`() {
-        val entity = toEntity(NoEntity.NAV.name.toLowerCase())
+        val entity = toEntity(NoEntity.NAV.name.lowercase(Locale.getDefault()))
         Assertions.assertEquals(NoEntity.NAV, entity)
     }
 
     @Test
     fun `An entity from an uppercase name is valid`() {
-        val entity = toEntity(NoEntity.ARTICLE.name.toUpperCase())
+        val entity = toEntity(NoEntity.ARTICLE.name.uppercase(Locale.getDefault()))
         Assertions.assertEquals(NoEntity.ARTICLE, entity)
     }
 
@@ -41,7 +42,7 @@ class EntityUtilsTest {
     fun `An entity reference is parsed as valid`() {
         val uuid = uuid()
         val expectedRef = EntityReference(uuid, NoEntity.EMAIL)
-        val ref = toEntityRef(NoEntity.EMAIL.name.toLowerCase() + "_" + uuid)
+        val ref = toEntityRef(NoEntity.EMAIL.name.lowercase(Locale.getDefault()) + "_" + uuid)
         Assertions.assertEquals(expectedRef, ref)
     }
 
@@ -91,7 +92,7 @@ class EntityUtilsTest {
 
     @Test
     fun `A lowercase entity name is a valid entity`() {
-        Assertions.assertTrue(isEntity(NoEntity.SESSION.name.toLowerCase()))
+        Assertions.assertTrue(isEntity(NoEntity.SESSION.name.lowercase(Locale.getDefault())))
     }
 
     @Test
@@ -111,7 +112,7 @@ class EntityUtilsTest {
 
     @Test
     fun `A lowercase entity name is a local reference`() {
-        Assertions.assertTrue(isLocalReference(NoEntity.EMAIL.name.toLowerCase()))
+        Assertions.assertTrue(isLocalReference(NoEntity.EMAIL.name.lowercase(Locale.getDefault())))
     }
 
     @Test
@@ -131,6 +132,6 @@ class EntityUtilsTest {
 
     @Test
     fun `An entity signature is recognised`() {
-        Assertions.assertTrue(isEntityReference(NoEntity.ARTICLE.name.toLowerCase() + "_" + uuid()))
+        Assertions.assertTrue(isEntityReference(NoEntity.ARTICLE.name.lowercase(Locale.getDefault()) + "_" + uuid()))
     }
 }

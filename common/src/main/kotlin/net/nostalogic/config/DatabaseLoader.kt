@@ -1,5 +1,6 @@
 package net.nostalogic.config
 
+import org.slf4j.LoggerFactory
 import org.springframework.core.env.Environment
 import org.springframework.core.io.Resource
 import org.springframework.core.io.ResourceLoader
@@ -14,15 +15,17 @@ import java.sql.Connection
 @Component(value = "DatabaseLoader")
 class DatabaseLoader(
         private val resourceLoader: ResourceLoader,
-        private val environment: Environment,
+        environment: Environment,
         jdbcTemplate: JdbcTemplate) {
 
     companion object {
+        private val logger = LoggerFactory.getLogger(DatabaseLoader::class.java)
+
         private const val BASE_SCHEMA_SQL_PATTERN = "_base_schema.sql"
         private const val SERVICE_SCHEMA_SQL_PATTERN = "_service_schema.sql"
         private const val STANDARD_SQL_PATTERN = "classpath*:sql/*/*.sql"
-        private const val OVERRIDE_SQL_PATTERN = "classpath*:sql/???_*.sql"
-        private const val DATA_SETUP_SQL_PATTERN = "classpath*:sql/02_data/*.sql"
+        private const val OVERRIDE_SQL_PATTERN = "classpath*:sql/override/*/*.sql"
+        private const val PRESET_SQL_PATTERN = "classpath*:sql/preset/*/*.sql"
         private const val DATA_DROP_SQL_PATTERN = "classpath*:sql/DataTeardown_*.sql"
         private const val SCHEMA_DROP_SQL_PATTERN = "classpath*:sql/SchemaTeardown_*.sql"
     }
@@ -59,20 +62,25 @@ class DatabaseLoader(
         runResourceScripts(getResourcesFromPattern(DATA_DROP_SQL_PATTERN))
     }
 
-    fun runDataSetupScripts() {
-        runResourceScripts(getResourcesFromPattern(DATA_SETUP_SQL_PATTERN))
-    }
-
     private fun runResourceScripts(resources: Array<Resource>) {
         if (useDatabase) {
-            for (script in resources)
-                ScriptUtils.executeSqlScript(connection, script)
+            for (script in resources) {
+                val scriptName = script.filename?.substringAfterLast("/")
+                try {
+                    logger.info("Running SQL script ${scriptName}")
+                    ScriptUtils.executeSqlScript(connection, script)
+                } catch (e: Exception) {
+                    logger.error("Failed to run ${scriptName}", e)
+                    throw RuntimeException("SQL initialisation failed")
+                }
+            }
         }
     }
 
     private fun getStartupScripts(): Array<Resource> {
         val standardScripts = getResourcesFromPattern(STANDARD_SQL_PATTERN).toMutableList()
         val overrideScripts = getResourcesFromPattern(OVERRIDE_SQL_PATTERN)
+        val presetDataScripts = getResourcesFromPattern(PRESET_SQL_PATTERN)
         val scriptsToRun = ArrayList<Resource>()
 
         isolateSchema(standardScripts)
@@ -81,8 +89,6 @@ class DatabaseLoader(
 
         standard@
         for (standard in standardScripts) {
-            if (standard.url.file.contains("schema") && standardScripts.indexOf(standard) > 0)
-                continue
             for (override in overrideScripts) {
                 if (standard.url.file.substringAfterLast("/").startsWith(override.url.file.substringAfterLast("/").substring(0, 3))) {
                     scriptsToRun.add(override)
@@ -91,6 +97,8 @@ class DatabaseLoader(
             }
             scriptsToRun.add(standard)
         }
+        presetDataScripts.sortBy { it.filename?.substringAfterLast("/") }
+        presetDataScripts.forEach { scriptsToRun.add(it) }
 
         return scriptsToRun.toArray(arrayOfNulls<Resource>(scriptsToRun.size))
     }

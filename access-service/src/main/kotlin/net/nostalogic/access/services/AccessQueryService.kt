@@ -196,7 +196,7 @@ open class AccessQueryService(
         val entities = HashSet<NoEntity>()
         for (entityId in entityIds) {
             if (EntityUtils.isEntity(entityId))
-                entities.add(NoEntity.valueOf(entityId.toUpperCase()))
+                entities.add(NoEntity.valueOf(entityId.uppercase()))
         }
         return entities
     }

@@ -51,8 +51,8 @@ class Config(private val context: ApplicationContext,
         }
 
         fun addSetting(setting: Setting) {
-            cache[setting.key.toLowerCase()] = setting
-            if (setting.key.toLowerCase() == JwtUtil.KEY_PROPERTY)
+            cache[setting.key.lowercase()] = setting
+            if (setting.key.lowercase() == JwtUtil.KEY_PROPERTY)
                 JwtUtil.setKey(setting.value)
         }
 
@@ -93,7 +93,7 @@ class Config(private val context: ApplicationContext,
         }
 
         fun getSetting(key: String, allowEmpty: Boolean = false): String {
-            val setting = cache[key.toLowerCase()]?.value
+            val setting = cache[key.lowercase()]?.value
             if (setting.isNullOrBlank())
                 if (allowEmpty) return ""
                 else throw NoRetrieveException(103001, "Setting", "Setting $key not found in cache", null)
@@ -101,12 +101,12 @@ class Config(private val context: ApplicationContext,
         }
 
         fun getBoolean(key: String): Boolean {
-            val setting = cache[key.toLowerCase()]?.value
+            val setting = cache[key.lowercase()]?.value
             return !setting.isNullOrBlank() && setting.equals("true", true)
         }
 
         fun getNumberSetting(key: String): Int {
-            return cache[key.toLowerCase()]?.numValue
+            return cache[key.lowercase()]?.numValue
                     ?: throw NoRetrieveException(103002, "Setting",
                             "Setting $key not found or not parsable as a number", null)
         }

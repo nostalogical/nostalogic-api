@@ -57,7 +57,7 @@ open class SessionContext (
             if (!(grant is LoginGrant || grant is ImpersonationGrant))
                 throw NoAuthException(102003, "User login is required for this function", NoStrings.notLoggedIn())
             val session = getToken()?.let { AccessComms.verifySession(it) }
-            if (session?.token == null)
+            if (session?.accessToken == null)
                 throw NoAuthException(102004, "User token is valid but the server session could not be verified", NoStrings.sessionVerifyFail())
         }
     }

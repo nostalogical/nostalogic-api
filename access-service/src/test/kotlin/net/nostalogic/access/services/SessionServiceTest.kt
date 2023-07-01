@@ -1,20 +1,22 @@
 package net.nostalogic.access.services
 
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.slot
-import io.mockk.verify
+import io.mockk.*
 import net.nostalogic.access.config.AccessTestConfig
+import net.nostalogic.access.persistence.entities.AccessExtensionEntity
 import net.nostalogic.access.persistence.entities.ServerSessionEntity
 import net.nostalogic.access.persistence.entities.ServerSessionEventEntity
+import net.nostalogic.access.persistence.repositories.AccessExtensionRepository
 import net.nostalogic.access.persistence.repositories.ServerSessionEventRepository
 import net.nostalogic.access.persistence.repositories.ServerSessionRepository
+import net.nostalogic.constants.AuthenticationSource
 import net.nostalogic.constants.AuthenticationType
+import net.nostalogic.constants.ExceptionCodes
 import net.nostalogic.constants.SessionEvent
+import net.nostalogic.datamodel.NoDate
 import net.nostalogic.exceptions.NoAuthException
 import net.nostalogic.security.models.SessionPrompt
 import net.nostalogic.security.utils.TokenDecoder
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -27,6 +29,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 import java.sql.Timestamp
 import java.time.Instant
 import java.util.*
+import kotlin.collections.HashSet
 
 @ActiveProfiles(profiles = ["test"])
 @ExtendWith(SpringExtension::class)
@@ -34,7 +37,9 @@ import java.util.*
 class SessionServiceTest(
         @Autowired val sessionService: SessionService,
         @Autowired val sessionRepo: ServerSessionRepository,
-        @Autowired val sessionEventRepo: ServerSessionEventRepository) {
+        @Autowired val sessionEventRepo: ServerSessionEventRepository,
+        @Autowired val accessExtensionRepo: AccessExtensionRepository,
+    ) {
 
     private val testId = "TestUserId"
     private val group1 = "group1"
@@ -42,68 +47,90 @@ class SessionServiceTest(
     private val additional = setOf(group1, group2)
     private val savedSession = slot<ServerSessionEntity>()
     private val savedEvent = slot<ServerSessionEventEntity>()
+    private val savedAccessExtensions = slot<Iterable<AccessExtensionEntity>>()
 
     @BeforeEach
     fun setup() {
         clearAllMocks()
         every { sessionRepo.save(capture(savedSession)) } answers{ savedSession.captured }
         every { sessionEventRepo.save(capture(savedEvent)) } answers{ savedEvent.captured }
+        every { accessExtensionRepo.saveAll(capture(savedAccessExtensions)) } answers{ savedAccessExtensions.captured }
     }
 
     @Test
     fun `Create session from username login`() {
-        val usernameLogin = sessionService.createSession(SessionPrompt(testId, additional, AuthenticationType.USERNAME))
+        val usernameLogin = sessionService.createSession(SessionPrompt(testId, AuthenticationSource.USERNAME))
         verify(exactly = 1) { sessionRepo.save(ofType(ServerSessionEntity::class)) }
         verify(exactly = 1) { sessionEventRepo.save(ofType(ServerSessionEventEntity::class)) }
-        Assertions.assertEquals(SessionEvent.LOGIN.name, savedEvent.captured.event)
-        Assertions.assertEquals(36, usernameLogin.sessionId.length)
-        Assertions.assertEquals(testId, usernameLogin.userId)
-        Assertions.assertEquals(AuthenticationType.USERNAME, usernameLogin.type)
-        Assertions.assertNull(usernameLogin.description)
-        Assertions.assertNotNull(usernameLogin.token)
-        Assertions.assertTrue(usernameLogin.end.getTimestamp().after(Timestamp.from(Instant.now())))
-        val grant = usernameLogin.token?.let { TokenDecoder.decodeToken(it) }
-        Assertions.assertNotNull(grant)
+        assertEquals(SessionEvent.BEGIN.name, savedEvent.captured.event)
+        assertEquals(36, usernameLogin.sessionId.length)
+        assertEquals(testId, usernameLogin.userId)
+        assertEquals(AuthenticationType.LOGIN, usernameLogin.type)
+        assertNull(usernameLogin.description)
+        assertNotNull(usernameLogin.accessToken)
+        assertTrue(usernameLogin.end.getTimestamp().after(Timestamp.from(Instant.now())))
+        val grant = usernameLogin.accessToken?.let { TokenDecoder.decodeToken(it.token) }
+        assertNotNull(grant)
     }
 
     @Test
     fun `Create session from email login`() {
-        val emailLogin = sessionService.createSession(SessionPrompt(testId, additional, AuthenticationType.EMAIL))
+        val emailLogin = sessionService.createSession(SessionPrompt(testId, AuthenticationSource.EMAIL))
         verify(exactly = 1) { sessionRepo.save(ofType(ServerSessionEntity::class)) }
         verify(exactly = 1) { sessionEventRepo.save(ofType(ServerSessionEventEntity::class)) }
-        val grant = emailLogin.token?.let { TokenDecoder.decodeToken(it) }
-        Assertions.assertNotNull(grant)
+        val grant = emailLogin.accessToken?.let { TokenDecoder.decodeToken(it.token) }
+        assertNotNull(grant)
     }
 
     @Test
     fun `Create session without a user ID`() {
-        assertThrows<NoAuthException> { sessionService.createSession(SessionPrompt("", additional, AuthenticationType.USERNAME)) }
+        assertThrows<NoAuthException> { sessionService.createSession(SessionPrompt("", AuthenticationSource.USERNAME)) }
         verify(exactly = 0) { sessionRepo.save(ofType(ServerSessionEntity::class)) }
         verify(exactly = 0) { sessionEventRepo.save(ofType(ServerSessionEventEntity::class)) }
     }
 
     @Test
+    fun `Create an impersonation session`() {
+        val impersonation = sessionService.createSession(SessionPrompt(testId, AuthenticationSource.IMPERSONATION, originalUserId = "OriginalId"))
+        verify(exactly = 1) { sessionRepo.save(ofType(ServerSessionEntity::class)) }
+        verify(exactly = 1) { sessionEventRepo.save(ofType(ServerSessionEventEntity::class)) }
+        val grant = impersonation.accessToken?.let { TokenDecoder.decodeToken(it.token) }
+        assertNotNull(grant)
+        assertNotNull(impersonation.accessToken)
+        assertNull(impersonation.refreshToken, "Impersonation sessions should not be refreshable.")
+    }
+
+    @Test
+    fun `An impersonation session requires an original user`() {
+        val exception = assertThrows<NoAuthException> { sessionService.createSession(SessionPrompt(testId, AuthenticationSource.IMPERSONATION)) }
+        assertEquals(ExceptionCodes._0201011, exception.errorCode)
+    }
+
+    @Test
     fun `Verify an existing session`() {
-        val usernameLogin = sessionService.createSession(SessionPrompt(testId, additional, AuthenticationType.USERNAME))
+        val usernameLogin = sessionService.createSession(SessionPrompt(testId, AuthenticationSource.USERNAME))
+        assertNotNull(usernameLogin.accessToken)
         every { sessionRepo.findByIdOrNull(usernameLogin.sessionId) } answers { savedSession.captured }
-        val verified = usernameLogin.token?.let { sessionService.verifySession(it) }
-        Assertions.assertNotNull(verified)
-        Assertions.assertEquals(usernameLogin.token, verified?.token)
+        val verified = usernameLogin.accessToken?.let { sessionService.verifySession(it.token) }
+        assertNotNull(verified)
+        assertEquals(usernameLogin.sessionId, verified?.sessionId)
+        assertNull(verified!!.accessToken)
+        assertNull(verified.refreshToken)
     }
 
     @Test
     fun `Verify an expired session`() {
-        val usernameLogin = sessionService.createSession(SessionPrompt(testId, additional, AuthenticationType.USERNAME))
+        val usernameLogin = sessionService.createSession(SessionPrompt(testId, AuthenticationSource.USERNAME))
         savedSession.captured.endDateTime = Timestamp.from(Instant.now().minusSeconds(20L))
         every { sessionRepo.findByIdOrNull(usernameLogin.sessionId) } answers { savedSession.captured }
-        assertThrows<NoAuthException> { usernameLogin.token?.let { sessionService.verifySession(it) } }
+        assertThrows<NoAuthException> { usernameLogin.accessToken?.let { sessionService.verifySession(it.token) } }
     }
 
     @Test
     fun `Verify a non-existing session`() {
-        val usernameLogin = sessionService.createSession(SessionPrompt(testId, additional, AuthenticationType.USERNAME))
+        val usernameLogin = sessionService.createSession(SessionPrompt(testId, AuthenticationSource.USERNAME))
         every { sessionRepo.findByIdOrNull(usernameLogin.sessionId) } answers { null }
-        assertThrows<NoAuthException> { usernameLogin.token?.let { sessionService.verifySession(it) } }
+        assertThrows<NoAuthException> { usernameLogin.accessToken?.let { sessionService.verifySession(it.token) } }
     }
 
     @Test
@@ -113,21 +140,21 @@ class SessionServiceTest(
 
     @Test
     fun `Refresh an existing session`() {
-        val usernameLogin = sessionService.createSession(SessionPrompt(testId, additional, AuthenticationType.USERNAME))
+        val usernameLogin = sessionService.createSession(SessionPrompt(testId, AuthenticationSource.USERNAME))
         every { sessionRepo.findByIdOrNull(usernameLogin.sessionId) } answers { savedSession.captured }
-        Thread.sleep(1000L)
-        val refreshed = usernameLogin.token?.let { sessionService.refreshSession(it) }
-        Assertions.assertEquals(SessionEvent.REFRESH.name, savedEvent.captured.event)
-        refreshed?.end?.isAfter(usernameLogin.end)?.let { Assertions.assertTrue(it) }
-        Assertions.assertNotEquals(usernameLogin.token, refreshed?.token)
+        Thread.sleep(10L)
+        val refreshed = usernameLogin.refreshToken?.let { sessionService.refreshSession(it.token) }
+        assertEquals(SessionEvent.REFRESH.name, savedEvent.captured.event)
+        refreshed?.end?.isAfter(usernameLogin.end)?.let { assertTrue(it) }
+        assertNotEquals(usernameLogin.accessToken, refreshed?.accessToken)
     }
 
     @Test
     fun `Refresh an expired session`() {
-        val usernameLogin = sessionService.createSession(SessionPrompt(testId, additional, AuthenticationType.USERNAME))
+        val usernameLogin = sessionService.createSession(SessionPrompt(testId, AuthenticationSource.USERNAME))
         savedSession.captured.endDateTime = Timestamp.from(Instant.now().minusSeconds(20L))
         every { sessionRepo.findByIdOrNull(usernameLogin.sessionId) } answers { savedSession.captured }
-        assertThrows<NoAuthException> { usernameLogin.token?.let { sessionService.refreshSession(it) } }
+        assertThrows<NoAuthException> { usernameLogin.accessToken?.let { sessionService.refreshSession(it.token) } }
     }
 
     @Test
@@ -137,19 +164,21 @@ class SessionServiceTest(
 
     @Test
     fun `Expire a valid session`() {
-        val usernameLogin = sessionService.createSession(SessionPrompt(testId, additional, AuthenticationType.USERNAME))
+        val usernameLogin = sessionService.createSession(SessionPrompt(testId, AuthenticationSource.USERNAME))
         every { sessionRepo.findByIdOrNull(usernameLogin.sessionId) } answers { savedSession.captured }
-        val expired = usernameLogin.token?.let { sessionService.expireSession(it) }
-        Assertions.assertNotNull(expired)
-        Assertions.assertNotNull(expired?.token)
+        val expired = usernameLogin.accessToken?.let { sessionService.expireSession(it.token) }
+        assertNotNull(expired)
+        Thread.sleep(10L)
+        assertTrue(expired!!.end.isBefore(NoDate()))
+        assertNull(expired.accessToken)
     }
 
     @Test
     fun `Expire an expired session`() {
-        val usernameLogin = sessionService.createSession(SessionPrompt(testId, additional, AuthenticationType.USERNAME))
+        val usernameLogin = sessionService.createSession(SessionPrompt(testId, AuthenticationSource.USERNAME))
         savedSession.captured.endDateTime = Timestamp.from(Instant.now().minusSeconds(20L))
         every { sessionRepo.findByIdOrNull(usernameLogin.sessionId) } answers { savedSession.captured }
-        assertThrows<NoAuthException> { usernameLogin.token?.let { sessionService.expireSession(it) } }
+        assertThrows<NoAuthException> { usernameLogin.accessToken?.let { sessionService.expireSession(it.token) } }
     }
 
     @Test
@@ -159,17 +188,49 @@ class SessionServiceTest(
 
     @Test
     fun `Update a user's session`() {
-        sessionService.createSession(SessionPrompt(testId, additional, AuthenticationType.USERNAME))
+        sessionService.createSession(SessionPrompt(testId, AuthenticationSource.USERNAME))
         every { sessionRepo.findAllByUserIdAndEndDateTimeIsAfter(testId, any()) } answers { hashSetOf(savedSession.captured) }
-        sessionService.updateUserSessions(testId, Collections.emptySet())
-        Assertions.assertEquals(SessionEvent.GROUPS_CHANGE.name, savedEvent.captured.event)
-        Assertions.assertEquals("", savedSession.captured.additional)
+        every { accessExtensionRepo.findAllByUserId(testId) } answers { emptySet() }
+        every { accessExtensionRepo.deleteAllByUserId(testId) } answers { }
+        sessionService.updateUserGroups(testId, hashSetOf(group1, group2))
+
+        verify(exactly = 1) { accessExtensionRepo.deleteAllByUserId(testId) }
+        assertEquals(2, savedAccessExtensions.captured.count())
+        savedAccessExtensions.captured.forEach { assertEquals(testId, it.userId) }
+        val groupIds = savedAccessExtensions.captured.map { it.entityId }.toHashSet()
+        assertTrue(groupIds.contains(group1))
+        assertTrue(groupIds.contains(group2))
+
+        assertEquals(SessionEvent.GROUPS_CHANGE.name, savedEvent.captured.event)
+    }
+
+    @Test
+    fun `Update a user's session with no group changes`() {
+        sessionService.createSession(SessionPrompt(testId, AuthenticationSource.USERNAME))
+        every { sessionRepo.findAllByUserIdAndEndDateTimeIsAfter(testId, any()) } answers { hashSetOf(savedSession.captured) }
+        val existingGroups = hashSetOf(AccessExtensionEntity(testId, group1), AccessExtensionEntity(testId, group2))
+        every { accessExtensionRepo.findAllByUserId(testId) } answers { existingGroups }
+        every { accessExtensionRepo.deleteAllByUserId(testId) } answers { }
+        sessionService.updateUserGroups(testId, hashSetOf(group1, group2))
+
+        verify(exactly = 1) { accessExtensionRepo.deleteAllByUserId(testId) }
+        assertEquals(2, savedAccessExtensions.captured.count())
+        savedAccessExtensions.captured.forEach { assertEquals(testId, it.userId) }
+        val groupIds = savedAccessExtensions.captured.map { it.entityId }.toHashSet()
+        assertTrue(groupIds.contains(group1))
+        assertTrue(groupIds.contains(group2))
+
+        assertEquals(SessionEvent.BEGIN.name, savedEvent.captured.event,
+            "A group change session event shouldn't be recorded if no actual change was made.")
     }
 
     @Test
     fun `Update a non-existing user's session`() {
         every { sessionRepo.findAllByUserIdAndEndDateTimeIsAfter(testId, any()) } answers { HashSet() }
-        sessionService.updateUserSessions(testId, additional)
+        every { accessExtensionRepo.findAllByUserId(testId) } answers { HashSet() }
+        every { accessExtensionRepo.deleteAllByUserId(testId) } answers { }
+        every { accessExtensionRepo.saveAll(any<List<AccessExtensionEntity>>()) } answers { mockk() }
+        sessionService.updateUserGroups(testId, additional)
         verify(exactly = 0) { sessionRepo.save(ofType(ServerSessionEntity::class)) }
         verify(exactly = 0) { sessionEventRepo.save(ofType(ServerSessionEventEntity::class)) }
     }

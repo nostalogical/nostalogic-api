@@ -1,6 +1,7 @@
 package net.nostalogic.crypto.encoders
 
 import net.nostalogic.crypto.algorithms.MessageDigestAlgorithm
+import net.nostalogic.datamodel.authentication.EncodingDetails
 import net.nostalogic.datamodel.authentication.UserAuthentication
 import net.nostalogic.exceptions.NoValidationException
 import org.apache.commons.lang3.StringUtils
@@ -11,11 +12,12 @@ object SHAEncoder : PasswordEncoder() {
     private val log = LoggerFactory.getLogger(SHAEncoder::class.java)
     private val PEPPER = HexEncoder.hexToBytes("98f207d6b0d9acdaf16b54812a0dc0fa")
 
-    override fun encodePassword(password: String): UserAuthentication {
+    override fun encodePassword(encodingDetails: EncodingDetails): UserAuthentication {
+        val password = encodingDetails.password
         if (StringUtils.isEmpty(password))
             throw NoValidationException(107001, "password", "Password cannot be empty")
 
-        val salt = getSalt()
+        val salt = encodingDetails.salt?.toByteArray() ?: getSalt()
         val passwordBytes = createHash(password, salt)
 
         return UserAuthentication(

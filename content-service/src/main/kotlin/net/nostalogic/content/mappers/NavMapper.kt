@@ -1,6 +1,6 @@
 package net.nostalogic.content.mappers
 
-import net.nostalogic.content.datamodel.navigations.Nav
+import net.nostalogic.content.datamodel.navigations.NavLink
 import net.nostalogic.content.datamodel.navigations.NavDetails
 import net.nostalogic.content.datamodel.navigations.NavType
 import net.nostalogic.content.persistence.entities.NavEntity
@@ -13,8 +13,8 @@ object NavMapper {
     fun entitiesToDto(navEntity: NavEntity, linkEntities: Collection<NavLinkEntity>, navEntities: Collection<NavEntity>): NavDetails {
         val sortedLinks = linkEntities.sortedWith(compareBy({ it.ordinal }, {it.created}, {it.parentId == navEntity.id})).toList()
         val mappedEntities = navEntities.map { it.id to it }.toMap()
-        val sideLinks = ArrayList<Nav>()
-        val topLinks = ArrayList<Nav>()
+        val sideLinks = ArrayList<NavLink>()
+        val topLinks = ArrayList<NavLink>()
         for (navLink in sortedLinks) {
             if (!mappedEntities.containsKey(navLink.childId))
                 continue
@@ -35,7 +35,7 @@ object NavMapper {
             system = navEntity.system)
     }
 
-    fun dtoToEntity(nav: Nav): NavEntity {
+    fun dtoToEntity(nav: NavLink): NavEntity {
         return NavEntity(
             urn = nav.path!!.split("/").last(),
             fullUrn = nav.path!!,
@@ -47,7 +47,7 @@ object NavMapper {
         )
     }
 
-    fun updateEntity(nav: Nav, navEntity: NavEntity) {
+    fun updateEntity(nav: NavLink, navEntity: NavEntity) {
         if (nav.path != null) {
             navEntity.fullUrn = nav.path!!
             navEntity.urn = nav.path!!.split("/").last()
@@ -58,8 +58,8 @@ object NavMapper {
             navEntity.text = nav.text!!
     }
 
-    fun entityToDto(navEntity: NavEntity, includeDetails: Boolean = true): Nav {
-        val nav = Nav(
+    fun entityToDto(navEntity: NavEntity, includeDetails: Boolean = true): NavLink {
+        val nav = NavLink(
             text = navEntity.text,
             icon = navEntity.icon,
             path = navEntity.fullUrn)

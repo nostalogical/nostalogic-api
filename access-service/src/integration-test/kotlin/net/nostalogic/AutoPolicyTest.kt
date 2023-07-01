@@ -1,6 +1,7 @@
 package net.nostalogic
 
 import net.nostalogic.access.AccessApplication
+import net.nostalogic.access.config.TestPostgresContainer
 import net.nostalogic.access.testutils.TestUtils
 import net.nostalogic.config.Config
 import net.nostalogic.config.DatabaseLoader
@@ -13,22 +14,34 @@ import net.nostalogic.entities.EntitySignature
 import net.nostalogic.entities.NoEntity
 import net.nostalogic.utils.AutoPolicy
 import net.nostalogic.utils.EntityUtils
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.ClassRule
+import org.junit.jupiter.api.*
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
+import org.testcontainers.containers.PostgreSQLContainer
 
 @Suppress("FunctionName")
 @ActiveProfiles(profiles = ["integration-test"])
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [AccessApplication::class])
 class AutoPolicyTest(@Autowired val dbLoader: DatabaseLoader) {
+
+    companion object {
+        @JvmField
+        @ClassRule
+        var postgreSQLContainer: PostgreSQLContainer<*> = TestPostgresContainer.getInstance("test_nostalogic_access")
+
+        @JvmStatic
+        @BeforeAll
+        fun beforeAll(): Unit {
+            postgreSQLContainer.start()
+        }
+    }
 
     private val localhost = "http://localhost:"
 
@@ -55,23 +68,23 @@ class AutoPolicyTest(@Autowired val dbLoader: DatabaseLoader) {
     @Test
     fun `Create an auto policy`() {
         val policy = AutoPolicy.generate(TEST_GROUP, TEST_USER.id, PolicyAction.READ, setOf(TEST_GROUP.toEntityReference()), true)
-        Assertions.assertNotNull(policy)
-        Assertions.assertEquals("AUTO - ${TEST_GROUP} - READ", policy.name)
-        Assertions.assertEquals(PolicyPriority.TWO_STANDARD, policy.priority)
-        Assertions.assertEquals(1, policy.resources!!.size)
-        Assertions.assertEquals(TEST_GROUP.toString(), policy.resources!!.iterator().next())
-        Assertions.assertEquals(1, policy.subjects!!.size)
-        Assertions.assertEquals(TEST_GROUP.toString(), policy.subjects!!.iterator().next())
-        Assertions.assertEquals(1, policy.permissions!!.size)
-        Assertions.assertTrue(policy.permissions!![PolicyAction.READ]!!)
+        assertNotNull(policy)
+        assertEquals("AUTO - ${TEST_GROUP} - READ", policy.name)
+        assertEquals(PolicyPriority.TWO_STANDARD, policy.priority)
+        assertEquals(1, policy.resources!!.size)
+        assertEquals(TEST_GROUP.toString(), policy.resources!!.iterator().next())
+        assertEquals(1, policy.subjects!!.size)
+        assertEquals(TEST_GROUP.toString(), policy.subjects!!.iterator().next())
+        assertEquals(1, policy.permissions!!.size)
+        assertTrue(policy.permissions!![PolicyAction.READ]!!)
     }
 
     @Test
     fun `Retrieve auto policies`() {
         val generated = AutoPolicy.generate(TEST_GROUP, TEST_USER.id, PolicyAction.READ, setOf(TEST_GROUP.toEntityReference()), true)
         val policies = AutoPolicy.retrieve(TEST_GROUP, setOf(PolicyAction.READ))
-        Assertions.assertNotNull(policies)
-        Assertions.assertEquals(1, policies.size)
+        assertNotNull(policies)
+        assertEquals(1, policies.size)
         TestUtils.assertPoliciesEqual(generated, policies.iterator().next(), true)
     }
 
@@ -79,10 +92,10 @@ class AutoPolicyTest(@Autowired val dbLoader: DatabaseLoader) {
     fun `Remove auto policies`() {
         val generated = AutoPolicy.generate(TEST_GROUP, TEST_USER.id, PolicyAction.READ, setOf(TEST_GROUP.toEntityReference()), true)
         var policies = AutoPolicy.retrieve(TEST_GROUP, setOf(PolicyAction.READ))
-        Assertions.assertEquals(1, policies.size)
+        assertEquals(1, policies.size)
         AutoPolicy.delete(generated.id!!)
         policies = AutoPolicy.retrieve(TEST_GROUP, setOf(PolicyAction.READ))
-        Assertions.assertEquals(0, policies.size)
+        assertEquals(0, policies.size)
     }
 
     @Test
@@ -90,7 +103,7 @@ class AutoPolicyTest(@Autowired val dbLoader: DatabaseLoader) {
         val permissions = hashSetOf(EntityPermission(PolicyAction.READ, false, hashSetOf(NamedEntity(null, TEST_GROUP.id, NoEntity.GROUP))))
         AutoPolicy.savePermissions(TEST_GROUP, TEST_USER.id, permissions)
         val returnedPermissions = AutoPolicy.retrievePermissions(TEST_GROUP)
-        Assertions.assertEquals(permissions, returnedPermissions)
+        assertEquals(permissions, returnedPermissions)
     }
 
     @Test
@@ -104,7 +117,7 @@ class AutoPolicyTest(@Autowired val dbLoader: DatabaseLoader) {
                 EntityPermission(PolicyAction.EDIT, false, hashSetOf(NamedEntity(null, EntityUtils.uuid(), NoEntity.USER))))
         AutoPolicy.savePermissions(TEST_GROUP, TEST_USER.id, updated)
         val returnedPermissions = AutoPolicy.retrievePermissions(TEST_GROUP)
-        Assertions.assertEquals(updated, returnedPermissions)
+        assertEquals(updated, returnedPermissions)
     }
 
 }

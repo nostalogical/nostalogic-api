@@ -1,6 +1,6 @@
 package net.nostalogic.content.services
 
-import net.nostalogic.content.datamodel.navigations.Nav
+import net.nostalogic.content.datamodel.navigations.NavLink
 import net.nostalogic.content.datamodel.navigations.NavDetails
 import net.nostalogic.content.datamodel.navigations.NavigationSearchCriteria
 import net.nostalogic.content.mappers.NavMapper
@@ -57,7 +57,7 @@ class NavService(
             ?: throw NoRetrieveException(503001, "Page", "The path '$fullPath' does not exist")
     }
 
-    fun createNav(nav: Nav): Nav {
+    fun createNav(nav: NavLink): NavLink {
         if (!AccessQuery().simpleCheck(entity = NoEntity.NAV, action = PolicyAction.CREATE))
             throw NoAccessException(501006, "Missing rights to create navigations")
 
@@ -72,7 +72,7 @@ class NavService(
         return NavMapper.entityToDto(saveNav(entity))
     }
 
-    fun editNav(nav: Nav): Nav {
+    fun editNav(nav: NavLink): NavLink {
         val navId = nav.id
         val entity = navRepository.findByIdOrNull(navId)
             ?: throw NoRetrieveException(504007, "Navigation", "Navigation ${navId} not found in database")
@@ -136,7 +136,7 @@ class NavService(
         process.execute(navEntity)
     }
 
-    fun getNav(navId: String): Nav {
+    fun getNav(navId: String): NavLink {
         if (!AccessQuery().simpleCheck(id = navId, entity = NoEntity.NAV, action = PolicyAction.READ))
             throw NoAccessException(501007, "Missing rights to view navigation")
         val entity = navRepository.findByIdOrNull(navId)
@@ -144,7 +144,7 @@ class NavService(
         return NavMapper.entityToDto(entity)
     }
 
-    fun searchNavs(searchCriteria: NavigationSearchCriteria): List<Nav> {
+    fun searchNavs(searchCriteria: NavigationSearchCriteria): List<NavLink> {
         val query = AccessQuery().currentSubject()
             .addQuery(null, NoEntity.NAV, PolicyAction.READ)
             .addQuery(null, NoEntity.NAV, PolicyAction.EDIT)

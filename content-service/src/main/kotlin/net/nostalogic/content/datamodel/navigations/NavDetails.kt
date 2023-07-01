@@ -7,7 +7,7 @@ data class NavDetails(
     var fullPath: String?,
     var urn: String,
     var breadcrumbs: List<String>,
-    var topLinks: List<Nav>,
-    var sideLinks: List<Nav>,
+    var topLinks: List<NavLink>,
+    var sideLinks: List<NavLink>,
     @JsonIgnore val system: Boolean? = false
 )

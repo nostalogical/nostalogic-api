@@ -9,7 +9,7 @@ class NavigationSearchCriteria(navIds: Collection<String>? = null,
                                urns: Collection<String>? = null,
                                texts: Collection<String>? = null,
                                status: Collection<EntityStatus>? = null,
-                               page: NoPageable<Nav>? = null): SearchCriteria<Nav> {
+                               page: NoPageable<NavLink>? = null): SearchCriteria<NavLink> {
 
     companion object {
         val DEFAULT_SORT_FIELDS = arrayOf("created", "id")
@@ -19,5 +19,5 @@ class NavigationSearchCriteria(navIds: Collection<String>? = null,
     val urns: Collection<String> = urns ?: Collections.emptySet()
     val texts: Collection<String> = texts ?: Collections.emptySet()
     val status: Collection<EntityStatus> = status ?: setOf(EntityStatus.ACTIVE)
-    val page: NoPageable<Nav> = page ?: NoPageable(1, 20, *DEFAULT_SORT_FIELDS)
+    val page: NoPageable<NavLink> = page ?: NoPageable(1, 20, *DEFAULT_SORT_FIELDS)
 }

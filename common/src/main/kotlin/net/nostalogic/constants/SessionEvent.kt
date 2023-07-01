@@ -1,9 +1,10 @@
 package net.nostalogic.constants
 
 enum class SessionEvent {
-    LOGIN,
+    BEGIN,
     LOGOUT,
     REFRESH,
     GROUPS_CHANGE,
-    RESET
+    LOGOUT_OTHERS,
+    FORCE_ENDED,
 }

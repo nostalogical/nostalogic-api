@@ -3,7 +3,7 @@ package net.nostalogic.content.controllers
 import net.nostalogic.config.DatabaseLoader
 import net.nostalogic.content.ContentApplication
 import net.nostalogic.content.config.ContentLoader
-import net.nostalogic.content.datamodel.navigations.Nav
+import net.nostalogic.content.datamodel.navigations.NavLink
 import net.nostalogic.content.datamodel.navigations.NavDetails
 import net.nostalogic.datamodel.ErrorResponse
 import net.nostalogic.datamodel.NoPageResponse
@@ -88,25 +88,25 @@ class NavigationControllerTest(@Autowired dbLoader: DatabaseLoader, @Autowired c
         Assertions.assertEquals(503001, response.body!!.errorCode)
     }
 
-    private fun createNavWithPermissions(blueprint: Nav): Nav {
+    private fun createNavWithPermissions(blueprint: NavLink): NavLink {
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.CREATE, true)))))
-        val response = exchange(entity = HttpEntity<Nav>(blueprint, testHeaders()),
-            responseType = object : ParameterizedTypeReference<Nav> () {}, method = HttpMethod.POST,
+        val response = exchange(entity = HttpEntity<NavLink>(blueprint, testHeaders()),
+            responseType = object : ParameterizedTypeReference<NavLink> () {}, method = HttpMethod.POST,
             url = "$baseApiUrl${NavigationController.NAV_ENDPOINT}/navigations")
         Assertions.assertEquals(HttpStatus.OK, response.statusCode)
         Assertions.assertNotNull(response.body)
         return response.body!!
     }
 
-    private fun createNavWithFail(blueprint: Nav): ResponseEntity<ErrorResponse> {
+    private fun createNavWithFail(blueprint: NavLink): ResponseEntity<ErrorResponse> {
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.CREATE, true)))))
-        return exchangeError(entity = HttpEntity<Nav>(blueprint, testHeaders()), method = HttpMethod.POST,
+        return exchangeError(entity = HttpEntity<NavLink>(blueprint, testHeaders()), method = HttpMethod.POST,
             url = "$baseApiUrl${NavigationController.NAV_ENDPOINT}/navigations")
     }
 
     @Test
     fun `Create a bottom level navigation`() {
-        val blueprint = Nav(text = "Some text", icon = "An icon", path = "generic")
+        val blueprint = NavLink(text = "Some text", icon = "An icon", path = "generic")
         val nav = createNavWithPermissions(blueprint)
         Assertions.assertEquals(blueprint.icon, nav.icon)
         Assertions.assertEquals(blueprint.text, nav.text)
@@ -119,7 +119,7 @@ class NavigationControllerTest(@Autowired dbLoader: DatabaseLoader, @Autowired c
 
     @Test
     fun `Create a sub level navigation`() {
-        val blueprint = Nav(text = "Other text", icon = "Another icon", path = "about/changelog/subpath", parentId = "2e1add8c-e6e9-4583-9ac0-45176aae205a")
+        val blueprint = NavLink(text = "Other text", icon = "Another icon", path = "about/changelog/subpath", parentId = "2e1add8c-e6e9-4583-9ac0-45176aae205a")
         val nav = createNavWithPermissions(blueprint)
         Assertions.assertEquals(blueprint.parentId, nav.parentId)
         Assertions.assertEquals(blueprint.path, nav.path)
@@ -128,7 +128,7 @@ class NavigationControllerTest(@Autowired dbLoader: DatabaseLoader, @Autowired c
 
     @Test
     fun `Sub level navigation full paths can be inferred`() {
-        val blueprint = Nav(text = "Other text", icon = "Another icon", path = "subpath", parentId = "2e1add8c-e6e9-4583-9ac0-45176aae205a")
+        val blueprint = NavLink(text = "Other text", icon = "Another icon", path = "subpath", parentId = "2e1add8c-e6e9-4583-9ac0-45176aae205a")
         val nav = createNavWithPermissions(blueprint)
         Assertions.assertEquals(blueprint.parentId, nav.parentId)
         Assertions.assertEquals("about/changelog/${blueprint.path}", nav.path)
@@ -137,7 +137,7 @@ class NavigationControllerTest(@Autowired dbLoader: DatabaseLoader, @Autowired c
 
     @Test
     fun `Creating a sub level navigation requires a parent ID`() {
-        val blueprint = Nav(text = "Other text", icon = "Another icon", path = "about/changelog/subpath")
+        val blueprint = NavLink(text = "Other text", icon = "Another icon", path = "about/changelog/subpath")
         val response = createNavWithFail(blueprint)
         Assertions.assertEquals(HttpStatus.BAD_REQUEST, response.statusCode)
         Assertions.assertEquals(507003, response.body!!.errorCode)
@@ -145,7 +145,7 @@ class NavigationControllerTest(@Autowired dbLoader: DatabaseLoader, @Autowired c
 
     @Test
     fun `Creating a navigation with a duplicate path should fail`() {
-        val blueprint = Nav(text = "Other text", icon = "Another icon", path = "about/changelog", parentId = "d7318720-e807-409a-99c5-2ae2e7817289")
+        val blueprint = NavLink(text = "Other text", icon = "Another icon", path = "about/changelog", parentId = "d7318720-e807-409a-99c5-2ae2e7817289")
         val response = createNavWithFail(blueprint)
         Assertions.assertEquals(HttpStatus.CONFLICT, response.statusCode)
         Assertions.assertEquals(505003, response.body!!.errorCode)
@@ -153,7 +153,7 @@ class NavigationControllerTest(@Autowired dbLoader: DatabaseLoader, @Autowired c
 
     @Test
     fun `Creating a navigation with a nonexistent parent should fail`() {
-        val blueprint = Nav(text = "Other text", icon = "Another icon", path = "something", parentId = EntityUtils.uuid())
+        val blueprint = NavLink(text = "Other text", icon = "Another icon", path = "something", parentId = EntityUtils.uuid())
         val response = createNavWithFail(blueprint)
         Assertions.assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
         Assertions.assertEquals(504008, response.body!!.errorCode)
@@ -161,7 +161,7 @@ class NavigationControllerTest(@Autowired dbLoader: DatabaseLoader, @Autowired c
 
     @Test
     fun `Basic navigation deletion`() {
-        val nav = createNavWithPermissions(Nav(text = "Other text", icon = "Another icon", path = "something"))
+        val nav = createNavWithPermissions(NavLink(text = "Other text", icon = "Another icon", path = "something"))
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.DELETE, true)))))
         val deleteResponse = exchange(entity = HttpEntity<Unit>(testHeaders()), method = HttpMethod.DELETE,
             responseType = object : ParameterizedTypeReference<Unit> () {},
@@ -192,7 +192,7 @@ class NavigationControllerTest(@Autowired dbLoader: DatabaseLoader, @Autowired c
     fun `Get a navigation by ID`() {
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.READ, true)))))
         val response = exchange(entity = HttpEntity<Unit>(testHeaders()), method = HttpMethod.GET,
-            responseType = object : ParameterizedTypeReference<Nav> () {},
+            responseType = object : ParameterizedTypeReference<NavLink> () {},
             url = "$baseApiUrl${NavigationController.NAV_ENDPOINT}/navigations/$aboutPageId")
         Assertions.assertEquals(HttpStatus.OK, response.statusCode)
         Assertions.assertNotNull(response.body)
@@ -213,10 +213,10 @@ class NavigationControllerTest(@Autowired dbLoader: DatabaseLoader, @Autowired c
         Assertions.assertEquals(504005, response.body!!.errorCode)
     }
 
-    private fun editNav(id: String, update: Nav): Nav {
+    private fun editNav(id: String, update: NavLink): NavLink {
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.EDIT, true)))))
-        val response = exchange(entity = HttpEntity<Nav>(update, testHeaders()), method = HttpMethod.PUT,
-            responseType = object : ParameterizedTypeReference<Nav> () {},
+        val response = exchange(entity = HttpEntity<NavLink>(update, testHeaders()), method = HttpMethod.PUT,
+            responseType = object : ParameterizedTypeReference<NavLink> () {},
             url = "$baseApiUrl${NavigationController.NAV_ENDPOINT}/navigations/$id")
         Assertions.assertEquals(HttpStatus.OK, response.statusCode)
         Assertions.assertNotNull(response.body)
@@ -225,7 +225,7 @@ class NavigationControllerTest(@Autowired dbLoader: DatabaseLoader, @Autowired c
 
     @Test
     fun `Edit a navigation`() {
-        val edit = Nav(text = "Changed Text", icon = "OtherIcon", status = EntityStatus.INACTIVE, path = null)
+        val edit = NavLink(text = "Changed Text", icon = "OtherIcon", status = EntityStatus.INACTIVE, path = null)
         val edited = editNav(aboutPageId, edit)
         Assertions.assertEquals(edit.text, edited.text)
         Assertions.assertEquals(edit.icon, edited.icon)
@@ -235,24 +235,24 @@ class NavigationControllerTest(@Autowired dbLoader: DatabaseLoader, @Autowired c
 
     @Test
     fun `Editing a parent navigation path should change the children`() {
-        val edit = Nav(path = "changed")
+        val edit = NavLink(path = "changed")
         val edited = editNav(aboutPageId, edit)
         Assertions.assertEquals(edit.path, edited.path)
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.READ, true)))))
         val changelogPage = exchange(entity = HttpEntity<Unit>(testHeaders()), method = HttpMethod.GET,
-            responseType = object : ParameterizedTypeReference<Nav> () {},
+            responseType = object : ParameterizedTypeReference<NavLink> () {},
             url = "$baseApiUrl${NavigationController.NAV_ENDPOINT}/navigations/$changelogPageId")
         Assertions.assertEquals("changed/changelog", changelogPage.body!!.path)
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.READ, true)))))
         val roadmapPage = exchange(entity = HttpEntity<Unit>(testHeaders()), method = HttpMethod.GET,
-            responseType = object : ParameterizedTypeReference<Nav> () {},
+            responseType = object : ParameterizedTypeReference<NavLink> () {},
             url = "$baseApiUrl${NavigationController.NAV_ENDPOINT}/navigations/$roadmapPageId")
         Assertions.assertEquals("changed/roadmap", roadmapPage.body!!.path)
     }
 
     @Test
     fun `Null or empty navigation fields are ignored`() {
-        val edit = Nav(path = "differ", status = null)
+        val edit = NavLink(path = "differ", status = null)
         val edited = editNav(changelogPageId, edit)
         Assertions.assertEquals("Changelog", edited.text)
         Assertions.assertEquals("change_history", edited.icon)
@@ -263,16 +263,16 @@ class NavigationControllerTest(@Autowired dbLoader: DatabaseLoader, @Autowired c
     @Test
     fun `Editing a nonexistent navigation should throw an error`() {
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.EDIT, true)))))
-        val response = exchangeError(entity = HttpEntity<Nav>(Nav(text = "nochange"), testHeaders()), method = HttpMethod.PUT,
+        val response = exchangeError(entity = HttpEntity<NavLink>(NavLink(text = "nochange"), testHeaders()), method = HttpMethod.PUT,
             url = "$baseApiUrl${NavigationController.NAV_ENDPOINT}/navigations/${EntityUtils.uuid()}")
         Assertions.assertEquals(HttpStatus.NOT_FOUND, response.statusCode)
         Assertions.assertEquals(504007, response.body!!.errorCode)
     }
 
-    private fun doSearch(criteria: String): NoPageResponse<Nav> {
+    private fun doSearch(criteria: String): NoPageResponse<NavLink> {
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.READ, true)))))
         val response = exchange(entity = HttpEntity<Unit>(testHeaders()), method = HttpMethod.GET,
-            responseType = object : ParameterizedTypeReference<NoPageResponse<Nav>> () {},
+            responseType = object : ParameterizedTypeReference<NoPageResponse<NavLink>> () {},
             url = "$baseApiUrl${NavigationController.NAV_ENDPOINT}/navigations?$criteria")
         Assertions.assertEquals(HttpStatus.OK, response.statusCode)
         Assertions.assertNotNull(response.body)

@@ -1,11 +1,12 @@
 package net.nostalogic
 
 import net.nostalogic.access.AccessApplication
+import net.nostalogic.access.config.TestPostgresContainer
 import net.nostalogic.access.testutils.TestUtils
 import net.nostalogic.comms.AccessComms
 import net.nostalogic.config.Config
 import net.nostalogic.config.DatabaseLoader
-import net.nostalogic.constants.AuthenticationType
+import net.nostalogic.constants.AuthenticationSource
 import net.nostalogic.datamodel.Setting
 import net.nostalogic.datamodel.access.AccessQuery
 import net.nostalogic.datamodel.access.PolicyAction
@@ -13,8 +14,10 @@ import net.nostalogic.entities.EntitySignature
 import net.nostalogic.entities.NoEntity
 import net.nostalogic.security.models.SessionPrompt
 import net.nostalogic.utils.EntityUtils
+import org.junit.ClassRule
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -23,12 +26,26 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
+import org.testcontainers.containers.PostgreSQLContainer
+
 
 @Suppress("FunctionName")
 @ActiveProfiles(profiles = ["integration-test"])
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [AccessApplication::class])
 class CommsTest(@Autowired val dbLoader: DatabaseLoader) {
+
+    companion object {
+        @JvmField
+        @ClassRule
+        var postgreSQLContainer: PostgreSQLContainer<*> = TestPostgresContainer.getInstance("test_nostalogic_access")
+
+        @JvmStatic
+        @BeforeAll
+        fun beforeAll() {
+            postgreSQLContainer.start()
+        }
+    }
 
     private val localhost = "http://localhost:"
 
@@ -59,45 +76,48 @@ class CommsTest(@Autowired val dbLoader: DatabaseLoader) {
 
     @Test
     fun `Create session comms works`() {
-        val summary = AccessComms.createSession(SessionPrompt(TEST_USER.id, emptySet(), AuthenticationType.EMAIL))
-        Assertions.assertNotNull(summary)
-        Assertions.assertEquals(TEST_USER.id, summary!!.userId)
-        Assertions.assertNotNull(summary.token)
+        val summary = AccessComms.createSession(SessionPrompt(TEST_USER.id, AuthenticationSource.EMAIL))
+        assertNotNull(summary)
+        assertEquals(TEST_USER.id, summary!!.userId)
+        assertNotNull(summary.accessToken)
     }
 
     @Test
     fun `Refresh session comms works`() {
-        val creation = AccessComms.createSession(SessionPrompt(TEST_USER.id, emptySet(), AuthenticationType.EMAIL))
-        Assertions.assertNotNull(creation)
-        val summary = AccessComms.refreshSession(creation!!.token!!)
-        Assertions.assertNotNull(summary)
-        Assertions.assertEquals(TEST_USER.id, summary!!.userId)
-        Assertions.assertNotNull(summary.token)
+        val creation = AccessComms.createSession(SessionPrompt(TEST_USER.id, AuthenticationSource.EMAIL))
+        assertNotNull(creation)
+        val summary = AccessComms.refreshSession(creation!!.refreshToken!!.token)
+        assertNotNull(summary)
+        assertEquals(TEST_USER.id, summary!!.userId)
+        assertNotNull(summary.accessToken)
     }
 
     @Test
     fun `End session comms works`() {
-        val creation = AccessComms.createSession(SessionPrompt(TEST_USER.id, emptySet(), AuthenticationType.EMAIL))
-        Assertions.assertNotNull(creation)
-        val summary = AccessComms.endSession(creation!!.token!!)
-        Assertions.assertEquals(TEST_USER.id, summary!!.userId)
+        val creation = AccessComms.createSession(SessionPrompt(TEST_USER.id, AuthenticationSource.EMAIL))
+        assertNotNull(creation)
+        val summary = AccessComms.endSession(creation!!.accessToken!!.token)
+        assertEquals(TEST_USER.id, summary!!.userId)
     }
 
     @Test
     fun `Verify session comms works`() {
-        val creation = AccessComms.createSession(SessionPrompt(TEST_USER.id, emptySet(), AuthenticationType.EMAIL))
-        Assertions.assertNotNull(creation)
-        val summary = AccessComms.verifySession(creation!!.token!!)
-        Assertions.assertNotNull(summary!!.token)
+        val creation = AccessComms.createSession(SessionPrompt(TEST_USER.id, AuthenticationSource.EMAIL))
+        assertNotNull(creation)
+        val summary = AccessComms.verifySession(creation!!.accessToken!!.token)
+        assertNotNull(summary)
+        assertEquals(creation.sessionId, summary?.sessionId)
+        assertNull(summary!!.accessToken, "No new tokens should be returned when verifying a session")
+        assertNull(summary.refreshToken, "No new tokens should be returned when verifying a session")
     }
 
     @Test
     fun `Update session comms works`() {
-        val creation = AccessComms.createSession(SessionPrompt(TEST_USER.id, emptySet(), AuthenticationType.EMAIL))
-        Assertions.assertNotNull(creation)
+        val creation = AccessComms.createSession(SessionPrompt(TEST_USER.id, AuthenticationSource.EMAIL))
+        assertNotNull(creation)
         val groups = hashSetOf(EntityUtils.uuid(), EntityUtils.uuid())
         val summary = AccessComms.updateSession(groups, TEST_USER.id)
-        Assertions.assertNotNull(summary)
+        assertNotNull(summary)
     }
 
 }
