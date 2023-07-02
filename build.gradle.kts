@@ -87,6 +87,7 @@ subprojects {
             exclude(group = "org.junit.vintage", module = "junit-vintage-engine")
         }
         testImplementation("io.mockk:mockk:1.13.5")
+        testImplementation("org.apache.httpcomponents:httpclient:4.5.14")
         `integration-testImplementation`("org.apache.httpcomponents:httpclient:4.5.14")
     }
     tasks.withType<Test> {

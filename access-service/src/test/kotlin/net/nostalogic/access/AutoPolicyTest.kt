@@ -1,4 +1,4 @@
-package net.nostalogic
+package net.nostalogic.access
 
 import net.nostalogic.access.AccessApplication
 import net.nostalogic.access.config.TestPostgresContainer
