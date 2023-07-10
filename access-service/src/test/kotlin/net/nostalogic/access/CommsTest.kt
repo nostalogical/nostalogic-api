@@ -1,7 +1,6 @@
 package net.nostalogic.access
 
-import net.nostalogic.access.AccessApplication
-import net.nostalogic.access.config.TestPostgresContainer
+import net.nostalogic.access.config.TestAccessDbContainer
 import net.nostalogic.access.testutils.TestUtils
 import net.nostalogic.comms.AccessComms
 import net.nostalogic.config.Config
@@ -38,7 +37,7 @@ class CommsTest(@Autowired val dbLoader: DatabaseLoader) {
     companion object {
         @JvmField
         @ClassRule
-        var postgreSQLContainer: PostgreSQLContainer<*> = TestPostgresContainer.getInstance("test_nostalogic_access")
+        var postgreSQLContainer: PostgreSQLContainer<*> = TestAccessDbContainer.getInstance()
 
         @JvmStatic
         @BeforeAll

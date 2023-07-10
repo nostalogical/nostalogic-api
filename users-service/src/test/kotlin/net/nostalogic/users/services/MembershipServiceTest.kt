@@ -2,7 +2,7 @@ package net.nostalogic.users.services
 
 import io.mockk.every
 import io.mockk.mockk
-import net.nostalogic.users.config.UserTestConfig
+import net.nostalogic.users.config.UserUnitTestConfig
 import net.nostalogic.users.constants.GroupType
 import net.nostalogic.users.constants.MembershipRole
 import net.nostalogic.users.constants.MembershipStatus
@@ -21,7 +21,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 
 @ActiveProfiles(profiles = ["test"])
 @ExtendWith(SpringExtension::class)
-@ContextConfiguration(classes = [UserTestConfig::class])
+@ContextConfiguration(classes = [UserUnitTestConfig::class])
 class MembershipServiceTest(
         @Autowired private val membershipService: MembershipService,
         @Autowired private val membershipRepository: MembershipRepository) {

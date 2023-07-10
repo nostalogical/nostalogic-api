@@ -15,7 +15,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.core.env.Environment
 
-open class UserTestConfig {
+open class UserUnitTestConfig {
 
     @Autowired
     private lateinit var environment: Environment

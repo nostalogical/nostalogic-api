@@ -9,7 +9,7 @@ class SessionSummary(
         var type: AuthenticationType,
         var start: NoDate,
         var end: NoDate,
-        var description: String?,
-        var accessToken: TokenDetails?,
-        var refreshToken: TokenDetails?
+        var description: String? = null,
+        var accessToken: TokenDetails? = null,
+        var refreshToken: TokenDetails? = null
 )

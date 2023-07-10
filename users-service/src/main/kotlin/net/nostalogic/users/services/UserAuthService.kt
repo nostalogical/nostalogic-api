@@ -38,9 +38,10 @@ import java.sql.Timestamp
 import java.util.regex.Pattern
 
 @Service
-class UserAuthService(@Autowired private val userRepository: UserRepository,
-                      @Autowired private val authRepository: AuthenticationRepository,
-                      @Autowired private val membershipService: MembershipService) {
+class UserAuthService(
+    @Autowired private val userRepository: UserRepository,
+    @Autowired private val authRepository: AuthenticationRepository,
+    ) {
 
     private val logger = LoggerFactory.getLogger(UserAuthService::class.java)
     private val EMAIL_PATTERN = Pattern.compile("\\w+@\\w+\\.\\w+")
@@ -69,8 +70,10 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
             return AuthenticationResponse(authenticated = false, message = Translator.translate(errorString))
         }
 
-        val loginType = if (EMAIL_PATTERN.matcher(loginRequest.username!!).find()) AuthenticationType.EMAIL else AuthenticationType.USERNAME
-        val session = Comms.accessComms.createSession(SessionPrompt(userEntity.id, membershipService.getGroupsForUserRights(userEntity.id), loginType))
+        val loginSource =
+            if (EMAIL_PATTERN.matcher(loginRequest.username!!).find()) AuthenticationSource.EMAIL
+            else AuthenticationSource.USERNAME
+        val session = Comms.accessComms.createSession(SessionPrompt(userEntity.id, loginSource))
                 ?: throw NoAccessException(302006, "Failed to create session internally", Translator.translate(ErrorStrings.COMMS_ERROR))
 
         SessionContext.getToken()?.let { Comms.accessComms.endSession(it) }
@@ -82,8 +85,9 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
         return AuthenticationResponse(
             authenticated = loggedIn,
             message = if (loggedIn) NoStrings.authGranted() else NoStrings.passwordNotVerified(),
-            token = session?.accessToken,
-            expiration = session?.end)
+            accessToken = session?.accessToken,
+            refreshToken = session?.refreshToken,
+            )
     }
 
     fun logout(): AuthenticationResponse {
@@ -106,8 +110,9 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
             AuthenticationResponse(
                     authenticated = refreshed,
                     message = if (refreshed) NoStrings.authGranted() else NoStrings.authRefreshDenied(),
-                    token = summary.accessToken,
-                    expiration = summary.end)
+                    accessToken = summary.accessToken,
+                    refreshToken = summary.refreshToken
+            )
         }
     }
 
@@ -143,13 +148,20 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
         authRepository.findTopByUserIdEqualsOrderByCreatedDesc(userEntity.id)?.let { expirePassword(it, true, "A new password was set") }
         setNewPassword(userEntity.id, loginRequest.newPassword)
 
-        val session = Comms.accessComms.createSession(SessionPrompt(userEntity.id, membershipService.getGroupsForUserRights(userEntity.id), AuthenticationType.PASSWORD_RESET, reset = true))
+        val session = Comms.accessComms.createSession(
+            SessionPrompt(
+                userEntity.id,
+                AuthenticationSource.PASSWORD_RESET,
+                reset = true
+            )
+        )
                 ?: throw NoAccessException(302011, "Failed to create session internally", Translator.translate(ErrorStrings.COMMS_ERROR))
         return AuthenticationResponse(
                 authenticated = session.accessToken != null,
                 message = if (session.accessToken != null) NoStrings.passwordChanged() else NoStrings.sessionCreateFail(),
-                token = session.accessToken,
-                expiration = session.end)
+                accessToken = session.accessToken,
+                refreshToken = session.refreshToken
+        )
     }
 
     private fun sendPasswordResetEmail(userEntity: UserEntity): AuthenticationResponse {
@@ -172,15 +184,22 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
             setNewPassword(userEntity.id, loginRequest.newPassword)
             expirePassword(authEntity, true, "A new password was set")
 
-            val loginType = if (EMAIL_PATTERN.matcher(loginRequest.username!!).find()) AuthenticationType.EMAIL else AuthenticationType.USERNAME
-            val session = Comms.accessComms.createSession(SessionPrompt(userEntity.id, membershipService.getGroupsForUserRights(userEntity.id), loginType, reset = true))
+            val loginSource =
+                if (EMAIL_PATTERN.matcher(loginRequest.username!!).find()) AuthenticationSource.EMAIL
+                else AuthenticationSource.USERNAME
+            val session = Comms.accessComms.createSession(SessionPrompt(
+                userEntity.id,
+                loginSource,
+                reset = true
+            ))
                     ?: throw NoAccessException(302011, "Failed to create session internally", Translator.translate(ErrorStrings.COMMS_ERROR))
 
             return AuthenticationResponse(
                     authenticated = session.accessToken != null,
                     message = if (session.accessToken != null) NoStrings.passwordChanged() else NoStrings.sessionCreateFail(),
-                    token = session.accessToken,
-                    expiration = session.end)
+                    accessToken = session.accessToken,
+                    refreshToken = session.refreshToken
+            )
         } else
             return AuthenticationResponse(
                     authenticated = false,
@@ -203,10 +222,9 @@ class UserAuthService(@Autowired private val userRepository: UserRepository,
 
         val session = Comms.accessComms.createSession(SessionPrompt(
                 userId = impRequest.userId,
-                additional = membershipService.getGroupsForUserRights(impRequest.userId),
                 type = AuthenticationSource.IMPERSONATION,
-                originalUserId = originalUserId,
-                alternates = alternates))
+                originalUserId = originalUserId
+                ))
                 ?: throw NoAccessException(302008, "Failed to create impersonation session internally", Translator.translate(ErrorStrings.COMMS_ERROR))
         val loggedIn = session.accessToken != null
 

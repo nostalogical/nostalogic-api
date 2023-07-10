@@ -46,7 +46,8 @@ class UserService(
         @Autowired private val userRepository: UserRepository,
         @Autowired private val detailsRepository: DetailsRepository,
         @Autowired private val membershipService: MembershipService,
-        @Autowired private val authService: UserAuthService) {
+        @Autowired private val authService: UserAuthService,
+) {
 
     private val logger = LoggerFactory.getLogger(UserService::class.java)
 

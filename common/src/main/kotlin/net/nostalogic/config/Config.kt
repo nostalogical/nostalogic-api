@@ -14,9 +14,11 @@ import org.springframework.stereotype.Component
 
 @Component(value = "Config")
 @DependsOn(value = ["DatabaseLoader"])
-class Config(private val context: ApplicationContext,
-             private val environment: Environment,
-             private var configRepository: ConfigRepository) {
+class Config(
+    private val context: ApplicationContext,
+    private val environment: Environment,
+    private var configRepository: ConfigRepository
+) {
 
     companion object {
 

@@ -13,6 +13,7 @@ import net.nostalogic.security.grants.ImpersonationGrant
 import net.nostalogic.security.grants.LoginGrant
 import net.nostalogic.security.models.SessionPrompt
 import net.nostalogic.security.models.SessionSummary
+import net.nostalogic.security.models.TokenDetails
 import net.nostalogic.security.utils.TokenDecoder
 import net.nostalogic.security.utils.TokenEncoder
 import net.nostalogic.users.UsersApplication
@@ -49,10 +50,11 @@ class AuthenticationControllerTest(@Autowired dbLoader: DatabaseLoader): BaseCon
     private val endDate = NoDate.plus(7, ChronoUnit.DAYS)
 
     private fun doLogin(userId: String = OWNER_ID, username: String = OWNER_NAME, password: String = OWNER_PASSWORD): AuthenticationResponse {
-        val grant = LoginGrant(userId, emptySet(), endDate, EntityUtils.uuid(), AuthenticationType.USERNAME)
+        val grant = LoginGrant(userId, endDate, EntityUtils.uuid())
         val token = TokenEncoder.encodeLoginGrant(grant)
+        val tokenDetails = TokenDetails(token, endDate)
         every { accessComms.createSession(ofType(SessionPrompt::class)) } answers {
-            SessionSummary(EntityUtils.uuid(), userId, grant.type, NoDate(), endDate, null, token) }
+            SessionSummary(EntityUtils.uuid(), userId, grant.type, NoDate(), endDate, null, tokenDetails) }
         return exchange(
                 entity = HttpEntity(LoginRequest(username, password, null)),
                 responseType = object : ParameterizedTypeReference<AuthenticationResponse>() {},
@@ -60,10 +62,11 @@ class AuthenticationControllerTest(@Autowired dbLoader: DatabaseLoader): BaseCon
     }
 
     private fun doImpersonation(loginToken: String, userId: String = REGULAR_ID, originalUserId: String = OWNER_ID): AuthenticationResponse {
-        val grant = ImpersonationGrant(userId, emptySet(), endDate, EntityUtils.uuid(), originalUserId, emptySet())
+        val grant = ImpersonationGrant(userId, endDate, EntityUtils.uuid(), originalUserId)
         val token = TokenEncoder.encodeImpersonationGrant(grant)
+        val tokenDetails = TokenDetails(token, null)
         every { accessComms.createSession(ofType(SessionPrompt::class)) } answers {
-            SessionSummary(EntityUtils.uuid(), userId, grant.type, NoDate(), endDate, null, token) }
+            SessionSummary(EntityUtils.uuid(), userId, grant.type, NoDate(), endDate, null, tokenDetails) }
         val headers = HttpHeaders()
         headers.set(NoStrings.AUTH_HEADER, loginToken)
         return  exchange(
@@ -77,8 +80,8 @@ class AuthenticationControllerTest(@Autowired dbLoader: DatabaseLoader): BaseCon
         val response = doLogin()
         Assertions.assertNotNull(response)
         Assertions.assertTrue(response.authenticated)
-        Assertions.assertNotNull(response.token)
-        Assertions.assertEquals(endDate, response.expiration)
+        Assertions.assertNotNull(response.accessToken?.token)
+        Assertions.assertEquals(endDate, response.accessToken?.expiration)
     }
 
     @Test
@@ -86,9 +89,9 @@ class AuthenticationControllerTest(@Autowired dbLoader: DatabaseLoader): BaseCon
         val session = doLogin()
         every { accessComms.query(ofType(AccessQuery::class)) } answers {
             AccessReport(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.EDIT, true))))) }
-        val exchange = doImpersonation(loginToken = session.token!!)
+        val exchange = doImpersonation(loginToken = session.accessToken!!.token)
         Assertions.assertTrue(exchange.authenticated)
-        val grant: ImpersonationGrant = TokenDecoder.decodeToken(exchange.token!!) as ImpersonationGrant
+        val grant: ImpersonationGrant = TokenDecoder.decodeToken(exchange.accessToken!!.token) as ImpersonationGrant
         Assertions.assertEquals(REGULAR_ID, grant.subject)
         Assertions.assertEquals(OWNER_ID, grant.originalSubject)
     }
@@ -97,11 +100,11 @@ class AuthenticationControllerTest(@Autowired dbLoader: DatabaseLoader): BaseCon
     fun `Refresh a login`() {
         val session = doLogin()
         val headers = HttpHeaders()
-        headers.set(NoStrings.AUTH_HEADER, session.token)
-        val grant = LoginGrant(OWNER_ID, emptySet(), endDate, EntityUtils.uuid(), AuthenticationType.USERNAME)
+        headers.set(NoStrings.AUTH_HEADER, session.accessToken!!.token)
+        val grant = LoginGrant(OWNER_ID, endDate, EntityUtils.uuid())
         val token = TokenEncoder.encodeLoginGrant(grant)
         every { accessComms.refreshSession(ofType(String::class)) } answers {
-            SessionSummary(EntityUtils.uuid(), OWNER_ID, grant.type, NoDate(), endDate, null, token) }
+            SessionSummary(EntityUtils.uuid(), OWNER_ID, grant.type, NoDate(), endDate, null, session.accessToken) }
         val exchange = exchange(
                 entity = HttpEntity<Unit>(headers),
                 responseType = object : ParameterizedTypeReference<AuthenticationResponse>() {},
@@ -113,24 +116,25 @@ class AuthenticationControllerTest(@Autowired dbLoader: DatabaseLoader): BaseCon
     fun `Normal log out`() {
         val session = doLogin()
         val headers = HttpHeaders()
-        headers.set(NoStrings.AUTH_HEADER, session.token)
+        headers.set(NoStrings.AUTH_HEADER, session.accessToken!!.token)
         every { accessComms.endSession(ofType(String::class)) } answers {
-            SessionSummary(EntityUtils.uuid(), OWNER_ID, AuthenticationType.USERNAME, NoDate(), endDate, null, null) }
+            SessionSummary(EntityUtils.uuid(), OWNER_ID, AuthenticationType.LOGIN, NoDate(), endDate) }
         val exchange = exchange(
                 entity = HttpEntity<Unit>(headers),
                 responseType = object : ParameterizedTypeReference<AuthenticationResponse>() {},
                 method = HttpMethod.POST, url = "$baseApiUrl${AuthenticationController.AUTH_ENDPOINT}${AuthenticationController.LOGOUT_URI}").body!!
         Assertions.assertNotNull(exchange)
         Assertions.assertFalse(exchange.authenticated)
-        Assertions.assertNull(exchange.token)
+        Assertions.assertNull(exchange.accessToken)
     }
 
     @Test
     fun `Create a new password with an old password`() {
-        val grant = LoginGrant(OWNER_ID, emptySet(), endDate, EntityUtils.uuid(), AuthenticationType.USERNAME)
+        val grant = LoginGrant(OWNER_ID, endDate, EntityUtils.uuid())
         val token = TokenEncoder.encodeLoginGrant(grant)
+        val tokenDetails = TokenDetails(token, null)
         every { accessComms.createSession(ofType(SessionPrompt::class)) } answers {
-            SessionSummary(EntityUtils.uuid(), OWNER_ID, grant.type, NoDate(), endDate, null, token) }
+            SessionSummary(EntityUtils.uuid(), OWNER_ID, grant.type, NoDate(), endDate, null, tokenDetails) }
         val exchange = exchange(
                 entity = HttpEntity(LoginRequest(OWNER_NAME, OWNER_PASSWORD, "NewOwnerPassword")),
                 responseType = object : ParameterizedTypeReference<AuthenticationResponse>() {},

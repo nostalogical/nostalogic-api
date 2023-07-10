@@ -1,7 +1,7 @@
 package net.nostalogic.access.controllers
 
 import net.nostalogic.access.AccessApplication
-import net.nostalogic.access.config.TestPostgresContainer
+import net.nostalogic.access.config.TestAccessDbContainer
 import net.nostalogic.config.DatabaseLoader
 import net.nostalogic.constants.AuthenticationSource
 import net.nostalogic.constants.AuthenticationType
@@ -43,7 +43,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
     companion object {
         @JvmField
         @ClassRule
-        var postgreSQLContainer: PostgreSQLContainer<*> = TestPostgresContainer.getInstance("test_nostalogic_access")
+        var postgreSQLContainer: PostgreSQLContainer<*> = TestAccessDbContainer.getInstance()
 
         @JvmStatic
         @BeforeAll

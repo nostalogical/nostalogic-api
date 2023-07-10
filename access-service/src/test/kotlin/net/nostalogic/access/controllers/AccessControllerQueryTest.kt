@@ -1,7 +1,7 @@
 package net.nostalogic.access.controllers
 
 import net.nostalogic.access.AccessApplication
-import net.nostalogic.access.config.TestPostgresContainer
+import net.nostalogic.access.config.TestAccessDbContainer
 import net.nostalogic.access.datamodel.ResourcePermissionContext
 import net.nostalogic.access.testutils.TestUtils
 import net.nostalogic.config.DatabaseLoader
@@ -38,7 +38,7 @@ class AccessControllerQueryTest(@Autowired dbLoader: DatabaseLoader) : BaseContr
     companion object {
         @JvmField
         @ClassRule
-        var postgreSQLContainer: PostgreSQLContainer<*> = TestPostgresContainer.getInstance("test_nostalogic_access")
+        var postgreSQLContainer: PostgreSQLContainer<*> = TestAccessDbContainer.getInstance()
 
         @JvmStatic
         @BeforeAll

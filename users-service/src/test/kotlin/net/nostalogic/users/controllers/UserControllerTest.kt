@@ -8,21 +8,21 @@ import net.nostalogic.datamodel.ErrorResponse
 import net.nostalogic.datamodel.NoDate
 import net.nostalogic.datamodel.NoPageResponse
 import net.nostalogic.datamodel.access.PolicyAction
+import net.nostalogic.datamodel.excomm.MessageOutline
 import net.nostalogic.entities.EntitySignature
 import net.nostalogic.entities.EntityStatus
 import net.nostalogic.entities.NoEntity
 import net.nostalogic.security.grants.ConfirmationGrant
 import net.nostalogic.security.models.SessionSummary
+import net.nostalogic.security.models.TokenDetails
 import net.nostalogic.security.utils.TokenEncoder
 import net.nostalogic.users.UsersApplication
-import net.nostalogic.users.datamodel.users.RegistrationAvailability
-import net.nostalogic.users.datamodel.users.SecureUserUpdate
-import net.nostalogic.users.datamodel.users.User
-import net.nostalogic.users.datamodel.users.UserRegistration
+import net.nostalogic.users.datamodel.users.*
+import net.nostalogic.users.persistence.repositories.UserRepository
 import net.nostalogic.utils.EntityUtils
 import org.apache.commons.lang3.RandomStringUtils
 import org.json.JSONObject
-import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -33,11 +33,13 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import java.time.temporal.ChronoUnit
 
-@Suppress("FunctionName")
 @ActiveProfiles(profiles = ["integration-test"])
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [UsersApplication::class])
-class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTest(dbLoader) {
+class UserControllerTest(
+    @Autowired dbLoader: DatabaseLoader,
+    @Autowired private val userRepository: UserRepository
+): BaseControllerTest(dbLoader) {
 
     private val ownerId = "09acf630-1a15-49a0-bddf-cc1c0794c2f9"
 
@@ -75,14 +77,15 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
     fun `Register a user`() {
         val name = "New user name"
         val email = "newemail@nostalogic.net"
+        every { excommComms.send(ofType(MessageOutline::class)) } answers { "MessageID" }
         val exchange = exchange(
                 entity = HttpEntity(UserRegistration(username = name, email = email, password = "Testing1.")),
-                responseType = object : ParameterizedTypeReference<User>() {},
+                responseType = object : ParameterizedTypeReference<RegistrationResponse>() {},
                 method = HttpMethod.POST, url = "$baseApiUrl${UserController.USERS_ENDPOINT}${UserController.REGISTER_URI}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(name, exchange.body!!.username)
-        Assertions.assertEquals(email, exchange.body!!.email)
-        Assertions.assertEquals(EntityStatus.INACTIVE, exchange.body!!.status)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        val regResponse = exchange.body as RegistrationResponse
+        assertEquals(name, regResponse.displayName)
+        assertEquals(email, regResponse.email)
     }
 
     @Test
@@ -91,9 +94,9 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(UserRegistration(username = "New user", email = "new@nostalogic.net", password = null)),
                 responseType = object : ParameterizedTypeReference<ErrorResponse>() {},
                 method = HttpMethod.POST, url = "$baseApiUrl${UserController.USERS_ENDPOINT}${UserController.REGISTER_URI}")
-        Assertions.assertEquals(HttpStatus.BAD_REQUEST, exchange.statusCode)
-        Assertions.assertEquals(307002, exchange.body!!.errorCode)
-        Assertions.assertTrue(exchange.body!!.userMessage.contains("password"))
+        assertEquals(HttpStatus.BAD_REQUEST, exchange.statusCode)
+        assertEquals(307002, exchange.body!!.errorCode)
+        assertTrue(exchange.body!!.userMessage.contains("password"))
     }
 
     @Test
@@ -102,19 +105,19 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(UserRegistration(username = "Owner", email = "admin@nostalogic.net", password = "Testing1.")),
                 responseType = object : ParameterizedTypeReference<ErrorResponse>() {},
                 method = HttpMethod.POST, url = "$baseApiUrl${UserController.USERS_ENDPOINT}${UserController.REGISTER_URI}")
-        Assertions.assertEquals(HttpStatus.BAD_REQUEST, exchange.statusCode)
-        Assertions.assertTrue(exchange.body!!.userMessage.contains("username"))
-        Assertions.assertTrue(exchange.body!!.userMessage.contains("email"))
-        Assertions.assertEquals(307001, exchange.body!!.errorCode)
+        assertEquals(HttpStatus.BAD_REQUEST, exchange.statusCode)
+        assertTrue(exchange.body!!.userMessage.contains("username"))
+        assertTrue(exchange.body!!.userMessage.contains("email"))
+        assertEquals(307001, exchange.body!!.errorCode)
     }
 
     @Test
     fun `Create a user`() {
         val user = createUser("Generated user", "generate@nostalogic.net",
                 responseType = object : ParameterizedTypeReference<User>() {}).body!!
-        Assertions.assertEquals("Generated user", user.username)
-        Assertions.assertEquals("generate@nostalogic.net", user.email)
-        Assertions.assertNotNull(user.id)
+        assertEquals("Generated user", user.username)
+        assertEquals("generate@nostalogic.net", user.email)
+        assertNotNull(user.id)
     }
 
     @Test
@@ -124,8 +127,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(UserRegistration(username = "name", email = "email@mail.com", password = "password")),
                 responseType = object : ParameterizedTypeReference<ErrorResponse>() {},
                 method = HttpMethod.POST, url = "$baseApiUrl${UserController.USERS_ENDPOINT}")
-        Assertions.assertEquals(HttpStatus.FORBIDDEN, exchange.statusCode)
-        Assertions.assertEquals(301001, exchange.body!!.errorCode)
+        assertEquals(HttpStatus.FORBIDDEN, exchange.statusCode)
+        assertEquals(301001, exchange.body!!.errorCode)
     }
 
     @Test
@@ -135,10 +138,10 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(UserRegistration(username = "Owner", email = "admin@nostalogic.net", password = "password")),
                 responseType = object : ParameterizedTypeReference<ErrorResponse>() {},
                 method = HttpMethod.POST, url = "$baseApiUrl${UserController.USERS_ENDPOINT}")
-        Assertions.assertEquals(HttpStatus.BAD_REQUEST, exchange.statusCode)
-        Assertions.assertEquals(307001, exchange.body!!.errorCode)
-        Assertions.assertTrue(exchange.body!!.userMessage.contains("username"))
-        Assertions.assertTrue(exchange.body!!.userMessage.contains("email"))
+        assertEquals(HttpStatus.BAD_REQUEST, exchange.statusCode)
+        assertEquals(307001, exchange.body!!.errorCode)
+        assertTrue(exchange.body!!.userMessage.contains("username"))
+        assertTrue(exchange.body!!.userMessage.contains("email"))
     }
 
     @Test
@@ -147,9 +150,9 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(UserRegistration(username = "New user name", email = "newemail@nostalogic.net", password = null)),
                 responseType = object : ParameterizedTypeReference<RegistrationAvailability>() {},
                 method = HttpMethod.POST, url = "$baseApiUrl${UserController.USERS_ENDPOINT}${UserController.REGISTER_URI}${UserController.AVAILABLE_URI}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertTrue(exchange.body!!.usernameAvailable!!)
-        Assertions.assertTrue(exchange.body!!.emailAvailable!!)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertTrue(exchange.body!!.usernameAvailable!!)
+        assertTrue(exchange.body!!.emailAvailable!!)
     }
 
     @Test
@@ -158,9 +161,9 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(UserRegistration(username = "Owner", email = "admin@nostalogic.net", password = null)),
                 responseType = object : ParameterizedTypeReference<RegistrationAvailability>() {},
                 method = HttpMethod.POST, url = "$baseApiUrl${UserController.USERS_ENDPOINT}${UserController.REGISTER_URI}${UserController.AVAILABLE_URI}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertFalse(exchange.body!!.usernameAvailable!!)
-        Assertions.assertFalse(exchange.body!!.emailAvailable!!)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertFalse(exchange.body!!.usernameAvailable!!)
+        assertFalse(exchange.body!!.emailAvailable!!)
     }
 
     @Test
@@ -169,34 +172,38 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
         val email = "reg@nostalogic.net"
         val exchange = exchange(
                 entity = HttpEntity(UserRegistration(username = name, email = email, password = "Testing1.")),
-                responseType = object : ParameterizedTypeReference<User>() {},
+                responseType = object : ParameterizedTypeReference<RegistrationResponse>() {},
                 method = HttpMethod.POST, url = "$baseApiUrl${UserController.USERS_ENDPOINT}${UserController.REGISTER_URI}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertNotNull(exchange.body!!.id)
-        val regConfirm = confirmReg(exchange.body!!.id!!, object : ParameterizedTypeReference<User>() {})
-        Assertions.assertEquals(HttpStatus.OK, regConfirm.statusCode)
-        Assertions.assertEquals(EntityStatus.ACTIVE, regConfirm.body!!.status)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        val regResponse = exchange.body as RegistrationResponse
+        assertEquals(name, regResponse.displayName)
+        assertEquals(email, regResponse.email)
+        val registeredUser = userRepository.findByEmailEquals(email)
+        assertNotNull(registeredUser)
+        val regConfirm = confirmReg(registeredUser!!.id, object : ParameterizedTypeReference<User>() {})
+        assertEquals(HttpStatus.OK, regConfirm.statusCode)
+        assertEquals(EntityStatus.ACTIVE, regConfirm.body!!.status)
     }
 
     @Test
     fun `Confirm registration with non-existent user`() {
         val regConfirm = confirmReg(EntityUtils.uuid(), object : ParameterizedTypeReference<ErrorResponse>() {})
-        Assertions.assertEquals(HttpStatus.NOT_FOUND, regConfirm.statusCode)
-        Assertions.assertEquals(304001, regConfirm.body!!.errorCode)
+        assertEquals(HttpStatus.NOT_FOUND, regConfirm.statusCode)
+        assertEquals(304001, regConfirm.body!!.errorCode)
     }
 
     @Test
     fun `Confirm registration for an activate user does nothing`() {
         val regConfirm = confirmReg(ownerId, object : ParameterizedTypeReference<User>() {})
-        Assertions.assertEquals(HttpStatus.OK, regConfirm.statusCode)
+        assertEquals(HttpStatus.OK, regConfirm.statusCode)
     }
 
     @Test
     fun `Confirm registration on deleted user fails`() {
         deleteUser(ownerId, object : ParameterizedTypeReference<User>() {})
         val regConfirm = confirmReg(ownerId, object : ParameterizedTypeReference<ErrorResponse>() {})
-        Assertions.assertEquals(HttpStatus.BAD_REQUEST, regConfirm.statusCode)
-        Assertions.assertEquals(304002, regConfirm.body!!.errorCode)
+        assertEquals(HttpStatus.BAD_REQUEST, regConfirm.statusCode)
+        assertEquals(304002, regConfirm.body!!.errorCode)
     }
 
     @Test
@@ -207,8 +214,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(User(username = name)),
                 responseType = object : ParameterizedTypeReference<User>() {},
                 method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$ownerId")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(name, exchange.body!!.username)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(name, exchange.body!!.username)
     }
 
     @Test
@@ -220,9 +227,9 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
             entity = HttpEntity(User(details = detailsRaw)),
             responseType = object : ParameterizedTypeReference<User>() {},
             method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$ownerId")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertNotNull(exchange.body!!.details)
-        Assertions.assertEquals(detailsInput.toString(), exchange.body!!.details)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertNotNull(exchange.body!!.details)
+        assertEquals(detailsInput.toString(), exchange.body!!.details)
         deleteUser(ownerId, object : ParameterizedTypeReference<User>() {}, true)
     }
 
@@ -233,7 +240,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(User()),
                 responseType = object : ParameterizedTypeReference<User>() {},
                 method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$ownerId")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
     }
 
     @Test
@@ -243,7 +250,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(User(username = "Change name")),
                 responseType = object : ParameterizedTypeReference<ErrorResponse>() {},
                 method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$ownerId")
-        Assertions.assertEquals(HttpStatus.FORBIDDEN, exchange.statusCode)
+        assertEquals(HttpStatus.FORBIDDEN, exchange.statusCode)
     }
 
     @Test
@@ -255,7 +262,7 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(SecureUserUpdate(currentPassword = "Testing1.", password = "NewPassword.2"), testHeaders(userId)),
                 responseType = object : ParameterizedTypeReference<User>() {},
                 method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$userId${UserController.SECURE_URI}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
     }
 
     @Test
@@ -267,8 +274,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(SecureUserUpdate(currentPassword = "Test1.Wrong", password = "NewPassword.2"), testHeaders(userId)),
                 responseType = object : ParameterizedTypeReference<ErrorResponse>() {},
                 method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$userId${UserController.SECURE_URI}")
-        Assertions.assertEquals(HttpStatus.UNAUTHORIZED, exchange.statusCode)
-        Assertions.assertEquals(301012, exchange.body!!.errorCode)
+        assertEquals(HttpStatus.UNAUTHORIZED, exchange.statusCode)
+        assertEquals(301012, exchange.body!!.errorCode)
     }
 
     @Test
@@ -278,8 +285,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(SecureUserUpdate(email = "newemail@nostalogic.net", currentPassword = "Testing1.")),
                 responseType = object : ParameterizedTypeReference<User>() {},
                 method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$ownerId${UserController.SECURE_URI}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals("newemail@nostalogic.net", exchange.body!!.email)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals("newemail@nostalogic.net", exchange.body!!.email)
     }
 
     @Test
@@ -289,8 +296,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(SecureUserUpdate(email = "admin@nostalogic.net", currentPassword = "Testing1.")),
                 responseType = object : ParameterizedTypeReference<User>() {},
                 method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$ownerId${UserController.SECURE_URI}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals("admin@nostalogic.net", exchange.body!!.email)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals("admin@nostalogic.net", exchange.body!!.email)
     }
 
     @Test
@@ -302,23 +309,30 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity(SecureUserUpdate(email = "admin@nostalogic.net")),
                 responseType = object : ParameterizedTypeReference<ErrorResponse>() {},
                 method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$userId${UserController.SECURE_URI}")
-        Assertions.assertEquals(HttpStatus.BAD_REQUEST, exchange.statusCode)
-        Assertions.assertEquals(307007, exchange.body!!.errorCode)
+        assertEquals(HttpStatus.BAD_REQUEST, exchange.statusCode)
+        assertEquals(307007, exchange.body!!.errorCode)
     }
 
     @Test
     fun `Get current profile`() {
         every { accessComms.verifySession(ofType(String::class)) } answers {
-            SessionSummary(EntityUtils.uuid(), ownerId, AuthenticationType.USERNAME, NoDate(), NoDate.plus(5L, ChronoUnit.DAYS), null, "token") }
+            SessionSummary(
+                EntityUtils.uuid(),
+                ownerId,
+                AuthenticationType.LOGIN,
+                NoDate(),
+                NoDate.plus(5L, ChronoUnit.DAYS),
+                accessToken = TokenDetails("token", null)
+            ) }
         val exchange = exchange(
                 entity = HttpEntity<Unit>(testHeaders(ownerId)),
                 responseType = object : ParameterizedTypeReference<User>() {},
                 method = HttpMethod.GET, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/${UserController.PROFILE_URI}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(EntityStatus.ACTIVE, exchange.body!!.status)
-        Assertions.assertEquals(ownerId, exchange.body!!.id)
-        Assertions.assertEquals("Owner", exchange.body!!.username)
-        Assertions.assertEquals("admin@nostalogic.net", exchange.body!!.email)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(EntityStatus.ACTIVE, exchange.body!!.status)
+        assertEquals(ownerId, exchange.body!!.id)
+        assertEquals("Owner", exchange.body!!.username)
+        assertEquals("admin@nostalogic.net", exchange.body!!.email)
     }
 
     @Test
@@ -327,10 +341,10 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<User>() {},
                 method = HttpMethod.GET, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/${UserController.PROFILE_URI}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals("Guest", exchange.body!!.username)
-        Assertions.assertEquals(EntityStatus.ACTIVE, exchange.body!!.status)
-        Assertions.assertNull(exchange.body!!.id)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals("Guest", exchange.body!!.username)
+        assertEquals(EntityStatus.ACTIVE, exchange.body!!.status)
+        assertNull(exchange.body!!.id)
     }
 
     @Test
@@ -340,9 +354,9 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<User>() {},
                 method = HttpMethod.GET, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/${ownerId}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals("Owner", exchange.body!!.username)
-        Assertions.assertEquals(ownerId, exchange.body!!.id)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals("Owner", exchange.body!!.username)
+        assertEquals(ownerId, exchange.body!!.id)
     }
 
     @Test
@@ -353,8 +367,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<User>() {},
                 method = HttpMethod.GET, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/${ownerId}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(ownerId, exchange.body!!.id)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(ownerId, exchange.body!!.id)
     }
 
     @Test
@@ -364,8 +378,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<ErrorResponse>() {},
                 method = HttpMethod.GET, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/${ownerId}")
-        Assertions.assertEquals(HttpStatus.FORBIDDEN, exchange.statusCode)
-        Assertions.assertEquals(301005, exchange.body!!.errorCode)
+        assertEquals(HttpStatus.FORBIDDEN, exchange.statusCode)
+        assertEquals(301005, exchange.body!!.errorCode)
     }
 
     @Test
@@ -375,33 +389,33 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<ErrorResponse>() {},
                 method = HttpMethod.GET, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/${EntityUtils.uuid()}")
-        Assertions.assertEquals(HttpStatus.NOT_FOUND, exchange.statusCode)
-        Assertions.assertEquals(304007, exchange.body!!.errorCode)
+        assertEquals(HttpStatus.NOT_FOUND, exchange.statusCode)
+        assertEquals(304007, exchange.body!!.errorCode)
     }
 
     @Test
     fun `Delete a user`() {
         val exchange = deleteUser(ownerId, object : ParameterizedTypeReference<User>() {})
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(EntityStatus.DELETED, exchange.body!!.status)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(EntityStatus.DELETED, exchange.body!!.status)
         val deleteConfirm = exchange(
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<User>() {},
                 method = HttpMethod.GET, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/${ownerId}")
-        Assertions.assertEquals(HttpStatus.OK, deleteConfirm.statusCode)
-        Assertions.assertEquals(EntityStatus.DELETED, deleteConfirm.body!!.status)
+        assertEquals(HttpStatus.OK, deleteConfirm.statusCode)
+        assertEquals(EntityStatus.DELETED, deleteConfirm.body!!.status)
     }
 
     @Test
     fun `Hard delete a user`() {
         val exchange = deleteUser(ownerId, object : ParameterizedTypeReference<User>() {}, true)
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(EntityStatus.DELETED, exchange.body!!.status)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(EntityStatus.DELETED, exchange.body!!.status)
         val deleteConfirm = exchange(
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<ErrorResponse>() {},
                 method = HttpMethod.GET, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/${ownerId}")
-        Assertions.assertEquals(HttpStatus.NOT_FOUND, deleteConfirm.statusCode)
+        assertEquals(HttpStatus.NOT_FOUND, deleteConfirm.statusCode)
     }
 
 
@@ -413,8 +427,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<ErrorResponse>() {},
                 method = HttpMethod.DELETE, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/${ownerId}")
-        Assertions.assertEquals(HttpStatus.FORBIDDEN, exchange.statusCode)
-        Assertions.assertEquals(301004, exchange.body!!.errorCode)
+        assertEquals(HttpStatus.FORBIDDEN, exchange.statusCode)
+        assertEquals(301004, exchange.body!!.errorCode)
     }
 
     @Test
@@ -426,8 +440,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<NoPageResponse<User>>() {},
                 method = HttpMethod.GET, url = "$baseApiUrl${UserController.USERS_ENDPOINT}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertTrue(exchange.body!!.size > 3)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertTrue(exchange.body!!.size > 3)
     }
 
     @Test
@@ -441,8 +455,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 responseType = object : ParameterizedTypeReference<NoPageResponse<User>>() {},
                 method = HttpMethod.GET, url = "$baseApiUrl${UserController.USERS_ENDPOINT}" +
                     "?username=${users.get(0).username}&email=${users.get(2).email}&id=${users.get(5).id}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(3, exchange.body!!.size)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(3, exchange.body!!.size)
     }
 
     @Test
@@ -453,8 +467,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<NoPageResponse<User>>() {},
                 method = HttpMethod.GET, url = "$baseApiUrl${UserController.USERS_ENDPOINT}?id=$newId,$ownerId")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(2, exchange.body!!.size)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(2, exchange.body!!.size)
     }
 
     @Test
@@ -466,8 +480,8 @@ class UserControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTes
                 entity = HttpEntity<Unit>(testHeaders()),
                 responseType = object : ParameterizedTypeReference<NoPageResponse<User>>() {},
                 method = HttpMethod.GET, url = "$baseApiUrl${UserController.USERS_ENDPOINT}")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(1, exchange.body!!.size)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(1, exchange.body!!.size)
     }
 
 }
