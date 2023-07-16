@@ -4,7 +4,8 @@ import net.nostalogic.constants.NoStrings
 import net.nostalogic.datamodel.NoPageResponse
 import net.nostalogic.datamodel.NoPageable
 import net.nostalogic.entities.EntityStatus
-import net.nostalogic.security.contexts.SessionContext
+import net.nostalogic.security.filters.IgnoreTokens
+import net.nostalogic.security.filters.RequireLogin
 import net.nostalogic.users.UsersApplication
 import net.nostalogic.users.controllers.UserController.Companion.USERS_ENDPOINT
 import net.nostalogic.users.datamodel.users.*
@@ -26,13 +27,13 @@ class UserController(@Autowired val userService: UserService) {
         const val SECURE_URI = "/secure"
     }
 
+    @RequireLogin
     @RequestMapping(method = [RequestMethod.POST])
     fun createUser(@RequestBody userRegistration: UserRegistration): User {
-        SessionContext.requireLogin()
         return userService.createUser(userRegistration)
     }
 
-    // TODO: Probably no longer want to return the user here
+    @IgnoreTokens
     @RequestMapping(method = [RequestMethod.POST], path = [REGISTER_URI])
     fun register(@RequestBody userRegistration: UserRegistration): RegistrationResponse {
         return userService.registerUser(userRegistration)
