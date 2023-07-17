@@ -15,7 +15,7 @@ object JwtUtil {
     private val logger = LoggerFactory.getLogger(JwtUtil::class.java)
 
     const val KEY_PROPERTY = "security.jwt.key"
-    private const val ISSUER = "nostalogic.net"
+    private const val ISSUER = "nostate"
     private var signingAlgorithm: Algorithm = Algorithm.HMAC512("placeholder")
     private var tokenVerifier: JWTVerifier = createVerifier(signingAlgorithm)
 

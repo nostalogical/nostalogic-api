@@ -1,6 +1,7 @@
 package net.nostalogic.datamodel.access
 
 import net.nostalogic.config.i18n.Translator
+import net.nostalogic.constants.ExceptionCodes._0101001
 import net.nostalogic.entities.EntityReference
 import net.nostalogic.entities.NoEntity
 import net.nostalogic.exceptions.NoAccessException
@@ -18,7 +19,7 @@ data class AccessReport(
         if (permission != null)
             return permission
         else
-            throw NoAccessException(101001,
+            throw NoAccessException(_0101001,
                     "Action '${action}' not specified for '${reference}'",
                     Translator.translate("permissionMissing"))
     }

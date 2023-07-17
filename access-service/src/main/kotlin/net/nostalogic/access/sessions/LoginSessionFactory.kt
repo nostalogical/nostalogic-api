@@ -12,7 +12,7 @@ class LoginSessionFactory(
     private val refreshKey: String = EntityUtils.uuid()
 
         init {
-            sessionEnd = standardSessionExpiration(sessionStart)
+            refreshSessionEnd = refreshSessionExpiration(sessionStart)
         }
 
     override fun createEntity(): ServerSessionEntity {
@@ -20,11 +20,16 @@ class LoginSessionFactory(
             sessionId,
             userId,
             sessionStart.getTimestamp(),
-            sessionEnd.getTimestamp(),
+            refreshSessionEnd.getTimestamp(),
             AuthenticationType.LOGIN,
             refreshKey = refreshKey,
             creatorId = userId,
+            tenant = tenant,
         )
+    }
+
+    override fun getCreator(): String {
+        return userId
     }
 
     override fun endOtherSessions(): Boolean {

@@ -1,6 +1,7 @@
 package net.nostalogic.access.persistence.entities
 
 import net.nostalogic.constants.AuthenticationType
+import net.nostalogic.constants.Tenant
 import net.nostalogic.persistence.entities.AbstractCoreEntity
 import net.nostalogic.utils.EntityUtils
 import java.sql.Timestamp
@@ -17,5 +18,10 @@ class ServerSessionEntity(
         @Enumerated(EnumType.STRING) val type: AuthenticationType,
         var refreshKey: String? = null,
         val notes: String? = null,
-        creatorId : String = EntityUtils.SYSTEM_ID
-) : AbstractCoreEntity(id = id, creatorId =  creatorId)
+        creatorId : String = EntityUtils.SYSTEM_ID,
+        tenant: Tenant,
+) : AbstractCoreEntity(
+        id = id,
+        creatorId =  creatorId,
+        tenant = tenant,
+)

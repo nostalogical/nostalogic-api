@@ -11,7 +11,9 @@ import net.nostalogic.constants.ExceptionCodes._0201005
 import net.nostalogic.constants.ExceptionCodes._0201006
 import net.nostalogic.constants.ExceptionCodes._0201007
 import net.nostalogic.constants.NoStrings
+import net.nostalogic.constants.Tenant
 import net.nostalogic.datamodel.ErrorResponse
+import net.nostalogic.security.models.GroupsAccessUpdate
 import net.nostalogic.security.models.SessionPrompt
 import net.nostalogic.security.models.SessionSummary
 import net.nostalogic.security.utils.TokenDecoder
@@ -104,7 +106,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Create session from username login`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, AuthenticationSource.USERNAME)))
+        val result = createSession(HttpEntity(sessionPrompt(userId = userId)))
         assertNotNull(result)
         assertEquals(200, result.statusCodeValue)
         val summary = result.body as SessionSummary
@@ -120,7 +122,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Create session from email login`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, AuthenticationSource.EMAIL)))
+        val result = createSession(HttpEntity(sessionPrompt(source = AuthenticationSource.EMAIL)))
         assertNotNull(result)
         assertEquals(200, result.statusCodeValue)
         assertEquals(AuthenticationType.LOGIN, (result.body as SessionSummary).type)
@@ -129,7 +131,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
     @Test
     fun `Create session without a user ID`() {
         val result = exchange(
-                entity = HttpEntity(SessionPrompt("", AuthenticationSource.EMAIL)),
+                entity = HttpEntity(SessionPrompt("", AuthenticationSource.EMAIL, tenant = Tenant.NOSTALOGIC.name)),
                 responseType = object : ParameterizedTypeReference<ErrorResponse>() {},
                 method = HttpMethod.POST,
                 url = sessionsUrl()
@@ -141,7 +143,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Verify an existing session`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, AuthenticationSource.USERNAME)))
+        val result = createSession(HttpEntity(sessionPrompt(userId = userId)))
         val token = result.body!!.accessToken!!.token
         val authResult = authenticateSession(token)
         assertEquals(200, authResult.statusCodeValue)
@@ -151,7 +153,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Verify a non-existing session`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, AuthenticationSource.USERNAME)))
+        val result = createSession(HttpEntity(sessionPrompt()))
         val summary = result.body as SessionSummary
         val token = summary.accessToken!!.token
         dbLoader.runDataWipeScripts()
@@ -167,7 +169,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Refresh an existing session`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, AuthenticationSource.USERNAME)))
+        val result = createSession(HttpEntity(sessionPrompt(userId = userId)))
         val refresh = exchange(
                 entity = tokenHeader(result.body!!.refreshToken!!.token),
                 responseType = object : ParameterizedTypeReference<SessionSummary>() {},
@@ -180,7 +182,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Refresh an expired session`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, AuthenticationSource.USERNAME)))
+        val result = createSession(HttpEntity(sessionPrompt()))
         val accessToken = result.body!!.accessToken!!.token
         val refreshToken = result.body!!.refreshToken!!.token
         expireSession(accessToken)
@@ -196,7 +198,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Expire a valid session`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, AuthenticationSource.USERNAME)))
+        val result = createSession(HttpEntity(sessionPrompt()))
         val token = result.body!!.accessToken!!.token
         expireSession(token)
         val loginFail = expectFailure(token, HttpMethod.GET)
@@ -205,7 +207,7 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Expire an expired session`() {
-        val result = createSession(HttpEntity(SessionPrompt(userId, AuthenticationSource.USERNAME)))
+        val result = createSession(HttpEntity(sessionPrompt()))
         val token = result.body!!.accessToken!!.token
         expireSession(token)
         val secondExpire = expectFailure(token, HttpMethod.DELETE)
@@ -221,8 +223,8 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
     @Test
     fun `Update a user's session`() {
         val newGroups = setOf("new_one", "new_two", "new_three")
-        val usernameSession = createSession(HttpEntity(SessionPrompt(userId, AuthenticationSource.USERNAME)))
-        val emailSession = createSession(HttpEntity(SessionPrompt(userId, AuthenticationSource.EMAIL)))
+        val usernameSession = createSession(HttpEntity(sessionPrompt()))
+        val emailSession = createSession(HttpEntity(sessionPrompt(source = AuthenticationSource.EMAIL)))
         exchange(entity = HttpEntity(newGroups),
                 responseType = object : ParameterizedTypeReference<Any>() {},
                 method = HttpMethod.PUT,
@@ -237,8 +239,9 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
 
     @Test
     fun `Update a non-existing user's session`() {
+        val groups = GroupsAccessUpdate(updaterId = null, tenant = Tenant.NOSTALOGIC.name, setOf("new_one", "new_two"))
         val update = exchange(
-                entity = HttpEntity(setOf("new_one", "new_two")),
+                entity = HttpEntity(groups),
                 responseType = object : ParameterizedTypeReference<Any>() {},
                 method = HttpMethod.PUT,
                 url = sessionsUrl() + "/update/fakeuserid"
@@ -246,6 +249,10 @@ class SessionControllerTest(@Autowired dbLoader: DatabaseLoader): BaseController
         assertEquals(200, update.statusCodeValue,
                 "This endpoint should always return 200, as a user with no any active sessions is " +
                         "functionally the same as a nonexistent user.")
+    }
+
+    private fun sessionPrompt(userId: String = TEST_USER.id, source: AuthenticationSource = AuthenticationSource.USERNAME, tenant: Tenant = Tenant.NOSTALOGIC): SessionPrompt {
+        return SessionPrompt(userId, source, tenant = tenant.name)
     }
 
 }

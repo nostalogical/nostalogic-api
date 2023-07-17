@@ -6,6 +6,7 @@ import net.nostalogic.comms.AccessComms
 import net.nostalogic.config.Config
 import net.nostalogic.config.DatabaseLoader
 import net.nostalogic.constants.AuthenticationSource
+import net.nostalogic.constants.Tenant
 import net.nostalogic.datamodel.Setting
 import net.nostalogic.datamodel.access.AccessQuery
 import net.nostalogic.datamodel.access.PolicyAction
@@ -69,13 +70,30 @@ class CommsTest(@Autowired val dbLoader: DatabaseLoader) {
 
     @Test
     fun `Internal access comms works`() {
-        val report = AccessComms.query(AccessQuery(hashSetOf(TEST_USER.toString()), hashMapOf(Pair(NoEntity.NAV.name, hashSetOf(PolicyAction.READ)))))
-        TestUtils.assertReport(report, hashSetOf(TEST_USER.toString()), null, hashMapOf(Pair(NoEntity.NAV, hashMapOf(Pair(PolicyAction.READ, true)))))
+        val report = AccessComms.query(
+            AccessQuery(
+                hashSetOf(TEST_USER.toString()),
+                hashMapOf(
+                    Pair(
+                        NoEntity.NAV.name,
+                        hashSetOf(PolicyAction.READ))
+                ))
+        )
+        TestUtils.assertReport(
+            report,
+            hashSetOf(TEST_USER.toString()),
+            null,
+            hashMapOf(
+                Pair(
+                    NoEntity.NAV,
+                    hashMapOf(Pair(PolicyAction.READ, true))
+                ))
+        )
     }
 
     @Test
     fun `Create session comms works`() {
-        val summary = AccessComms.createSession(SessionPrompt(TEST_USER.id, AuthenticationSource.EMAIL))
+        val summary = AccessComms.createSession(testSession())
         assertNotNull(summary)
         assertEquals(TEST_USER.id, summary!!.userId)
         assertNotNull(summary.accessToken)
@@ -83,7 +101,7 @@ class CommsTest(@Autowired val dbLoader: DatabaseLoader) {
 
     @Test
     fun `Refresh session comms works`() {
-        val creation = AccessComms.createSession(SessionPrompt(TEST_USER.id, AuthenticationSource.EMAIL))
+        val creation = AccessComms.createSession(testSession())
         assertNotNull(creation)
         val summary = AccessComms.refreshSession(creation!!.refreshToken!!.token)
         assertNotNull(summary)
@@ -93,7 +111,7 @@ class CommsTest(@Autowired val dbLoader: DatabaseLoader) {
 
     @Test
     fun `End session comms works`() {
-        val creation = AccessComms.createSession(SessionPrompt(TEST_USER.id, AuthenticationSource.EMAIL))
+        val creation = AccessComms.createSession(testSession())
         assertNotNull(creation)
         val summary = AccessComms.endSession(creation!!.accessToken!!.token)
         assertEquals(TEST_USER.id, summary!!.userId)
@@ -101,7 +119,7 @@ class CommsTest(@Autowired val dbLoader: DatabaseLoader) {
 
     @Test
     fun `Verify session comms works`() {
-        val creation = AccessComms.createSession(SessionPrompt(TEST_USER.id, AuthenticationSource.EMAIL))
+        val creation = AccessComms.createSession(testSession())
         assertNotNull(creation)
         val summary = AccessComms.verifySession(creation!!.accessToken!!.token)
         assertNotNull(summary)
@@ -112,11 +130,15 @@ class CommsTest(@Autowired val dbLoader: DatabaseLoader) {
 
     @Test
     fun `Update session comms works`() {
-        val creation = AccessComms.createSession(SessionPrompt(TEST_USER.id, AuthenticationSource.EMAIL))
+        val creation = AccessComms.createSession(testSession())
         assertNotNull(creation)
         val groups = hashSetOf(EntityUtils.uuid(), EntityUtils.uuid())
         val summary = AccessComms.updateSession(groups, TEST_USER.id)
         assertNotNull(summary)
+    }
+
+    private fun testSession(): SessionPrompt {
+        return SessionPrompt(TEST_USER.id, AuthenticationSource.EMAIL, tenant = Tenant.NOSTALOGIC.name)
     }
 
 }

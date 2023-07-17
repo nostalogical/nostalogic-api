@@ -4,6 +4,7 @@ import net.nostalogic.access.AccessApplication
 import net.nostalogic.access.controllers.SessionController.Companion.SESSIONS_ENDPOINT
 import net.nostalogic.access.services.SessionService
 import net.nostalogic.constants.NoStrings
+import net.nostalogic.security.models.GroupsAccessUpdate
 import net.nostalogic.security.models.SessionPrompt
 import net.nostalogic.security.models.SessionSummary
 import org.springframework.web.bind.annotation.*
@@ -38,8 +39,8 @@ class SessionController(private val sessionService: SessionService) {
     }
 
     @RequestMapping(path= ["/update/{userId}"], method = [RequestMethod.PUT], produces = ["application/json"])
-    fun updateUserSessions(@RequestBody groups: HashSet<String>, @PathVariable userId: String) {
-        sessionService.updateUserGroups(userId, groups)
+    fun updateUserSessions(@RequestBody update: GroupsAccessUpdate, @PathVariable userId: String) {
+        sessionService.updateUserGroups(userId, update)
     }
 
 }

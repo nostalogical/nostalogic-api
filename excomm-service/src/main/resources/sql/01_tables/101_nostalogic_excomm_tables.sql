@@ -1,6 +1,6 @@
 
 CREATE TABLE IF NOT EXISTS email (
-    tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+    tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
     id CHAR(36) PRIMARY KEY,
     recipient_id VARCHAR(50),
     recipient_email_address VARCHAR(100) NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS email (
 );
 
 CREATE TABLE IF NOT EXISTS email_template (
-    tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+    tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
     id CHAR(36) PRIMARY KEY,
     subject VARCHAR(100) NOT NULL,
     body_html TEXT NOT NULL,

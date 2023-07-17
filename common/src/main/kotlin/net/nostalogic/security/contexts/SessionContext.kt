@@ -5,6 +5,7 @@ import net.nostalogic.comms.Comms
 import net.nostalogic.config.Config
 import net.nostalogic.constants.NoLocale
 import net.nostalogic.constants.NoStrings
+import net.nostalogic.constants.Tenant
 import net.nostalogic.datamodel.NoDate
 import net.nostalogic.exceptions.NoAuthException
 import net.nostalogic.security.grants.*
@@ -13,8 +14,9 @@ import java.util.*
 import kotlin.concurrent.getOrSet
 
 open class SessionContext (
-        var token: String? = null,
-        var grant: NoGrant = GuestGrant()
+    var token: String? = null,
+    var grant: NoGrant = GuestGrant(),
+    var tenant: Tenant = Tenant.NOSTALOGIC,
 ) {
 
     companion object {
@@ -26,6 +28,10 @@ open class SessionContext (
 
         fun getGrant(): NoGrant {
             return getSession().grant
+        }
+
+        fun getTenant(): Tenant {
+            return  getSession().tenant
         }
 
         fun getToken(): String? {

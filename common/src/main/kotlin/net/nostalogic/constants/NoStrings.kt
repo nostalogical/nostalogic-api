@@ -42,6 +42,7 @@ object NoStrings {
     const val DETAIL_EMAIL = "email_login"
     const val DETAIL_IMPERSONATE = "admin_override"
     const val AUTH_HEADER = "Authorization"
+    const val TENANT_HEADER = "Tenant"
     const val AUTH_COOKIE = "NostaAuth"
     const val AUTH_GUEST = "GUEST"
     const val TEST_TOKEN = "test_token"

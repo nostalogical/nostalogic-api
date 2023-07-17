@@ -23,7 +23,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
 
 @Suppress("FunctionName")
-@ActiveProfiles(profiles = ["integration-test"])
+@ActiveProfiles(profiles = ["integration-test", "test"])
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [UsersApplication::class])
 class GroupControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTest(dbLoader) {

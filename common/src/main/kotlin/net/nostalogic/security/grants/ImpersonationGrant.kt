@@ -1,6 +1,7 @@
 package net.nostalogic.security.grants
 
 import net.nostalogic.constants.AuthenticationType
+import net.nostalogic.constants.Tenant
 import net.nostalogic.datamodel.NoDate
 
 class ImpersonationGrant(
@@ -8,10 +9,12 @@ class ImpersonationGrant(
         expiration: NoDate,
         val sessionId: String,
         val originalSubject: String,
-        created: NoDate = NoDate()
+        created: NoDate = NoDate(),
+        tenant: String = Tenant.NOSTALOGIC.name.lowercase(),
 ) : NoGrant(
         subject,
         expiration,
         AuthenticationType.IMPERSONATION,
-        created = created
+        created = created,
+        tenant = tenant,
 )

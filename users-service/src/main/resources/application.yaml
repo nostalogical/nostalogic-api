@@ -12,7 +12,6 @@ spring:
     password: solice
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/nostalogic?currentSchema=nostalogic_users
-    platform: postgres
   jpa:
     show-sql: true
     properties:
@@ -23,6 +22,9 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   liquibase:
     default-schema: nostalogic_users
+  sql:
+    init:
+      platform: postgres
 
 
 server:

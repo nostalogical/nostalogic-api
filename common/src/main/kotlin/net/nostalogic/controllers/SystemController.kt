@@ -1,6 +1,9 @@
 package net.nostalogic.controllers
 
 import net.nostalogic.config.Config
+import net.nostalogic.constants.ExceptionCodes._0101006
+import net.nostalogic.constants.ExceptionCodes._0101007
+import net.nostalogic.constants.ExceptionCodes._0101008
 import net.nostalogic.datamodel.Setting
 import net.nostalogic.datamodel.StatusCheck
 import net.nostalogic.datamodel.access.AccessQuery
@@ -30,14 +33,14 @@ class SystemController(@Autowired private val config: Config,
     @RequestMapping(path = ["/settings"], method = [RequestMethod.GET], produces = ["application/json"])
     fun getSettings(): HashMap<Setting.Source, HashMap<String, String>> {
         if (!AccessQuery().simpleCheck(entity = NoEntity.SETTING, action = PolicyAction.READ))
-            throw NoAccessException(101006, "Missing rights to view settings")
+            throw NoAccessException(_0101006, "Missing rights to view settings")
         return Config.getAllSettings()
     }
 
     @RequestMapping(path = ["/reload"], method = [RequestMethod.GET], produces = ["application/json"])
     fun reloadSettings(): HashMap<Setting.Source, HashMap<String, String>> {
         if (!AccessQuery().simpleCheck(entity = NoEntity.SETTING, action = PolicyAction.READ))
-            throw NoAccessException(101007, "Missing rights to view or reload settings")
+            throw NoAccessException(_0101007, "Missing rights to view or reload settings")
         config.reloadSettings()
         return Config.getAllSettings()
     }
@@ -46,7 +49,7 @@ class SystemController(@Autowired private val config: Config,
     fun updateSetting(@RequestBody keyVal: Pair<String, String>, @RequestParam reload: Boolean = false):
             HashMap<Setting.Source, HashMap<String, String>> {
         if (!AccessQuery().simpleCheck(entity = NoEntity.SETTING, action = PolicyAction.EDIT))
-            throw NoAccessException(101008, "Missing rights to update settings")
+            throw NoAccessException(_0101008, "Missing rights to update settings")
         Config.addSetting(Setting(keyVal.first, keyVal.second, Setting.Source.DATABASE))
         if (reload)
             config.reloadSettings()

@@ -3,6 +3,7 @@ package net.nostalogic.comms
 import com.google.gson.reflect.TypeToken
 import net.nostalogic.config.Config
 import net.nostalogic.config.i18n.Translator
+import net.nostalogic.constants.ExceptionCodes._0101002
 import net.nostalogic.constants.NoStrings
 import net.nostalogic.datamodel.NoPageResponse
 import net.nostalogic.datamodel.access.*
@@ -30,7 +31,7 @@ object AccessComms {
                 headers = Comms.HEADERS, clazz = AccessReport::class.java) ?: AccessReport()
         } catch (e: Exception) {
             logger.error("Request to access service failed", e)
-            throw NoAccessException(101002, "Failed to connect to access service", Translator.translate("permissionMissing"))
+            throw NoAccessException(_0101002, "Failed to connect to access service", Translator.translate("permissionMissing"))
         }
     }
 

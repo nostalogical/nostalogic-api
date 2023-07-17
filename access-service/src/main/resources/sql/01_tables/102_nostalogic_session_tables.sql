@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS server_session (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY,
@@ -14,11 +14,12 @@ CREATE TABLE IF NOT EXISTS server_session (
 );
 
 CREATE TABLE IF NOT EXISTS server_session_event (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
-  id bigint GENERATED ALWAYS AS IDENTITY,
+  creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
+  id CHAR(36) PRIMARY KEY,
   session_id CHAR(36) NOT NULL REFERENCES server_session(id),
-  event CHAR(20) NOT NULL,
+  session_event CHAR(20) NOT NULL,
   ip VARCHAR(250) NULl,
   details JSON DEFAULT '{}'
 );

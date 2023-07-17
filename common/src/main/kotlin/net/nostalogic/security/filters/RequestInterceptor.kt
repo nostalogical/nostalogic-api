@@ -2,6 +2,7 @@ package net.nostalogic.security.filters
 
 import net.nostalogic.config.Config
 import net.nostalogic.constants.NoStrings
+import net.nostalogic.constants.Tenant
 import net.nostalogic.security.contexts.SessionContext
 import net.nostalogic.security.grants.GuestGrant
 import net.nostalogic.security.grants.TestGrant
@@ -12,7 +13,7 @@ import org.springframework.web.servlet.HandlerInterceptor
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 
-class AuthenticationInterceptor : HandlerInterceptor {
+class RequestInterceptor : HandlerInterceptor {
 
     override fun preHandle(request: HttpServletRequest, response: HttpServletResponse, handler: Any): Boolean {
         handleRequestAuthorization(request, handler)
@@ -37,7 +38,8 @@ class AuthenticationInterceptor : HandlerInterceptor {
             }
             SessionContext.currentSession.set(SessionContext(token, grant))
         } ?: run {
-            val context = if (Config.isTest()) SessionContext(grant = TestGrant()) else SessionContext()
+            val context = if (Config.isTest()) SessionContext(grant = TestGrant())
+            else SessionContext(tenant = determineTenant(request))
             SessionContext.currentSession.set(context)
         }
 
@@ -48,6 +50,16 @@ class AuthenticationInterceptor : HandlerInterceptor {
     private fun extractToken(request: HttpServletRequest): String? {
         return if (request is RequestFacade)
             request.getHeader(NoStrings.AUTH_HEADER)
+        else null
+    }
+
+    private fun determineTenant(request: HttpServletRequest): Tenant {
+        return extractTenant(request) ?: Tenant.NOSTALOGIC
+    }
+
+    private fun extractTenant(request: HttpServletRequest): Tenant? {
+        return if (request is RequestFacade)
+            Tenant.fromName(request.getHeader(NoStrings.TENANT_HEADER))
         else null
     }
 

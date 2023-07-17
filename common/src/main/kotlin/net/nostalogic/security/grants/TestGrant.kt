@@ -11,7 +11,7 @@ class TestGrant : NoGrant(
         subject = TEST_SUBJECT,
         expiration = NoDate.plus(2, ChronoUnit.MINUTES),
         type = AuthenticationType.TEST,
-        created = NoDate()
+        created = NoDate(),
 ) {
 
     companion object {

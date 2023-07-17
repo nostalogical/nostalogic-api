@@ -13,7 +13,7 @@ class ImpersonationSessionFactory(
     val originalUserId: String
 
         init {
-            sessionEnd = standardSessionExpiration(sessionStart)
+            refreshSessionEnd = accessSessionExpiration(sessionStart)
             originalUserId = sessionPrompt.originalUserId ?: throw NoAuthException(ExceptionCodes._0201011,
                 "An impersonation session requires an original user ID")
             if (originalUserId == userId)
@@ -26,9 +26,14 @@ class ImpersonationSessionFactory(
             sessionId,
             userId,
             sessionStart.getTimestamp(),
-            sessionEnd.getTimestamp(),
+            refreshSessionEnd.getTimestamp(),
             AuthenticationType.IMPERSONATION,
             creatorId = originalUserId,
+            tenant = tenant,
         )
+    }
+
+    override fun getCreator(): String {
+        return originalUserId
     }
 }

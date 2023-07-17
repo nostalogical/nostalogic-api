@@ -8,6 +8,7 @@ import net.nostalogic.access.persistence.repositories.ServerSessionEventReposito
 import net.nostalogic.access.persistence.repositories.ServerSessionRepository
 import net.nostalogic.access.sessions.SessionFactory
 import net.nostalogic.constants.AuthenticationType
+import net.nostalogic.constants.ExceptionCodes._0101009
 import net.nostalogic.constants.ExceptionCodes._0201001
 import net.nostalogic.constants.ExceptionCodes._0201002
 import net.nostalogic.constants.ExceptionCodes._0201003
@@ -18,14 +19,17 @@ import net.nostalogic.constants.ExceptionCodes._0201008
 import net.nostalogic.constants.ExceptionCodes._0201010
 import net.nostalogic.constants.ExceptionCodes._0201013
 import net.nostalogic.constants.SessionEvent
+import net.nostalogic.constants.Tenant
 import net.nostalogic.crypto.encoders.EncoderType
 import net.nostalogic.crypto.encoders.HexEncoder
 import net.nostalogic.crypto.encoders.PasswordEncoder
 import net.nostalogic.datamodel.NoDate
 import net.nostalogic.datamodel.authentication.EncodingDetails
 import net.nostalogic.datamodel.authentication.UserAuthentication
+import net.nostalogic.exceptions.NoAccessException
 import net.nostalogic.exceptions.NoAuthException
 import net.nostalogic.security.grants.*
+import net.nostalogic.security.models.GroupsAccessUpdate
 import net.nostalogic.security.models.SessionPrompt
 import net.nostalogic.security.models.SessionSummary
 import net.nostalogic.security.models.TokenDetails
@@ -47,9 +51,19 @@ class SessionService(
         val sessionFactory = SessionFactory.create(prompt)
         val persistedSession = sessionRepo.save(sessionFactory.createEntity())
 
-        addSessionEvent(ServerSessionEventEntity(persistedSession.id, SessionEvent.BEGIN))
+        addSessionEvent(ServerSessionEventEntity(
+            persistedSession.id,
+            SessionEvent.BEGIN,
+            creatorId = sessionFactory.getCreator(),
+            tenant = sessionFactory.tenant,
+            ))
         if (sessionFactory.endOtherSessions()) {
-            addSessionEvent(ServerSessionEventEntity(persistedSession.id, SessionEvent.LOGOUT_OTHERS))
+            addSessionEvent(ServerSessionEventEntity(
+                persistedSession.id,
+                SessionEvent.LOGOUT_OTHERS,
+                creatorId = sessionFactory.getCreator(),
+                tenant = sessionFactory.tenant,
+            ))
             endOtherSessions(prompt.userId, persistedSession)
         }
 
@@ -85,10 +99,15 @@ class SessionService(
         )
         if (!verified)
             throw NoAuthException(_0201013, "Refresh token is invalid")
-        session.endDateTime = SessionFactory.standardSessionExpiration().getTimestamp()
+        session.endDateTime = SessionFactory.refreshSessionExpiration().getTimestamp()
         session.refreshKey = EntityUtils.uuid()
         val updated = sessionRepo.save(session)
-        addSessionEvent(ServerSessionEventEntity(updated.id, SessionEvent.REFRESH))
+        addSessionEvent(ServerSessionEventEntity(
+            sessionId = updated.id,
+            sessionEvent = SessionEvent.REFRESH,
+            creatorId = session.creatorId,
+            tenant = session.tenant,
+        ))
         confirmSessionIsValid(updated)
         return summaryFromSession(updated, includeTokens = true)
     }
@@ -98,22 +117,30 @@ class SessionService(
      * time their group memberships change to add/remove access. This update is expected to be infrequent, so it should
      * contain an exhaustive list of the user's groups, meaning they can be reset and replaced with the provided list.
      */
-    fun updateUserGroups(userId: String, groups: Set<String>) {
+    fun updateUserGroups(userId: String, update: GroupsAccessUpdate) {
+        val tenant = Tenant.fromName(update.tenant) ?: throw NoAccessException(_0101009,
+            "User groups cannot be updated, no valid tenant is specified")
         val currentExtensions = extensionRepo.findAllByUserId(userId)
         val currentGroups = currentExtensions.map { it.entityId }.toHashSet()
         extensionRepo.deleteAllByUserId(userId)
-        val updatedExtensions = groups.map {
+        val updatedExtensions = update.groups.map {
             AccessExtensionEntity(
                 userId = userId,
                 entityId = it,
+                creatorId = update.updaterId ?: EntityUtils.SYSTEM_ID,
+                tenant = tenant,
             )
         }
         extensionRepo.saveAll(updatedExtensions)
 
         val userSessions = sessionRepo.findAllByUserIdAndEndDateTimeIsAfter(userId, Timestamp.from(Instant.now()))
-        if (currentGroups != groups) {
+        if (currentGroups != update.groups) {
             for (session in userSessions) {
-                addSessionEvent(ServerSessionEventEntity(session.id, SessionEvent.GROUPS_CHANGE))
+                addSessionEvent(ServerSessionEventEntity(
+                    sessionId = session.id,
+                    sessionEvent = SessionEvent.GROUPS_CHANGE,
+                    tenant = session.tenant,
+                    ))
             }
         }
     }
@@ -124,7 +151,11 @@ class SessionService(
             throw NoAuthException(_0201006, "Session has already ended")
         session.endDateTime = Timestamp.from(Instant.now().minusSeconds(5))
         val updated = sessionRepo.save(session)
-        addSessionEvent(ServerSessionEventEntity(updated.id, SessionEvent.LOGOUT))
+        addSessionEvent(ServerSessionEventEntity(
+            sessionId = updated.id,
+            sessionEvent = SessionEvent.LOGOUT,
+            tenant = session.tenant,
+            ))
         return summaryFromSession(updated, includeTokens = false)
     }
 
@@ -171,7 +202,13 @@ class SessionService(
         sessions.removeIf { it.id ==  exclude?.id }
         val endTime = Timestamp.from(Instant.now().minusSeconds(5))
         sessions.forEach { if (it.endDateTime.after(endTime)) it.endDateTime = endTime }
-        val sessionLogouts = sessions.map { ServerSessionEventEntity(it.id, SessionEvent.FORCE_ENDED) }
+        val sessionLogouts = sessions.map { ServerSessionEventEntity(
+            sessionId = it.id,
+            sessionEvent = SessionEvent.FORCE_ENDED,
+            creatorId = exclude?.creatorId ?: EntityUtils.SYSTEM_ID,
+            tenant = it.tenant,
+            )
+        }
         eventRepo.saveAll(sessionLogouts)
         if (sessions.isNotEmpty())
             sessionRepo.saveAll(sessions)
@@ -187,20 +224,24 @@ class SessionService(
 
     private fun createLoginAccessToken(entity: ServerSessionEntity): TokenDetails {
         val grant = LoginGrant(
-                entity.userId,
-                NoDate(entity.endDateTime),
-                entity.id,
-                NoDate(entity.startDateTime))
+            subject = entity.userId,
+            expiration = SessionFactory.accessSessionExpiration(NoDate(entity.startDateTime)),
+            sessionId = entity.id,
+            created = NoDate(entity.startDateTime),
+            tenant = entity.tenant.name,
+        )
         return TokenDetails(TokenEncoder.encodeLoginGrant(grant), grant.expiration)
     }
 
     private fun createImpersonationAccessToken(entity: ServerSessionEntity): TokenDetails {
         val grant = ImpersonationGrant(
-                entity.userId,
-                NoDate(entity.endDateTime),
-                entity.id,
-                entity.creatorId,
-                NoDate(entity.startDateTime))
+            subject = entity.userId,
+            expiration = NoDate(entity.endDateTime),
+            sessionId = entity.id,
+            originalSubject = entity.creatorId,
+            created = NoDate(entity.startDateTime),
+            tenant = entity.tenant.name,
+        )
         return TokenDetails(TokenEncoder.encodeImpersonationGrant(grant), grant.expiration)
     }
 
@@ -215,11 +256,12 @@ class SessionService(
             ),
             EncoderType.PBKDF2)
         val grant = RefreshGrant(
-            entity.userId,
-            NoDate(entity.endDateTime),
-            entity.id,
-            hashedRefresh.hash,
-            NoDate(entity.startDateTime),
+            subject = entity.userId,
+            expiration = NoDate(entity.endDateTime),
+            sessionId = entity.id,
+            refreshHash = hashedRefresh.hash,
+            created = NoDate(entity.startDateTime),
+            tenant = entity.tenant.name,
         )
         return TokenDetails(TokenEncoder.encodeRefreshGrant(grant), grant.expiration)
     }

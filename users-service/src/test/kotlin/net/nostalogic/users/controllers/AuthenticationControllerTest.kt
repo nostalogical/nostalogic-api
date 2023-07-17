@@ -35,7 +35,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 import java.time.temporal.ChronoUnit
 
 @Suppress("FunctionName")
-@ActiveProfiles(profiles = ["integration-test"])
+@ActiveProfiles(profiles = ["integration-test", "test"])
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [UsersApplication::class])
 class AuthenticationControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControllerTest(dbLoader) {

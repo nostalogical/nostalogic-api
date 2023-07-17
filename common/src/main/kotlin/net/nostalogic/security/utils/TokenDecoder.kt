@@ -27,7 +27,8 @@ object TokenDecoder {
             jwt.subject,
             NoDate(jwt.expiresAt),
             jwt.getClaim(TokenEncoder.SESSION).asString(),
-            created = NoDate(jwt.issuedAt)
+            created = NoDate(jwt.issuedAt),
+            tenant = jwt.getClaim(TokenEncoder.TENANT).asString(),
         )
     }
 
@@ -38,30 +39,34 @@ object TokenDecoder {
             jwt.getClaim(TokenEncoder.SESSION).asString(),
             created = NoDate(jwt.issuedAt),
             refreshHash = jwt.getClaim(TokenEncoder.TOKEN_HASH).asString(),
+            tenant = jwt.getClaim(TokenEncoder.TENANT).asString(),
         )
     }
 
     private fun decodeImpersonationToken(jwt: DecodedJWT): ImpersonationGrant {
         return ImpersonationGrant(
-                jwt.subject,
-                NoDate(jwt.expiresAt),
-                jwt.getClaim(TokenEncoder.SESSION).asString(),
-                jwt.getClaim(TokenEncoder.ORIGINAL_USER).asString(),
-                created = NoDate(jwt.issuedAt)
+            jwt.subject,
+            NoDate(jwt.expiresAt),
+            jwt.getClaim(TokenEncoder.SESSION).asString(),
+            jwt.getClaim(TokenEncoder.ORIGINAL_USER).asString(),
+            created = NoDate(jwt.issuedAt),
+            tenant = jwt.getClaim(TokenEncoder.TENANT).asString(),
         )
     }
 
     private fun decodeConfirmationToken(jwt: DecodedJWT): ConfirmationGrant {
         return ConfirmationGrant(
-                jwt.subject,
-                created = NoDate(jwt.issuedAt)
+            jwt.subject,
+            created = NoDate(jwt.issuedAt),
+            tenant = jwt.getClaim(TokenEncoder.TENANT).asString(),
         )
     }
 
     private fun decodePasswordResetToken(jwt: DecodedJWT): PasswordResetGrant {
         return PasswordResetGrant(
-                jwt.subject,
-                created = NoDate(jwt.issuedAt)
+            jwt.subject,
+            created = NoDate(jwt.issuedAt),
+            tenant = jwt.getClaim(TokenEncoder.TENANT).asString(),
         )
     }
 }

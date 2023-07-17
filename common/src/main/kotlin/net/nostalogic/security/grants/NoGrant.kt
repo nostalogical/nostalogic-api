@@ -1,6 +1,7 @@
 package net.nostalogic.security.grants
 
 import net.nostalogic.constants.AuthenticationType
+import net.nostalogic.constants.Tenant
 import net.nostalogic.datamodel.NoDate
 import java.io.Serializable
 
@@ -14,5 +15,6 @@ abstract class NoGrant(
         val expiration: NoDate? = null,
         val type: AuthenticationType,
         val description: String? = null,
-        val created: NoDate
+        val created: NoDate,
+        val tenant: String = Tenant.NOSTALOGIC.name.lowercase(),
 ) : Serializable

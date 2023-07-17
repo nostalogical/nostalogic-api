@@ -1,7 +1,7 @@
 
 
 CREATE TABLE IF NOT EXISTS short_mixed_case_code (
-    tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+    tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
     created TIMESTAMP NOT NULL DEFAULT now(),
     creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
     id CHAR(36) DEFAULT uuid_generate_v4() PRIMARY KEY,
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS short_mixed_case_code (
 );
 
 CREATE TABLE IF NOT EXISTS long_phrase_code (
-    tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+    tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
     created TIMESTAMP NOT NULL DEFAULT now(),
     creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
     id CHAR(36) DEFAULT uuid_generate_v4() PRIMARY KEY,

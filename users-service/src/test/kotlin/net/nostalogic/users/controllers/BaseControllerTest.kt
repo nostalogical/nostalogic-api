@@ -42,7 +42,7 @@ import java.io.IOException
 import java.time.temporal.ChronoUnit
 
 @Suppress("FunctionName")
-@ActiveProfiles(profiles = ["integration-test"])
+@ActiveProfiles(profiles = ["integration-test", "test"])
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [UsersApplication::class])
 open class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader) {

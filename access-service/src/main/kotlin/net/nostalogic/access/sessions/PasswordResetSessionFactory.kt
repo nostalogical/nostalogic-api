@@ -11,7 +11,7 @@ class PasswordResetSessionFactory(
     SessionFactory(sessionPrompt) {
 
     init {
-        sessionEnd = sessionStart.addTime(7, ChronoUnit.DAYS)
+        refreshSessionEnd = sessionStart.addTime(7, ChronoUnit.DAYS)
     }
 
     override fun createEntity(): ServerSessionEntity {
@@ -19,10 +19,15 @@ class PasswordResetSessionFactory(
             sessionId,
             userId,
             sessionStart.getTimestamp(),
-            sessionEnd.getTimestamp(),
+            refreshSessionEnd.getTimestamp(),
             AuthenticationType.PASSWORD_RESET,
-            creatorId = userId
+            creatorId = userId,
+            tenant = tenant,
         )
+    }
+
+    override fun getCreator(): String {
+        return userId
     }
 
     override fun endOtherSessions(): Boolean {

@@ -7,4 +7,6 @@ class SessionPrompt(
         val userId: String,
         val type: AuthenticationSource,
         val originalUserId: String? = null,
-        val reset: Boolean = false) : Serializable
+        val reset: Boolean = false,
+        val tenant: String?,
+) : Serializable

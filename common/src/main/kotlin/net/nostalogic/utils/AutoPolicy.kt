@@ -1,6 +1,9 @@
 package net.nostalogic.utils
 
 import net.nostalogic.comms.Comms
+import net.nostalogic.constants.ExceptionCodes._0101003
+import net.nostalogic.constants.ExceptionCodes._0101004
+import net.nostalogic.constants.ExceptionCodes._0101005
 import net.nostalogic.datamodel.NamedEntity
 import net.nostalogic.datamodel.access.EntityPermission
 import net.nostalogic.datamodel.access.Policy
@@ -21,20 +24,20 @@ object AutoPolicy {
                 resources = hashSetOf(resource.toString()),
                 subjects = subjects.map { it.toString() }.toHashSet(),
                 permissions = CollUtils.enumMapOf(Pair(action, allow)),
-                creator = creator)) ?: throw NoAccessException(101003, "Unable to autogenerate policy for $resource")
+                creator = creator)) ?: throw NoAccessException(_0101003, "Unable to autogenerate policy for $resource")
     }
 
     fun retrieve(resource: EntitySignature, actions: Collection<PolicyAction>): Collection<Policy> {
         val expectedNames = actions.map { autoPolicyName(resource, it) }.toHashSet()
         val policies = Comms.access().retrievePolicies(resources = setOf(resource.toString()), status = EntityStatus.values().toSet(),
                 priority = setOf(PolicyPriority.TWO_STANDARD), actions = actions.toHashSet())
-                ?: throw NoAccessException(101004, "Unable to retrieve auto policies for $resource")
+                ?: throw NoAccessException(_0101004, "Unable to retrieve auto policies for $resource")
         policies.toHashSet().removeIf { !expectedNames.contains(it.name) }
         return policies
     }
 
     fun updatePolicy(policy: Policy): Policy {
-        return Comms.access().updatePolicy(policy) ?: throw NoAccessException(101005, "Unable to update auto policy for ${policy.resources?.iterator()?.next()}")
+        return Comms.access().updatePolicy(policy) ?: throw NoAccessException(_0101005, "Unable to update auto policy for ${policy.resources?.iterator()?.next()}")
     }
 
     fun delete(policyId: String) {

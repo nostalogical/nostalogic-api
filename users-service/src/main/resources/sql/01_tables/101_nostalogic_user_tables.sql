@@ -2,7 +2,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public;
 
 CREATE TABLE IF NOT EXISTS "user" (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS "user" (
 );
 
 CREATE TABLE IF NOT EXISTS username (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS username (
 );
 
 CREATE TABLE IF NOT EXISTS email (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS email (
 );
 
 CREATE TABLE IF NOT EXISTS authentication (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS authentication (
 );
 
 CREATE TABLE IF NOT EXISTS "group" (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
@@ -70,7 +70,7 @@ CREATE TABLE IF NOT EXISTS "group" (
 );
 
 CREATE TABLE IF NOT EXISTS details (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY,
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS details (
 );
 
 CREATE TABLE IF NOT EXISTS membership (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),

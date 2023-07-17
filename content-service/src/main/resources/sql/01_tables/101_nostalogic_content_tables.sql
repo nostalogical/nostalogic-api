@@ -2,7 +2,7 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public;
 
 CREATE TABLE IF NOT EXISTS navigation (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS navigation (
 );
 
 CREATE TABLE IF NOT EXISTS navigation_link (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS navigation_link_mask (
 );
 
 CREATE TABLE IF NOT EXISTS container (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS container (
 );
 
 CREATE TABLE IF NOT EXISTS article (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS article (
 );
 
 CREATE TABLE IF NOT EXISTS article_revision (
-  tenant VARCHAR(20) NOT NULL DEFAULT 'nostalogic',
+  tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),

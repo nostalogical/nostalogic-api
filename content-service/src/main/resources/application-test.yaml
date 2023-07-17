@@ -5,6 +5,8 @@ security:
     refresh-duration-minutes: 86400
 
 spring:
+  profiles:
+    include=default:
   application:
     name: content-service
   datasource:

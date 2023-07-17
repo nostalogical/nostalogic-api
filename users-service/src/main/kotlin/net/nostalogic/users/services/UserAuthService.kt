@@ -73,8 +73,11 @@ class UserAuthService(
         val loginSource =
             if (EMAIL_PATTERN.matcher(loginRequest.username!!).find()) AuthenticationSource.EMAIL
             else AuthenticationSource.USERNAME
-        val session = Comms.accessComms.createSession(SessionPrompt(userEntity.id, loginSource))
-                ?: throw NoAccessException(302006, "Failed to create session internally", Translator.translate(ErrorStrings.COMMS_ERROR))
+        val session = Comms.accessComms.createSession(SessionPrompt(
+            userId = userEntity.id,
+            type = loginSource,
+            tenant = SessionContext.getTenant().name
+        )) ?: throw NoAccessException(302006, "Failed to create session internally", Translator.translate(ErrorStrings.COMMS_ERROR))
 
         SessionContext.getToken()?.let { Comms.accessComms.endSession(it) }
 
@@ -152,7 +155,8 @@ class UserAuthService(
             SessionPrompt(
                 userEntity.id,
                 AuthenticationSource.PASSWORD_RESET,
-                reset = true
+                reset = true,
+                tenant = SessionContext.getTenant().name,
             )
         )
                 ?: throw NoAccessException(302011, "Failed to create session internally", Translator.translate(ErrorStrings.COMMS_ERROR))
@@ -190,7 +194,8 @@ class UserAuthService(
             val session = Comms.accessComms.createSession(SessionPrompt(
                 userEntity.id,
                 loginSource,
-                reset = true
+                reset = true,
+                tenant = SessionContext.getTenant().name,
             ))
                     ?: throw NoAccessException(302011, "Failed to create session internally", Translator.translate(ErrorStrings.COMMS_ERROR))
 
@@ -213,7 +218,6 @@ class UserAuthService(
             is ImpersonationGrant -> grant.originalSubject
             else -> throw NoAccessException(301002, "Only a logged in user can impersonate another user", NoStrings.impersonationDenied())
         }
-        val alternates = HashSet<String>()
 
         if (impRequest.userId == originalUserId)
             throw NoAccessException(302009, "A user cannot impersonate themselves", NoStrings.impersonationDenied())
@@ -221,11 +225,16 @@ class UserAuthService(
             throw NoAccessException(302010, "Missing edit permission for this user, which is required for impersonation", NoStrings.impersonationDenied())
 
         val session = Comms.accessComms.createSession(SessionPrompt(
-                userId = impRequest.userId,
-                type = AuthenticationSource.IMPERSONATION,
-                originalUserId = originalUserId
-                ))
-                ?: throw NoAccessException(302008, "Failed to create impersonation session internally", Translator.translate(ErrorStrings.COMMS_ERROR))
+            userId = impRequest.userId,
+            type = AuthenticationSource.IMPERSONATION,
+            originalUserId = originalUserId,
+            tenant = SessionContext.getTenant().name,
+            )) ?:
+            throw NoAccessException(
+                302008,
+                "Failed to create impersonation session internally",
+                Translator.translate(ErrorStrings.COMMS_ERROR)
+            )
         val loggedIn = session.accessToken != null
 
         return AuthenticationResponse(
