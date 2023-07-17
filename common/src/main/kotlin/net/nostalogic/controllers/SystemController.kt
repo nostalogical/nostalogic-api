@@ -4,6 +4,8 @@ import net.nostalogic.config.Config
 import net.nostalogic.constants.ExceptionCodes._0101006
 import net.nostalogic.constants.ExceptionCodes._0101007
 import net.nostalogic.constants.ExceptionCodes._0101008
+import net.nostalogic.constants.ExceptionCodes._0101010
+import net.nostalogic.constants.Tenant
 import net.nostalogic.datamodel.Setting
 import net.nostalogic.datamodel.StatusCheck
 import net.nostalogic.datamodel.access.AccessQuery
@@ -51,6 +53,25 @@ class SystemController(@Autowired private val config: Config,
         if (!AccessQuery().simpleCheck(entity = NoEntity.SETTING, action = PolicyAction.EDIT))
             throw NoAccessException(_0101008, "Missing rights to update settings")
         Config.addSetting(Setting(keyVal.first, keyVal.second, Setting.Source.DATABASE))
+        if (reload)
+            config.reloadSettings()
+        return Config.getAllSettings()
+    }
+
+    @RequestMapping(path = ["/tenant/{tenantName}/update"], method = [RequestMethod.PUT], produces = ["application/json"])
+    fun updateTenantSetting(
+        @PathVariable("tenantName") tenantName: String,
+        @RequestBody keyVal: Pair<String, String>,
+        @RequestParam reload: Boolean = false
+    ): HashMap<Setting.Source, HashMap<String, String>> {
+        val tenant = Tenant.fromName(tenantName)
+            ?: throw NoAccessException(_0101010, "Tenant setting cannot be updated, invalid tenant name")
+        if (!AccessQuery().simpleCheck(entity = NoEntity.SETTING, action = PolicyAction.EDIT))
+            throw NoAccessException(_0101008, "Missing rights to update settings")
+        Config.addTenantSetting(
+            Setting(keyVal.first, keyVal.second, Setting.Source.DATABASE),
+            tenant,
+        )
         if (reload)
             config.reloadSettings()
         return Config.getAllSettings()

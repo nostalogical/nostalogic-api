@@ -39,10 +39,9 @@ class UserController(@Autowired val userService: UserService) {
         return userService.registerUser(userRegistration)
     }
 
-    // TODO: Completely deprecate, no longer want to expose this
     @RequestMapping(method = [RequestMethod.POST], path = [REGISTER_URI + AVAILABLE_URI])
     fun availableCheck(@RequestBody userRegistration: UserRegistration): RegistrationAvailability {
-        return userService.checkRegistrationAvailable(userRegistration)
+        return userService.checkRegistrationAvailable(userRegistration, checkEmail = false)
     }
 
     @RequestMapping(method = [RequestMethod.POST], path = [REGISTER_URI + CONFIRM_URI])

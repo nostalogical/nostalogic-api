@@ -89,6 +89,21 @@ class UserControllerTest(
     }
 
     @Test
+    fun `Registration with an existing email should succeed`() {
+        val name = "An available name"
+        val email = "admin@nostalogic.net"
+        every { excommComms.send(ofType(MessageOutline::class)) } answers { "MessageID" }
+        val exchange = exchange(
+            entity = HttpEntity(UserRegistration(username = name, email = email, password = "password")),
+            responseType = object : ParameterizedTypeReference<RegistrationResponse>() {},
+            method = HttpMethod.POST, url = "$baseApiUrl${UserController.USERS_ENDPOINT}${UserController.REGISTER_URI}")
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        val regResponse = exchange.body as RegistrationResponse
+        assertEquals(name, regResponse.displayName)
+        assertEquals(email, regResponse.email)
+    }
+
+    @Test
     fun `Register a user with a missing password`() {
         val exchange = exchange(
                 entity = HttpEntity(UserRegistration(username = "New user", email = "new@nostalogic.net", password = null)),
@@ -107,7 +122,8 @@ class UserControllerTest(
                 method = HttpMethod.POST, url = "$baseApiUrl${UserController.USERS_ENDPOINT}${UserController.REGISTER_URI}")
         assertEquals(HttpStatus.BAD_REQUEST, exchange.statusCode)
         assertTrue(exchange.body!!.userMessage.contains("username"))
-        assertTrue(exchange.body!!.userMessage.contains("email"))
+        assertFalse(exchange.body!!.userMessage.contains("email"),
+            "Email details should not be exposed on registration")
         assertEquals(307001, exchange.body!!.errorCode)
     }
 
@@ -141,7 +157,8 @@ class UserControllerTest(
         assertEquals(HttpStatus.BAD_REQUEST, exchange.statusCode)
         assertEquals(307001, exchange.body!!.errorCode)
         assertTrue(exchange.body!!.userMessage.contains("username"))
-        assertTrue(exchange.body!!.userMessage.contains("email"))
+        assertTrue(exchange.body!!.userMessage.contains("email"), "When directly creating a user, it " +
+                "shouldn't be a problem to divulge if they already exist")
     }
 
     @Test
@@ -152,7 +169,18 @@ class UserControllerTest(
                 method = HttpMethod.POST, url = "$baseApiUrl${UserController.USERS_ENDPOINT}${UserController.REGISTER_URI}${UserController.AVAILABLE_URI}")
         assertEquals(HttpStatus.OK, exchange.statusCode)
         assertTrue(exchange.body!!.usernameAvailable!!)
-        assertTrue(exchange.body!!.emailAvailable!!)
+        assertNull(exchange.body!!.emailAvailable, "By default, email availability should not be exposed")
+    }
+
+    @Test
+    fun `Email details should not be exposed when registering with an existing email`() {
+        val exchange = exchange(
+            entity = HttpEntity(UserRegistration(username = "An available name", email = "admin@nostalogic.net", password = null)),
+            responseType = object : ParameterizedTypeReference<RegistrationAvailability>() {},
+            method = HttpMethod.POST, url = "$baseApiUrl${UserController.USERS_ENDPOINT}${UserController.REGISTER_URI}${UserController.AVAILABLE_URI}")
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertTrue(exchange.body!!.usernameAvailable!!)
+        assertNull(exchange.body!!.emailAvailable, "By default, email availability should not be exposed")
     }
 
     @Test
@@ -163,13 +191,14 @@ class UserControllerTest(
                 method = HttpMethod.POST, url = "$baseApiUrl${UserController.USERS_ENDPOINT}${UserController.REGISTER_URI}${UserController.AVAILABLE_URI}")
         assertEquals(HttpStatus.OK, exchange.statusCode)
         assertFalse(exchange.body!!.usernameAvailable!!)
-        assertFalse(exchange.body!!.emailAvailable!!)
+        assertNull(exchange.body!!.emailAvailable)
     }
 
     @Test
     fun `Confirm registration`() {
         val name = "Registering"
         val email = "reg@nostalogic.net"
+        every { excommComms.send(ofType(MessageOutline::class)) } answers { "MessageID" }
         val exchange = exchange(
                 entity = HttpEntity(UserRegistration(username = name, email = email, password = "Testing1.")),
                 responseType = object : ParameterizedTypeReference<RegistrationResponse>() {},

@@ -1,5 +1,7 @@
 package net.nostalogic.config
 
+import net.nostalogic.constants.Tenant
+import net.nostalogic.constants.UsernameRule
 import net.nostalogic.datamodel.Setting
 import net.nostalogic.exceptions.NoRetrieveException
 import net.nostalogic.persistence.entities.ConfigEntity
@@ -42,6 +44,8 @@ class Config(
         private const val CLIENT_BASE_URL = "client.base-url"
         private const val CLIENT_PORT = "client.port"
 
+        private const val TENANT_USERNAME_RULE = "server.username.rule"
+
         private var service = "unknown"
         private var apiVersion = ApiVersion(0, 0, 0)
 
@@ -50,6 +54,19 @@ class Config(
                 this.service = service
                 this.apiVersion = apiVersion
             }
+        }
+
+        private fun suffixForTenant(tenant: Tenant): String {
+            return ".tenant-${tenant}"
+        }
+
+        fun addTenantSetting(setting: Setting, tenant: Tenant) {
+            val tenantSetting = Setting(
+                key = "${setting.key}${suffixForTenant(tenant)}",
+                initValue = setting.initValue,
+                source = setting.source,
+            )
+            addSetting(tenantSetting)
         }
 
         fun addSetting(setting: Setting) {
@@ -94,7 +111,22 @@ class Config(
             return getSetting(CLIENT_BASE_URL) + getSetting(CLIENT_PORT, true)
         }
 
-        fun getSetting(key: String, allowEmpty: Boolean = false): String {
+        fun usernameRule(tenant: Tenant): UsernameRule {
+            return UsernameRule.fromName(getTenantSetting(TENANT_USERNAME_RULE, tenant, true))
+                ?: UsernameRule.USERNAME_ONLY
+        }
+
+        /**
+         * Returns the string-value for a setting for the given tenant. If a tenant specific setting exists, this will
+         * be returned, and it not a generic setting value will be returned if that exists.
+         */
+        private fun getTenantSetting(key: String, tenant: Tenant, allowEmpty: Boolean = false): String {
+            val tenantKey = "${key}${suffixForTenant(tenant)}"
+            val tenantValue = getSetting(tenantKey, true)
+            return tenantValue.ifBlank { getSetting(key, allowEmpty) }
+        }
+
+        private fun getSetting(key: String, allowEmpty: Boolean = false): String {
             val setting = cache[key.lowercase()]?.value
             if (setting.isNullOrBlank())
                 if (allowEmpty) return ""

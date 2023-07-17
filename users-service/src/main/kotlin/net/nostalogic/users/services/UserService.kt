@@ -1,11 +1,11 @@
 package net.nostalogic.users.services
 
-import net.nostalogic.comms.ExcommComms
+import net.nostalogic.comms.Comms
+import net.nostalogic.config.Config
 import net.nostalogic.config.i18n.Translator
-import net.nostalogic.constants.ErrorStrings
-import net.nostalogic.constants.MessageType
-import net.nostalogic.constants.NoLocale
-import net.nostalogic.constants.NoStrings
+import net.nostalogic.constants.*
+import net.nostalogic.constants.ExceptionCodes._0305001
+import net.nostalogic.constants.ExceptionCodes._0305006
 import net.nostalogic.crypto.encoders.EncoderType
 import net.nostalogic.crypto.encoders.PasswordEncoder
 import net.nostalogic.datamodel.NoPageable
@@ -55,7 +55,8 @@ class UserService(
         if (!AccessQuery().simpleCheck(entity = NoEntity.USER, action = PolicyAction.CREATE))
             throw NoAccessException(301001, "Current user does not have create permissions for users")
 
-        RegistrationValidator.validateRegistration(userRegistration, checkRegistrationAvailable(userRegistration))
+        val registrationCheck = checkRegistrationAvailable(userRegistration)
+        RegistrationValidator.validateRegistration(userRegistration, registrationCheck)
         PasswordValidator.simpleValidate(userRegistration.password)
 
         val authentication = PasswordEncoder.encodePassword(userRegistration.password!!, EncoderType.PBKDF2)
@@ -66,18 +67,41 @@ class UserService(
     }
 
     fun registerUser(userRegistration: UserRegistration): RegistrationResponse {
-        RegistrationValidator.validateRegistration(userRegistration, checkRegistrationAvailable(userRegistration))
+        val registrationCheck = checkRegistrationAvailable(userRegistration)
 
+        RegistrationValidator.validateRegistration(userRegistration, registrationCheck, requireAvailableEmail = false)
+        if (registrationCheck.emailAvailable == false)
+            return sendRegistrationPasswordResetEmail(userRegistration)
+        return registerNewUser(userRegistration)
+    }
+
+    /**
+     * If registration is done with an existing email, trigger a customised password reset email to be sent to it, and
+     * then return a generic "registered" response to the user. This prevents leaking information on registered emails.
+     */
+    private fun sendRegistrationPasswordResetEmail(userRegistration: UserRegistration): RegistrationResponse {
+        val userEntity = userRepository.findByEmailEquals(userRegistration.email!!)!!
+        val regCode = TokenEncoder.encodeRegistrationGrant(ConfirmationGrant(subject = userEntity.id))
+        Comms.excomm().send(MessageOutline(
+            recipientId = userEntity.id,
+            recipientEmailAddress = userEntity.email,
+            type = MessageType.REGISTRATION_RESET,
+            locale = userEntity.locale)
+            .setParameter("reg_code", regCode))
+        return RegistrationResponse(userRegistration.email, userRegistration.username!!)
+    }
+
+    private fun registerNewUser(userRegistration: UserRegistration): RegistrationResponse {
         val userEntity = saveUser(UserMapper.registrationToEntity(userRegistration = userRegistration))
         authService.setNewPassword(userEntity.id, userRegistration.password)
 
         val regCode = TokenEncoder.encodeRegistrationGrant(ConfirmationGrant(subject = userEntity.id))
-        ExcommComms.send(MessageOutline(
-                recipientId = userEntity.id,
-                recipientEmailAddress = userEntity.email,
-                type = MessageType.REGISTRATION_CONFIRM,
-                locale = userEntity.locale)
-                .setParameter("reg_code", regCode))
+        Comms.excomm().send(MessageOutline(
+            recipientId = userEntity.id,
+            recipientEmailAddress = userEntity.email,
+            type = MessageType.REGISTRATION_CONFIRM,
+            locale = userEntity.locale)
+            .setParameter("reg_code", regCode))
         return RegistrationResponse(userEntity.email, userEntity.username)
     }
 
@@ -102,10 +126,19 @@ class UserService(
             throw NoAuthException(302001, "Token is not a registration confirmation token", Translator.translate("authMethodMismatch"))
     }
 
-    fun checkRegistrationAvailable(userRegistration: UserRegistration): RegistrationAvailability {
+    fun checkRegistrationAvailable(userRegistration: UserRegistration, checkEmail: Boolean = true): RegistrationAvailability {
+        val rule = Config.usernameRule(SessionContext.getTenant())
+        val taggingEnabled = rule != UsernameRule.USERNAME_ONLY
+
+        val nameAvailable = if (rule == UsernameRule.ALWAYS_TAG) true
+        else userRegistration.username?.let { userRepository.isUsernameAvailable(it) }
+        val emailAvailable = if (!checkEmail) null else userRegistration.email?.let { userRepository.isEmailAvailable(it) }
+
         return RegistrationAvailability(
-                usernameAvailable = userRegistration.username?.let { userRepository.isUsernameAvailable(it) },
-                emailAvailable = userRegistration.email?.let { userRepository.isEmailAvailable(it) })
+            usernameAvailable = nameAvailable,
+            taggingEnabled = taggingEnabled,
+            emailAvailable = emailAvailable,
+        )
     }
 
     private fun saveUser(userEntity: UserEntity): UserEntity {
@@ -113,7 +146,7 @@ class UserService(
             userRepository.save(userEntity)
         } catch (e: Exception) {
             logger.error("Unable to save user ${userEntity.id}", e)
-            throw NoSaveException(305001, "user", e)
+            throw NoSaveException(_0305001, "user", e)
         }
     }
 
@@ -122,7 +155,7 @@ class UserService(
             detailsRepository.save(detailsEntity)
         } catch (e: Exception) {
             logger.error("Unable to save user details ${detailsEntity.id}", e)
-            throw NoSaveException(305001, "user", e)
+            throw NoSaveException(_0305006, "user", e)
         }
     }
 

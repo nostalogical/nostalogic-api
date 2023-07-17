@@ -29,6 +29,7 @@ object ExceptionCodes {
     const val _0101007 = 101007
     const val _0101008 = 101008
     const val _0101009 = 101009
+    const val _0101010 = 101010
 
     /**
      * Auth service
@@ -47,5 +48,15 @@ object ExceptionCodes {
     const val _0201012 = 201012
     const val _0201013 = 201013
     const val _0201014 = 201014
+
+    /**
+     * User service
+     */
+    const val _0305001 = 305001
+    const val _0305002 = 305002
+    const val _0305003 = 305003
+    const val _0305004 = 305004
+    const val _0305005 = 305005
+    const val _0305006 = 305006
 
 }

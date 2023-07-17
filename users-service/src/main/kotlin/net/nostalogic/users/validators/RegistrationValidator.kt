@@ -7,7 +7,11 @@ import org.apache.commons.lang3.StringUtils
 
 object RegistrationValidator {
 
-    fun validateRegistration(userRegistration: UserRegistration, registrationAvailability: RegistrationAvailability) {
+    fun validateRegistration(
+        userRegistration: UserRegistration,
+        registrationAvailability: RegistrationAvailability,
+        requireAvailableEmail: Boolean = true,
+    ) {
         val report = InvalidFieldsReport()
         if (StringUtils.isBlank(userRegistration.username))
             report.addMissingField("username")
@@ -15,7 +19,7 @@ object RegistrationValidator {
             report.addMissingField("email")
         if (!registrationAvailability.usernameAvailable!!)
             report.addFieldAlreadyInUse("username")
-        if (!registrationAvailability.emailAvailable!!)
+        if (requireAvailableEmail && registrationAvailability.emailAvailable == false)
             report.addFieldAlreadyInUse("email")
         report.validate(307001)
     }
