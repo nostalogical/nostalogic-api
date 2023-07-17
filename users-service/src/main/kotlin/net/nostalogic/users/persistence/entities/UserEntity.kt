@@ -16,6 +16,7 @@ class UserEntity(
         creatorId: String = EntityUtils.SYSTEM_ID,
         var username: String,
         var email: String,
+        var displayName: String?,
         @Enumerated(EnumType.STRING) var locale: NoLocale,
         @Enumerated(EnumType.STRING) var status: EntityStatus
 ): AbstractCoreEntity(id = id, creatorId = creatorId)

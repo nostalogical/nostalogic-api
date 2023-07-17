@@ -17,7 +17,7 @@ object RegistrationValidator {
             report.addMissingField("username")
         if (StringUtils.isBlank(userRegistration.email))
             report.addMissingField("email")
-        if (!registrationAvailability.usernameAvailable!!)
+        if (!registrationAvailability.usernameAvailable!! && !registrationAvailability.taggingRequired)
             report.addFieldAlreadyInUse("username")
         if (requireAvailableEmail && registrationAvailability.emailAvailable == false)
             report.addFieldAlreadyInUse("email")

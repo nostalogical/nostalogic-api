@@ -34,6 +34,7 @@ import net.nostalogic.users.persistence.repositories.UserRepository
 import net.nostalogic.users.validators.PasswordValidator
 import net.nostalogic.users.validators.RegistrationValidator
 import net.nostalogic.users.validators.UserValidator
+import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -60,7 +61,11 @@ class UserService(
         PasswordValidator.simpleValidate(userRegistration.password)
 
         val authentication = PasswordEncoder.encodePassword(userRegistration.password!!, EncoderType.PBKDF2)
-        val userEntity = saveUser(UserMapper.registrationToEntity(userRegistration = userRegistration, status = EntityStatus.ACTIVE))
+        val userEntity = saveUser(UserMapper.registrationToEntity(
+            userRegistration = userRegistration,
+            status = EntityStatus.ACTIVE,
+            tag = generateUsernameTag(userRegistration.username!!, registrationCheck),
+        ))
         authService.saveAuthentication(AuthMapper.tempAuthToEntity(authentication, userEntity.id, "Temporary password for manually created user"))
 
         return UserMapper.entityToDto(userEntity)
@@ -72,7 +77,7 @@ class UserService(
         RegistrationValidator.validateRegistration(userRegistration, registrationCheck, requireAvailableEmail = false)
         if (registrationCheck.emailAvailable == false)
             return sendRegistrationPasswordResetEmail(userRegistration)
-        return registerNewUser(userRegistration)
+        return registerNewUser(userRegistration, registrationCheck)
     }
 
     /**
@@ -91,8 +96,11 @@ class UserService(
         return RegistrationResponse(userRegistration.email, userRegistration.username!!)
     }
 
-    private fun registerNewUser(userRegistration: UserRegistration): RegistrationResponse {
-        val userEntity = saveUser(UserMapper.registrationToEntity(userRegistration = userRegistration))
+    private fun registerNewUser(userRegistration: UserRegistration, availability: RegistrationAvailability): RegistrationResponse {
+        val userEntity = saveUser(UserMapper.registrationToEntity(
+            userRegistration = userRegistration,
+            tag = generateUsernameTag(userRegistration.username!!, availability),
+        ))
         authService.setNewPassword(userEntity.id, userRegistration.password)
 
         val regCode = TokenEncoder.encodeRegistrationGrant(ConfirmationGrant(subject = userEntity.id))
@@ -102,7 +110,7 @@ class UserService(
             type = MessageType.REGISTRATION_CONFIRM,
             locale = userEntity.locale)
             .setParameter("reg_code", regCode))
-        return RegistrationResponse(userEntity.email, userEntity.username)
+        return RegistrationResponse(userEntity.email, userRegistration.username)
     }
 
     fun confirmRegistration(token: String?): User {
@@ -128,15 +136,16 @@ class UserService(
 
     fun checkRegistrationAvailable(userRegistration: UserRegistration, checkEmail: Boolean = true): RegistrationAvailability {
         val rule = Config.usernameRule(SessionContext.getTenant())
-        val taggingEnabled = rule != UsernameRule.USERNAME_ONLY
 
-        val nameAvailable = if (rule == UsernameRule.ALWAYS_TAG) true
-        else userRegistration.username?.let { userRepository.isUsernameAvailable(it) }
+        val nameAvailable =
+            if (rule == UsernameRule.ALWAYS_TAG) true
+            else userRegistration.username?.let { userRepository.isUsernameAvailable(it) }
+        val taggingRequired = rule == UsernameRule.ALWAYS_TAG || (nameAvailable == false && rule == UsernameRule.AUTO_TAG)
         val emailAvailable = if (!checkEmail) null else userRegistration.email?.let { userRepository.isEmailAvailable(it) }
 
         return RegistrationAvailability(
             usernameAvailable = nameAvailable,
-            taggingEnabled = taggingEnabled,
+            taggingRequired = taggingRequired,
             emailAvailable = emailAvailable,
         )
     }
@@ -325,6 +334,19 @@ class UserService(
         }
 
         return UserMapper.entityToDto(userEntity)
+    }
+
+    fun generateUsernameTag(baseUsername: String, availability: RegistrationAvailability): String? {
+        if (!availability.taggingRequired)
+            return null
+
+        var tag: String
+        var fullUsername: String
+        do {
+            tag = RandomStringUtils.random(6, false, true)
+            fullUsername = UserMapper.usernameWithTag(baseUsername, tag)
+        } while (userRepository.findByUsernameEquals(fullUsername) != null)
+        return tag
     }
 
     fun checkRights(): EntityRights {

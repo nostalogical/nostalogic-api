@@ -5,6 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude
 @JsonInclude(JsonInclude.Include.NON_NULL)
 data class RegistrationAvailability(
     val usernameAvailable: Boolean?,
-    val taggingEnabled: Boolean,
+    val taggingRequired: Boolean,
     val emailAvailable: Boolean? = null,
 )

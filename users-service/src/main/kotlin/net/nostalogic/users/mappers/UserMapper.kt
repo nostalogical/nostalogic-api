@@ -34,14 +34,23 @@ object UserMapper {
     fun registrationToEntity(
             userRegistration: UserRegistration,
             creatorId: String? = null,
-            status: EntityStatus = EntityStatus.INACTIVE
+            status: EntityStatus = EntityStatus.INACTIVE,
+            tag: String?,
     ): UserEntity {
         val userId = EntityUtils.uuid()
-        return UserEntity(id = userId, creatorId = creatorId ?: userId,
-                username = userRegistration.username!!,
-                email = userRegistration.email!!,
-                status = status,
-                locale = userRegistration.locale)
+        return UserEntity(
+            id = userId,
+            creatorId = creatorId ?: userId,
+            username = usernameWithTag(userRegistration.username!!, tag),
+            displayName = userRegistration.username,
+            email = userRegistration.email!!,
+            status = status,
+            locale = userRegistration.locale,
+            )
+    }
+
+    fun usernameWithTag(baseUsername: String, tag: String?): String {
+        return tag?.let { "${baseUsername}#${it}" } ?: baseUsername
     }
 
     fun stringToDetailsEntity(detailsString: String, userId: String): DetailsEntity {

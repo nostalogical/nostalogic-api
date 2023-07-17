@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS "user" (
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
   id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
   username VARCHAR(500) NOT NULL UNIQUE,
-  tag VARCHAR(30),
+  display_name VARCHAR(500),
   email VARCHAR(500) NOT NULL UNIQUE,
   status VARCHAR(20) NOT NULL DEFAULT 'INACTIVE',
   locale CHAR(5) NOT NULL DEFAULT 'en_GB',
