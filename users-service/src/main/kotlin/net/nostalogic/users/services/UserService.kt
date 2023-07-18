@@ -5,7 +5,6 @@ import net.nostalogic.config.Config
 import net.nostalogic.config.i18n.Translator
 import net.nostalogic.constants.*
 import net.nostalogic.constants.ExceptionCodes._0305001
-import net.nostalogic.constants.ExceptionCodes._0305006
 import net.nostalogic.crypto.encoders.EncoderType
 import net.nostalogic.crypto.encoders.PasswordEncoder
 import net.nostalogic.datamodel.NoPageable
@@ -27,9 +26,7 @@ import net.nostalogic.users.datamodel.memberships.MembershipSearchCriteria
 import net.nostalogic.users.datamodel.users.*
 import net.nostalogic.users.mappers.AuthMapper
 import net.nostalogic.users.mappers.UserMapper
-import net.nostalogic.users.persistence.entities.DetailsEntity
 import net.nostalogic.users.persistence.entities.UserEntity
-import net.nostalogic.users.persistence.repositories.DetailsRepository
 import net.nostalogic.users.persistence.repositories.UserRepository
 import net.nostalogic.users.validators.PasswordValidator
 import net.nostalogic.users.validators.RegistrationValidator
@@ -45,7 +42,6 @@ import org.springframework.stereotype.Service
 @Service
 class UserService(
         @Autowired private val userRepository: UserRepository,
-        @Autowired private val detailsRepository: DetailsRepository,
         @Autowired private val membershipService: MembershipService,
         @Autowired private val authService: UserAuthService,
 ) {
@@ -159,18 +155,8 @@ class UserService(
         }
     }
 
-    private fun saveUserDetails(detailsEntity: DetailsEntity): DetailsEntity {
-        return try {
-            detailsRepository.save(detailsEntity)
-        } catch (e: Exception) {
-            logger.error("Unable to save user details ${detailsEntity.id}", e)
-            throw NoSaveException(_0305006, "user", e)
-        }
-    }
-
     private fun hardDeleteUser(userEntity: UserEntity): UserEntity {
         return try {
-            detailsRepository.deleteAllById(userEntity.id)
             authService.deleteAllUserAuthentications(userEntity.id)
             membershipService.deleteUserFromAllGroups(userEntity.id)
             userRepository.delete(userEntity)
@@ -203,16 +189,11 @@ class UserService(
         if (!report.hasPermission(EntityReference(userId, NoEntity.USER), PolicyAction.READ))
             throw NoAccessException(301005, "You do not have read permission for user $userId")
         val userEntity = getUserEntity(userId)
-        val detailsEntity = getUserDetailsEntity(userId)
-        return UserMapper.entityToDto(userEntity, details = detailsEntity, includeSensitive = hasUserEditPermissions(report, userId))
+        return UserMapper.entityToDto(userEntity, includeSensitive = hasUserEditPermissions(report, userId))
     }
 
     private fun getUserEntity(userId: String): UserEntity {
         return userRepository.findByIdEquals(userId) ?: throw NoRetrieveException(304007, "User")
-    }
-
-    private fun getUserDetailsEntity(userId: String): DetailsEntity? {
-        return detailsRepository.findByIdOrNull(userId)
     }
 
     fun getCurrentUser(includeMemberships: Boolean, includeRights: Boolean): User {
@@ -233,13 +214,12 @@ class UserService(
                     create = it.value[PolicyAction.CREATE]) }.toMap()
             }
 
-            val detailsEntity = getUserDetailsEntity(userId)
             val memberships = if (!includeMemberships) null else {
                 val pageable = NoPageable<Membership>(sortFields = *UserSearchCriteria.DEFAULT_SORT_FIELDS)
                 val criteria = MembershipSearchCriteria(userIds = setOf(userId), page = pageable, rights = includeRights)
                 pageable.toResponse(membershipService.getMemberships(searchCriteria = criteria, showUsers = false))
             }
-            UserMapper.entityToDto(userEntity, memberships = memberships, details = detailsEntity, rights = rights)
+            UserMapper.entityToDto(userEntity, memberships = memberships, rights = rights)
         }
     }
 
@@ -301,10 +281,10 @@ class UserService(
             userEntity.username = update.username!!
         if (StringUtils.isNotBlank(update.locale))
             userEntity.locale = NoLocale.fromString(update.locale!!)!!
-        val details = if (update.details != null) saveUserDetails(UserMapper.stringToDetailsEntity(detailsString = update.details!!, userId = userId))
-            else detailsRepository.findByIdOrNull(userId)
+        if (StringUtils.isNotBlank(update.details))
+            userEntity.details = update.details
 
-        return UserMapper.entityToDto(saveUser(userEntity), details = details)
+        return UserMapper.entityToDto(saveUser(userEntity))
     }
 
     fun secureUpdate(userId: String, update: SecureUserUpdate): User {
@@ -336,7 +316,7 @@ class UserService(
         return UserMapper.entityToDto(userEntity)
     }
 
-    fun generateUsernameTag(baseUsername: String, availability: RegistrationAvailability): String? {
+    private fun generateUsernameTag(baseUsername: String, availability: RegistrationAvailability): String? {
         if (!availability.taggingRequired)
             return null
 

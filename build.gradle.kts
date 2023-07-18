@@ -78,6 +78,7 @@ subprojects {
         implementation("com.github.kittinunf.fuel:fuel-gson:2.3.1")
         implementation("com.google.code.gson:gson:2.8.6")
         implementation("org.json:json:20211205")
+        implementation("com.vladmihalcea:hibernate-types-55:2.21.1")
         implementation(platform(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES))
         runtimeOnly("org.springframework.boot:spring-boot-devtools")
         providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")

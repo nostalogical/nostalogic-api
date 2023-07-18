@@ -250,7 +250,6 @@ class UserControllerTest(
     @Test
     fun `Update a user's details`() {
         val detailsRaw = "{\"age\": 22, \"address\": {\"town\": \"Whitehaven\"}, \"hasPassport\": true, \"cities\": [\"Sheffield\", \"Oxford\"] }"
-        val detailsInput = JSONObject(detailsRaw)
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.EDIT, true)))))
         val exchange = exchange(
             entity = HttpEntity(User(details = detailsRaw)),
@@ -258,7 +257,7 @@ class UserControllerTest(
             method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$ownerId")
         assertEquals(HttpStatus.OK, exchange.statusCode)
         assertNotNull(exchange.body!!.details)
-        assertEquals(detailsInput.toString(), exchange.body!!.details)
+        assertEquals(detailsRaw, exchange.body!!.details)
         deleteUser(ownerId, object : ParameterizedTypeReference<User>() {}, true)
     }
 
