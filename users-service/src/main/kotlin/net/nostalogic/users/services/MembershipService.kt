@@ -73,7 +73,7 @@ class MembershipService(
         if (!manageGroup) {
             val currentUserMember = membershipRepository.findAllByUserIdInAndGroupIdIn(setOf(SessionContext.getUserId()), setOf(groupId))
             if (!currentUserMember.isEmpty())
-                manageGroup = setOf(MembershipRole.CHIEF, MembershipRole.MANAGER).contains(currentUserMember.first().role)
+                manageGroup = setOf(MembershipRole.OWNER, MembershipRole.MANAGER).contains(currentUserMember.first().role)
         }
 
         if (!manageGroup)
@@ -147,7 +147,7 @@ class MembershipService(
             changes.add(groupChanges)
             val editGroup = report.hasPermission(EntityReference(group.id, NoEntity.GROUP), PolicyAction.EDIT)
                     || currentUserId == group.creatorId && report.hasPermission(EntityReference(group.id, NoEntity.GROUP), PolicyAction.EDIT_OWN)
-            val manageGroup = editGroup || setOf(MembershipRole.CHIEF, MembershipRole.MANAGER).contains(membershipByUserByGroup[group.id]?.get(currentUserId)?.role)
+            val manageGroup = editGroup || setOf(MembershipRole.OWNER, MembershipRole.MANAGER).contains(membershipByUserByGroup[group.id]?.get(currentUserId)?.role)
             users.forEach { user ->
                 val editUser = report.hasPermission(EntityReference(user.id, NoEntity.USER), PolicyAction.EDIT)
                         || currentUserId == user.id && report.hasPermission(EntityReference(user.id, NoEntity.USER), PolicyAction.EDIT_OWN)
@@ -220,7 +220,7 @@ class MembershipService(
                                  userId: String, manageGroup: Boolean, editUser: Boolean) {
         if (existingMembership == null)
             changes.addMembershipChange(userId, reasonKey = NoStrings.notMember())
-        else if (existingMembership.role == MembershipRole.CHIEF)
+        else if (existingMembership.role == MembershipRole.OWNER)
             changes.addMembershipChange(userId, oldStatus = existingMembership.status, reasonKey = NoStrings.ownerCannotLeave())
         else if (existingMembership.groupType == GroupType.RIGHTS && !manageGroup)
             changes.addMembershipChange(userId, oldStatus = existingMembership.status, reasonKey = NoStrings.cannotRemoveFromRightsGroup())

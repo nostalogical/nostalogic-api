@@ -8,10 +8,7 @@ import net.nostalogic.constants.ExceptionCodes._0305001
 import net.nostalogic.crypto.encoders.EncoderType
 import net.nostalogic.crypto.encoders.PasswordEncoder
 import net.nostalogic.datamodel.NoPageable
-import net.nostalogic.datamodel.access.AccessQuery
-import net.nostalogic.datamodel.access.AccessReport
-import net.nostalogic.datamodel.access.EntityRights
-import net.nostalogic.datamodel.access.PolicyAction
+import net.nostalogic.datamodel.access.*
 import net.nostalogic.datamodel.excomm.MessageOutline
 import net.nostalogic.entities.EntityReference
 import net.nostalogic.entities.EntityStatus
@@ -263,7 +260,7 @@ class UserService(
         return userEntities.map { UserMapper.entityToDto(it, includeSensitive = hasUserEditPermissions(report, it.id)) }.toList()
     }
 
-    fun hasUserEditPermissions(report: AccessReport, userId: String): Boolean {
+    private fun hasUserEditPermissions(report: AccessReport, userId: String): Boolean {
         val allowed = report.hasPermission(EntityReference(userId, NoEntity.USER), PolicyAction.EDIT)
         return if (!allowed && userId == SessionContext.getUserId())
             report.hasPermission(EntityReference(userId, NoEntity.USER), PolicyAction.EDIT_OWN)
@@ -271,7 +268,7 @@ class UserService(
     }
 
     fun updateUser(userId: String, update: User): User {
-        if (!AccessQuery().simpleCheck(userId, NoEntity.USER, PolicyAction.EDIT))
+        if (!SimpleAccess(userId, NoEntity.USER, PolicyAction.EDIT).check())
             throw NoAccessException(301006, "You do not have edit permission for user $userId")
 
         val userEntity = userRepository.findByIdEquals(userId) ?: throw NoRetrieveException(304008, "User")

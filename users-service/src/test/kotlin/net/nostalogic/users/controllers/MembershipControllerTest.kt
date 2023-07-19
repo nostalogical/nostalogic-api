@@ -159,7 +159,7 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
         Assertions.assertEquals("${baseUserId}01", membership.userId)
         Assertions.assertEquals("User 01", membership.username)
         Assertions.assertEquals(MembershipStatus.ACTIVE, membership.status)
-        Assertions.assertEquals(MembershipRole.CHIEF, membership.role)
+        Assertions.assertEquals(MembershipRole.OWNER, membership.role)
     }
 
     @Test
@@ -279,7 +279,7 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
     fun `Change user role and status`() {
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true), Pair(PolicyAction.EDIT, true))),
             Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true), Pair(PolicyAction.EDIT, true)))))
-        val membership = Membership(status = MembershipStatus.ACTIVE, role = MembershipRole.CHIEF)
+        val membership = Membership(status = MembershipStatus.ACTIVE, role = MembershipRole.OWNER)
         val exchange = exchange(
             entity = HttpEntity(membership, testHeaders()),
             responseType = object : ParameterizedTypeReference<Membership>() {},
@@ -288,7 +288,7 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
         Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
         val updated = exchange.body!!
         Assertions.assertEquals(MembershipStatus.ACTIVE, updated.status)
-        Assertions.assertEquals(MembershipRole.CHIEF, updated.role)
+        Assertions.assertEquals(MembershipRole.OWNER, updated.role)
     }
 
 }

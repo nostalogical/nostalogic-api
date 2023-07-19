@@ -6,6 +6,7 @@ import net.nostalogic.access.persistence.repositories.PolicyActionRepository
 import net.nostalogic.access.persistence.repositories.PolicyRepository
 import net.nostalogic.access.persistence.repositories.PolicyResourceRepository
 import net.nostalogic.access.persistence.repositories.PolicySubjectRepository
+import net.nostalogic.access.processors.ResourceMatcher
 import net.nostalogic.datamodel.NoPageable
 import net.nostalogic.datamodel.access.AccessQuery
 import net.nostalogic.datamodel.access.AccessReport
@@ -72,7 +73,7 @@ open class AccessQueryService(
             relevantSubjects.retainAll(querySubjects)
             for (policyResource in policy.resources!!) {
                 for (queryResource in resources) {
-                    if (queryResource.toString() == policyResource || queryResource.entity.name == policyResource || policyResource == NoEntity.ALL.name) {
+                    if (ResourceMatcher(queryResource, EntityReference(policyResource)).isMatch()) {
                         for (policyAction in policy.permissions!!.keys) {
                             if (resourceContexts[queryResource]!!.keys.contains(policyAction))
                                 resourceContexts[queryResource]!![policyAction]!!.updatePolicies(policy, relevantSubjects, policyResource, policyAction)
@@ -86,9 +87,9 @@ open class AccessQueryService(
     }
 
     /**
-     * Exclusive search that returns all policies matching each and every one of the supplied criteria, or all policies
-     * if no criteria are supplied. If subject and resource IDs are supplied, only policies matching all the supplied
-     * criteria are returned.
+     * Exclusive search that returns all policies matching each of the supplied criteria, or all policies if no criteria
+     * are supplied. If subject and resource IDs are supplied, only policies matching all the supplied criteria are
+     * returned.
      */
     fun filterPolicies(criteria: PolicySearchCriteria): ArrayList<Policy> {
         if (criteria.subjectIds.isEmpty() && criteria.resourceIds.isEmpty())

@@ -60,16 +60,21 @@ data class AccessQuery(val subjects: HashSet<String> = HashSet(),
         return Comms.accessComms.query(this)
     }
 
+    /**
+     * Perform a simple check on a single entity's permissions.
+     * A creator ID can also be specified, so if either this or the actual entity ID is the same as the current user,
+     * the permissions are determined to be in the "own" category. If this is a check on edit or delete rights, the
+     * "own" version of these actions is automatically included.
+     */
     fun simpleCheck(id: String? = null, entity: NoEntity, action: PolicyAction, creatorId: String? = null): Boolean {
         val ref = EntityReference(id, entity)
-        val selfCheck = id == SessionContext.getUserId() || creatorId == SessionContext.getUserId()
-        val actions = hashSetOf(action)
-
         val query = currentSubject().addQuery(ref, action)
+
+        val selfCheck = id == SessionContext.getUserId() || creatorId == SessionContext.getUserId()
         if (selfCheck && action == PolicyAction.EDIT)
-            actions.add(PolicyAction.EDIT_OWN)
+            query.addQuery(ref, PolicyAction.EDIT_OWN)
         else if (selfCheck && action == PolicyAction.DELETE)
-            actions.add(PolicyAction.DELETE_OWN)
+            query.addQuery(ref, PolicyAction.DELETE_OWN)
 
         val report = query.toReport()
 

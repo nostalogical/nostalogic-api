@@ -104,7 +104,7 @@ class MembershipServiceTest(
     fun `Remove membership of group chief`() {
         val changes = changes()
         val membership = membership()
-        membership.role = MembershipRole.CHIEF
+        membership.role = MembershipRole.OWNER
         membershipService.processMembershipRemoval(changes, membership, userId, manageGroup = true, editUser = true)
         Assertions.assertEquals(1, changes.memberships.size)
         Assertions.assertFalse(changes.memberships.first().changed)

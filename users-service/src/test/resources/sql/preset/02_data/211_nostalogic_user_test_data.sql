@@ -67,17 +67,13 @@ VALUES ('53941203-f159-4a2a-8cc8-5af32c015310', 'Group 10', 'RIGHTS') ON CONFLIC
 
 -- Test memberships
 INSERT INTO membership (user_id, group_id, status, role) VALUES
-    ('f8680c40-2280-4125-812e-25dce05b4d01', '53941203-f159-4a2a-8cc8-5af32c015301', 'ACTIVE', 'CHIEF') ON CONFLICT DO NOTHING;
+    ('f8680c40-2280-4125-812e-25dce05b4d01', '53941203-f159-4a2a-8cc8-5af32c015301', 'ACTIVE', 'OWNER') ON CONFLICT DO NOTHING;
 INSERT INTO membership (user_id, group_id, status, role) VALUES
-    ('f8680c40-2280-4125-812e-25dce05b4d02', '53941203-f159-4a2a-8cc8-5af32c015302', 'ACTIVE', 'CHIEF') ON CONFLICT DO NOTHING;
+    ('f8680c40-2280-4125-812e-25dce05b4d02', '53941203-f159-4a2a-8cc8-5af32c015302', 'ACTIVE', 'OWNER') ON CONFLICT DO NOTHING;
 INSERT INTO membership (user_id, group_id, status, role) VALUES
     ('f8680c40-2280-4125-812e-25dce05b4d03', '53941203-f159-4a2a-8cc8-5af32c015303', 'ACTIVE', 'MANAGER') ON CONFLICT DO NOTHING;
 INSERT INTO membership (user_id, group_id, status, role) VALUES
     ('f8680c40-2280-4125-812e-25dce05b4d04', '53941203-f159-4a2a-8cc8-5af32c015304', 'ACTIVE', 'MANAGER') ON CONFLICT DO NOTHING;
-INSERT INTO membership (user_id, group_id, status, role) VALUES
-    ('f8680c40-2280-4125-812e-25dce05b4d05', '53941203-f159-4a2a-8cc8-5af32c015305', 'ACTIVE', 'MODERATOR') ON CONFLICT DO NOTHING;
-INSERT INTO membership (user_id, group_id, status, role) VALUES
-    ('f8680c40-2280-4125-812e-25dce05b4d06', '53941203-f159-4a2a-8cc8-5af32c015306', 'ACTIVE', 'MODERATOR') ON CONFLICT DO NOTHING;
 INSERT INTO membership (user_id, group_id, status, role) VALUES
     ('f8680c40-2280-4125-812e-25dce05b4d07', '53941203-f159-4a2a-8cc8-5af32c015307', 'ACTIVE', 'REGULAR') ON CONFLICT DO NOTHING;
 INSERT INTO membership (user_id, group_id, status, role) VALUES
