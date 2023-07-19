@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.junit.jupiter.SpringExtension
@@ -20,8 +19,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 @ActiveProfiles(profiles = ["test"])
 @ExtendWith(SpringExtension::class)
 @ContextConfiguration(classes = [AccessTestConfig::class])
-class PolicyValidationTest(
-        @Autowired val accessService: AccessService) : PolicyTestBase() {
+class PolicyValidationTest : PolicyTestBase() {
 
     @BeforeEach
     fun setup() {

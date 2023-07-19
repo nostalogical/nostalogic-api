@@ -24,7 +24,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 @ContextConfiguration(classes = [UserUnitTestConfig::class])
 class MembershipServiceTest(
         @Autowired private val membershipService: MembershipService,
-        @Autowired private val membershipRepository: MembershipRepository) {
+        @Autowired private val membershipRepository: MembershipRepository
+) {
 
     private val userId = EntityUtils.uuid()
     private val groupId = EntityUtils.uuid()

@@ -33,7 +33,8 @@ import java.util.stream.Collectors
 class MembershipService(
         @Autowired private val membershipRepository: MembershipRepository,
         @Autowired private val userRepository: UserRepository,
-        @Autowired private val groupRepository: GroupRepository) {
+        @Autowired private val groupRepository: GroupRepository,
+    ) {
 
     private val logger = LoggerFactory.getLogger(MembershipService::class.java)
 

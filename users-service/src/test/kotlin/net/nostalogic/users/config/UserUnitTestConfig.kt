@@ -10,6 +10,8 @@ import net.nostalogic.users.persistence.repositories.GroupRepository
 import net.nostalogic.users.persistence.repositories.MembershipRepository
 import net.nostalogic.users.persistence.repositories.UserRepository
 import net.nostalogic.users.services.MembershipService
+import net.nostalogic.users.services.UserAuthService
+import net.nostalogic.users.services.UserService
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.context.annotation.Bean
@@ -27,6 +29,9 @@ open class UserUnitTestConfig {
     private val userRepo = mockk<UserRepository>()
     private val groupRepo = mockk<GroupRepository>()
 
+    private val memberService = MembershipService(membershipRepo, userRepo, groupRepo)
+    private val userAuthService = mockk<UserAuthService>()
+
     init {
         every { configRepo.findAll() } returns ArrayList<ConfigEntity>()
     }
@@ -34,6 +39,11 @@ open class UserUnitTestConfig {
     @Bean
     open fun databaseLoader(): DatabaseLoader {
         return databaseLoader
+    }
+
+    @Bean
+    open fun userRepo(): UserRepository {
+        return userRepo
     }
 
     @Bean
@@ -48,7 +58,17 @@ open class UserUnitTestConfig {
 
     @Bean
     open fun membershipService(): MembershipService {
-        return MembershipService(membershipRepo, userRepo, groupRepo)
+        return memberService
+    }
+
+    @Bean
+    open fun userAuthService(): UserAuthService {
+        return userAuthService
+    }
+
+    @Bean
+    open fun userService(): UserService {
+        return UserService(userRepo, memberService, userAuthService)
     }
 
 }

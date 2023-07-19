@@ -11,6 +11,10 @@ import net.nostalogic.access.persistence.entities.PolicyActionEntity
 import net.nostalogic.access.persistence.entities.PolicyEntity
 import net.nostalogic.access.persistence.entities.PolicyResourceEntity
 import net.nostalogic.access.persistence.entities.PolicySubjectEntity
+import net.nostalogic.access.persistence.repositories.PolicyActionRepository
+import net.nostalogic.access.persistence.repositories.PolicyRepository
+import net.nostalogic.access.persistence.repositories.PolicyResourceRepository
+import net.nostalogic.access.persistence.repositories.PolicySubjectRepository
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.datamodel.access.PolicyAction
 import net.nostalogic.datamodel.access.PolicyPriority
@@ -31,7 +35,11 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 @ExtendWith(SpringExtension::class)
 @ContextConfiguration(classes = [AccessTestConfig::class])
 class AccessServiceTest(
-        @Autowired val accessService: AccessService
+    @Autowired val accessService: AccessService,
+    @Autowired val policyRepository: PolicyRepository,
+    @Autowired val actionRepository: PolicyActionRepository,
+    @Autowired val resourceRepository: PolicyResourceRepository,
+    @Autowired val subjectRepository: PolicySubjectRepository,
 ) : PolicyTestBase() {
 
     @BeforeEach

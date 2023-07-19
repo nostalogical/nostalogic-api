@@ -1,22 +1,12 @@
 package net.nostalogic.access.services
 
-import net.nostalogic.access.persistence.repositories.PolicyActionRepository
-import net.nostalogic.access.persistence.repositories.PolicyRepository
-import net.nostalogic.access.persistence.repositories.PolicyResourceRepository
-import net.nostalogic.access.persistence.repositories.PolicySubjectRepository
 import net.nostalogic.datamodel.access.Policy
 import net.nostalogic.entities.EntitySignature
 import net.nostalogic.entities.NoEntity
 import net.nostalogic.utils.EntityUtils
 import org.junit.jupiter.api.Assertions
-import org.springframework.beans.factory.annotation.Autowired
 
-open class PolicyTestBase {
-
-    @Autowired lateinit var policyRepository: PolicyRepository
-    @Autowired lateinit var actionRepository: PolicyActionRepository
-    @Autowired lateinit var resourceRepository: PolicyResourceRepository
-    @Autowired lateinit var subjectRepository: PolicySubjectRepository
+open class PolicyTestBase{
 
     val name = "Policy Test Name"
     val resource = EntitySignature(EntityUtils.uuid(), NoEntity.ARTICLE)

@@ -301,6 +301,7 @@ class UserService(
                     userMessage = Translator.translate(ErrorStrings.WRONG_PASSWORD_UPDATE))
 
         if (StringUtils.isNotBlank(update.password)) {
+            PasswordValidator.simpleValidate(update.password)
             val authentication = PasswordEncoder.encodePassword(update.password!!, EncoderType.PBKDF2)
             if (selfChange)
                 authService.saveAuthentication(AuthMapper.newAuthToEntity(authentication, userId))
