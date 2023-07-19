@@ -18,7 +18,7 @@ class UserEntity(
         var username: String,
         var email: String,
         var displayName: String?,
-        @Type(type = "jsonb")  @Column(columnDefinition = "jsonb") var details: String? = "{}",
+        @Type(type = "jsonb")  @Column(columnDefinition = "jsonb") var details: String? = null,
         @Enumerated(EnumType.STRING) var locale: NoLocale,
         @Enumerated(EnumType.STRING) var status: EntityStatus
 ): AbstractCoreEntity(id = id, creatorId = creatorId)

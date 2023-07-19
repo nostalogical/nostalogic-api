@@ -3,6 +3,7 @@ package net.nostalogic.utils
 import com.google.gson.GsonBuilder
 import com.google.gson.InstanceCreator
 import net.nostalogic.datamodel.NoDate
+import net.nostalogic.serialisation.NoJson
 import net.nostalogic.datamodel.access.PolicyAction
 import org.json.JSONObject
 import org.slf4j.LoggerFactory
@@ -38,25 +39,18 @@ object Serialiser {
         }
     }
 
-    fun toJson(src: Any): JSONObject? {
+    fun toJsonObject(src: Any): NoJson? {
+        if (src is NoJson) return src
         return try {
-            JSONObject(serialise(src))
+            val json = if (src is String) src else serialise(src)
+            NoJson(json)
         } catch (e: Exception) {
             logger.error("Failed to convert object to JSONObject", e)
             null
         }
     }
 
-    fun toJsonObject(src: String): JSONObject? {
-        return try {
-            JSONObject(src)
-        } catch (e: Exception) {
-            logger.error("Failed to convert object to JSONObject", e)
-            null
-        }
-    }
-
-    fun isValidJson(src: String): Boolean {
+    fun isValidJson(src: Any): Boolean {
         return toJsonObject(src) != null
     }
 

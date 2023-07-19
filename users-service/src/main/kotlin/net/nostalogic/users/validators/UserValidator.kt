@@ -21,9 +21,9 @@ object UserValidator {
             report.addFieldTooLong("username", USERNAME_MAX_LENGTH)
         if (StringUtils.isNotBlank(user.locale) && NoLocale.fromString(user.locale!!) == null)
             report.addInvalidFieldValue("locale", user.locale!!)
-        if (StringUtils.isNotBlank(user.details) && !Serialiser.isValidJson(user.details!!))
-            report.addInvalidFieldValue("details", user.details!!)
-        if (StringUtils.isNotBlank(user.details) && user.details!!.length > DETAILS_MAX_LENGTH)
+        if (user.details != null && !Serialiser.isValidJson(user.details!!))
+            report.addInvalidFieldValue("details", user.details.toString())
+        if (user.details != null && Serialiser.toJsonObject(user.details!!)!!.length() > DETAILS_MAX_LENGTH)
             report.addFieldTooLong("details", DETAILS_MAX_LENGTH)
         report.validate(307005)
     }

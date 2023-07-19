@@ -10,6 +10,7 @@ import net.nostalogic.users.datamodel.users.User
 import net.nostalogic.users.datamodel.users.UserRegistration
 import net.nostalogic.users.persistence.entities.UserEntity
 import net.nostalogic.utils.EntityUtils
+import net.nostalogic.utils.Serialiser
 
 object UserMapper {
 
@@ -18,14 +19,16 @@ object UserMapper {
                     memberships: NoPageResponse<Membership>? = null,
                     rights: Map<NoEntity, EntityRights>? = null): User {
         return User(
-                id = entity.id,
-                username = entity.username,
-                email = if (includeSensitive) entity.email else null,
-                status = entity.status,
-                memberships = memberships,
-                details = entity.details,
-                rights = rights,
-                created = NoDate(entity.created))
+            id = entity.id,
+            username = entity.username,
+            displayName = entity.displayName,
+            email = if (includeSensitive) entity.email else null,
+            status = entity.status,
+            memberships = memberships,
+            details = entity.details?.let { Serialiser.toJsonObject(it) },
+            rights = rights,
+            created = NoDate(entity.created),
+        )
     }
 
     fun registrationToEntity(

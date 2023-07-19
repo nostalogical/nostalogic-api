@@ -1,6 +1,6 @@
 package net.nostalogic.users.services
 
-import net.nostalogic.comms.AccessComms
+import net.nostalogic.comms.Comms
 import net.nostalogic.constants.NoStrings
 import net.nostalogic.datamodel.access.AccessQuery
 import net.nostalogic.datamodel.access.PolicyAction
@@ -283,7 +283,7 @@ class MembershipService(
             activeMemberships.forEach { memberGroups[it.userId]?.add(it.groupId) }
             memberGroups.forEach {
                 logger.info("Updating groups for user ${it.key} sessions")
-                AccessComms.updateSession(it.value, it.key)
+                Comms.access().updateSession(it.value, it.key)
             }
         } catch (e: Exception) {
             logger.error("Unable to to session updates for changed user groups", e)

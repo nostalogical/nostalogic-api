@@ -31,6 +31,7 @@ import net.nostalogic.users.persistence.repositories.UserRepository
 import net.nostalogic.users.validators.PasswordValidator
 import net.nostalogic.users.validators.RegistrationValidator
 import net.nostalogic.users.validators.UserValidator
+import net.nostalogic.utils.Serialiser
 import org.apache.commons.lang3.RandomStringUtils
 import org.apache.commons.lang3.StringUtils
 import org.slf4j.LoggerFactory
@@ -281,8 +282,7 @@ class UserService(
             userEntity.username = update.username!!
         if (StringUtils.isNotBlank(update.locale))
             userEntity.locale = NoLocale.fromString(update.locale!!)!!
-        if (StringUtils.isNotBlank(update.details))
-            userEntity.details = update.details
+        detailsToJson(update.details)?.let { userEntity.details = it }
 
         return UserMapper.entityToDto(saveUser(userEntity))
     }
@@ -327,6 +327,14 @@ class UserService(
             fullUsername = UserMapper.usernameWithTag(baseUsername, tag)
         } while (userRepository.findByUsernameEquals(fullUsername) != null)
         return tag
+    }
+
+    private fun detailsToJson(details: Any?): String? {
+        return try {
+            details?.let { Serialiser.serialise(details) }
+        } catch (e: Exception) {
+            return null
+        }
     }
 
     fun checkRights(): EntityRights {

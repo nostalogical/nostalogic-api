@@ -20,8 +20,8 @@ import net.nostalogic.users.UsersApplication
 import net.nostalogic.users.datamodel.users.*
 import net.nostalogic.users.persistence.repositories.UserRepository
 import net.nostalogic.utils.EntityUtils
+import net.nostalogic.utils.Serialiser
 import org.apache.commons.lang3.RandomStringUtils
-import org.json.JSONObject
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -250,14 +250,16 @@ class UserControllerTest(
     @Test
     fun `Update a user's details`() {
         val detailsRaw = "{\"age\": 22, \"address\": {\"town\": \"Whitehaven\"}, \"hasPassport\": true, \"cities\": [\"Sheffield\", \"Oxford\"] }"
+        val detailsJson = Serialiser.toJsonObject(detailsRaw)
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.EDIT, true)))))
         val exchange = exchange(
-            entity = HttpEntity(User(details = detailsRaw)),
+            entity = HttpEntity(User(details = detailsJson)),
             responseType = object : ParameterizedTypeReference<User>() {},
             method = HttpMethod.PUT, url = "$baseApiUrl${UserController.USERS_ENDPOINT}/$ownerId")
         assertEquals(HttpStatus.OK, exchange.statusCode)
         assertNotNull(exchange.body!!.details)
-        assertEquals(detailsRaw, exchange.body!!.details)
+        val responseJson = Serialiser.toJsonObject(exchange.body!!.details!!)
+        assertEquals(detailsJson, responseJson)
         deleteUser(ownerId, object : ParameterizedTypeReference<User>() {}, true)
     }
 
