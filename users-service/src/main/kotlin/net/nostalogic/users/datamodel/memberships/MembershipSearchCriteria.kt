@@ -6,12 +6,14 @@ import net.nostalogic.users.constants.GroupType
 import net.nostalogic.users.constants.MembershipStatus
 import java.util.*
 
-class MembershipSearchCriteria(userIds: Collection<String>? = null,
-                               groupIds: Collection<String>? = null,
-                               type: Collection<GroupType>? = null,
-                               status: Collection<MembershipStatus>? = null,
-                               rights: Boolean = false,
-                               page: NoPageable<Membership>? = null): SearchCriteria<Membership> {
+class MembershipSearchCriteria(
+    val rights: Boolean? = null,
+    userIds: Collection<String>? = null,
+    groupIds: Collection<String>? = null,
+    type: Collection<GroupType>? = null,
+    status: Collection<MembershipStatus>? = null,
+    page: NoPageable<Membership>? = null
+): SearchCriteria<Membership> {
 
     companion object {
         val BULK_SORT_FIELDS = arrayOf("created", "role", "id")

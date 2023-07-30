@@ -15,5 +15,6 @@ class Membership(
         val role: MembershipRole?,
         val status: MembershipStatus?,
         val groupType: GroupType? = null,
+        val rights: Boolean? = null,
         val created: NoDate? = null
 )

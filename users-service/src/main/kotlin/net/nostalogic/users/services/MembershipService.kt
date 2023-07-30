@@ -216,13 +216,18 @@ class MembershipService(
         }
     }
 
-    fun processMembershipRemoval(changes: GroupMembershipChanges, existingMembership: MembershipEntity?,
-                                 userId: String, manageGroup: Boolean, editUser: Boolean) {
+    fun processMembershipRemoval(
+        changes: GroupMembershipChanges,
+        existingMembership: MembershipEntity?,
+        userId: String,
+        manageGroup: Boolean,
+        editUser: Boolean
+    ) {
         if (existingMembership == null)
             changes.addMembershipChange(userId, reasonKey = NoStrings.notMember())
         else if (existingMembership.role == MembershipRole.OWNER)
             changes.addMembershipChange(userId, oldStatus = existingMembership.status, reasonKey = NoStrings.ownerCannotLeave())
-        else if (existingMembership.groupType == GroupType.RIGHTS && !manageGroup)
+        else if (existingMembership.rightsGroup == true && !manageGroup)
             changes.addMembershipChange(userId, oldStatus = existingMembership.status, reasonKey = NoStrings.cannotRemoveFromRightsGroup())
         else if (!manageGroup && !editUser)
             changes.addMembershipChange(userId, oldStatus = existingMembership.status, reasonKey = NoStrings.cannotRemoveFromGroup())
@@ -254,16 +259,17 @@ class MembershipService(
         else report.filterByPermitted(searchCriteria.groupIds, NoEntity.GROUP, PolicyAction.READ)
 
         val types = searchCriteria.type.map { it.name }.toSet()
+        val isRights: Set<Boolean> = searchCriteria.rights?.let { setOf(it) } ?: setOf(true, false)
         val status = searchCriteria.status.map { it.name }.toSet()
         val page = searchCriteria.page.toQuery()
 
         val membershipEntities =
                 when {
-                    userIds == null && groupIds == null -> membershipRepository.searchMemberships(types, status, page)
+                    userIds == null && groupIds == null -> membershipRepository.searchMemberships(types, isRights, status, page)
                     userIds?.isEmpty() == true || groupIds?.isEmpty() == true -> return emptyList()
-                    groupIds == null && userIds!!.isNotEmpty() -> membershipRepository.searchMembershipsForUsers(userIds, types, status, page)
-                    userIds == null && groupIds!!.isNotEmpty() -> membershipRepository.searchMembershipsForGroups(groupIds, types, status, page)
-                    else -> membershipRepository.searchMembershipsForUsersAndGroups(userIds!!, groupIds!!, types, status, page)
+                    groupIds == null && userIds!!.isNotEmpty() -> membershipRepository.searchMembershipsForUsers(userIds, types, isRights, status, page)
+                    userIds == null && groupIds!!.isNotEmpty() -> membershipRepository.searchMembershipsForGroups(groupIds, types, isRights, status, page)
+                    else -> membershipRepository.searchMembershipsForUsersAndGroups(userIds!!, groupIds!!, types, isRights, status, page)
                 }
         searchCriteria.page.setResponseMetadata(membershipEntities)
 

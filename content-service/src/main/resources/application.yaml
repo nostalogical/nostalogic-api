@@ -1,8 +1,9 @@
 security:
   jwt:
     key: ZqHPJkeRMjYRpNKFfFtUNZZPGnHzclYFpwnISiabFCddietCFUeiKBTNyMaLOsgQ
+  session:
     access-duration-minutes: 60
-    refresh-duration-minutes: 86400
+    duration-minutes: 86400
 
 spring:
   application:
@@ -12,7 +13,6 @@ spring:
     password: solice
     driverClassName: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5432/nostalogic?currentSchema=nostalogic_content
-    platform: postgres
   jpa:
     show-sql: true
     properties:
@@ -23,6 +23,9 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
   liquibase:
     default-schema: nostalogic_content
+  sql:
+    init:
+      platform: postgres
 
 
 server:
@@ -41,4 +44,3 @@ microservices:
 client:
   base-url: http://localhost
   port: :4200
-

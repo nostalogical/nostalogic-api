@@ -1,11 +1,9 @@
 
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA public;
-
 CREATE TABLE IF NOT EXISTS navigation (
   tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
-  id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id CHAR(36) PRIMARY KEY DEFAULT uuid_generate_v4(),
 
   parent_id CHAR(36) REFERENCES navigation(id),
   urn VARCHAR(500) NOT NULL,
@@ -20,7 +18,7 @@ CREATE TABLE IF NOT EXISTS navigation_link (
   tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
-  id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id CHAR(36) PRIMARY KEY DEFAULT uuid_generate_v4(),
 
   parent_id CHAR(36) NOT NULL REFERENCES navigation(id),
   child_id CHAR(36) NOT NULL REFERENCES navigation(id),
@@ -39,7 +37,7 @@ CREATE TABLE IF NOT EXISTS container (
   tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
-  id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id CHAR(36) PRIMARY KEY DEFAULT uuid_generate_v4(),
 
   navigation_id CHAR(36) REFERENCES navigation(id),
   type VARCHAR(30) NOT NULL,
@@ -52,7 +50,7 @@ CREATE TABLE IF NOT EXISTS article (
   tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
-  id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id CHAR(36) PRIMARY KEY DEFAULT uuid_generate_v4(),
 
   name VARCHAR(100) NOT NULL,
   contents VARCHAR(10000),
@@ -65,7 +63,7 @@ CREATE TABLE IF NOT EXISTS article_revision (
   tenant VARCHAR(20) NOT NULL DEFAULT 'NOSTALOGIC',
   created TIMESTAMP NOT NULL DEFAULT now(),
   creator_id CHAR(36) NOT NULL DEFAULT 'SYSTEM_GENERATED_RECORD_____________',
-  id CHAR(36) PRIMARY KEY DEFAULT public.uuid_generate_v4(),
+  id CHAR(36) PRIMARY KEY DEFAULT uuid_generate_v4(),
 
   article_id CHAR(36) NOT NULL REFERENCES article(id),
   name VARCHAR(100) NOT NULL,

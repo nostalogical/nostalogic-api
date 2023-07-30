@@ -11,6 +11,7 @@ import net.nostalogic.constants.AuthenticationType
 import net.nostalogic.constants.NoStrings
 import net.nostalogic.content.ContentApplication
 import net.nostalogic.content.config.ContentLoader
+import net.nostalogic.content.config.TestContentDbContainer
 import net.nostalogic.datamodel.ErrorResponse
 import net.nostalogic.datamodel.NoDate
 import net.nostalogic.datamodel.Setting
@@ -21,8 +22,10 @@ import net.nostalogic.entities.NoEntity
 import net.nostalogic.security.grants.LoginGrant
 import net.nostalogic.security.utils.TokenEncoder
 import net.nostalogic.utils.EntityUtils
+import org.junit.ClassRule
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -36,6 +39,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.web.client.DefaultResponseErrorHandler
 import org.springframework.web.client.RestTemplate
+import org.testcontainers.containers.PostgreSQLContainer
 import java.io.IOException
 import java.time.temporal.ChronoUnit
 
@@ -44,6 +48,18 @@ import java.time.temporal.ChronoUnit
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [ContentApplication::class])
 open class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader, @Autowired val contentLoader: ContentLoader) {
+
+    companion object {
+        @JvmField
+        @ClassRule
+        var postgreSQLContainer: PostgreSQLContainer<*> = TestContentDbContainer.getInstance()
+
+        @JvmStatic
+        @BeforeAll
+        fun beforeAll() {
+            postgreSQLContainer.start()
+        }
+    }
 
     private val localhost = "http://localhost:"
     protected val accessComms: AccessComms = mockk()
@@ -105,8 +121,10 @@ open class BaseControllerTest(@Autowired val dbLoader: DatabaseLoader, @Autowire
             headers.set(
                 NoStrings.AUTH_HEADER, TokenEncoder.encodeLoginGrant(
                     LoginGrant(
-                subject = userId, expiration = NoDate.plus(1, ChronoUnit.MINUTES),
-                sessionId = EntityUtils.uuid(), type = AuthenticationType.USERNAME)
+                        subject = userId,
+                        expiration = NoDate.plus(1, ChronoUnit.MINUTES),
+                        sessionId = EntityUtils.uuid()
+                    )
                 ))
         return headers
     }

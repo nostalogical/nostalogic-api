@@ -22,6 +22,9 @@ class MembershipEntity(
         @Column(name = "type", table = "\"group\"", insertable = false, updatable = false)
         val groupType: GroupType? = null,
 
+        @Column(name = "rights", table = "\"group\"", insertable = false, updatable = false)
+        val rightsGroup: Boolean? = null,
+
         @Enumerated(EnumType.STRING) var status: MembershipStatus,
 
         @Enumerated(EnumType.STRING) var role: MembershipRole,

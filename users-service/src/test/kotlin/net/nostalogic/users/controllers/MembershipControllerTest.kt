@@ -11,6 +11,7 @@ import net.nostalogic.users.constants.MembershipStatus
 import net.nostalogic.users.datamodel.memberships.GroupMembershipChanges
 import net.nostalogic.users.datamodel.memberships.Membership
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
@@ -38,9 +39,9 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
     }
 
     private fun assertPageResponse(exchange: ResponseEntity<NoPageResponse<Membership>>, size: Int) {
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(size, exchange.body!!.size)
-        Assertions.assertFalse(exchange.body!!.hasNext!!)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(size, exchange.body!!.size)
+        assertFalse(exchange.body!!.hasNext!!)
     }
 
     @Test
@@ -50,7 +51,7 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
             entity = HttpEntity<Unit>(testHeaders()),
             responseType = object : ParameterizedTypeReference<NoPageResponse<Membership>>() {},
             method = HttpMethod.GET, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}")
-        assertPageResponse(exchange, 12)
+        assertPageResponse(exchange, 10)
     }
 
     @Test
@@ -60,9 +61,9 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
             entity = HttpEntity<Unit>(testHeaders()),
             responseType = object : ParameterizedTypeReference<NoPageResponse<Membership>>() {},
             method = HttpMethod.GET, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}?size=5")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(5, exchange.body!!.size)
-        Assertions.assertTrue(exchange.body!!.hasNext!!)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(5, exchange.body!!.size)
+        assertTrue(exchange.body!!.hasNext!!)
     }
 
     @Test
@@ -102,8 +103,8 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
         val exchange = exchange(
             entity = HttpEntity<Unit>(testHeaders()),
             responseType = object : ParameterizedTypeReference<NoPageResponse<Membership>>() {},
-            method = HttpMethod.GET, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}?type=RIGHTS")
-        assertPageResponse(exchange, 5)
+            method = HttpMethod.GET, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}?rights=true")
+        assertPageResponse(exchange, 6)
     }
 
     @Test
@@ -122,7 +123,7 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
         val exchange = exchange(
             entity = HttpEntity<Unit>(testHeaders()),
             responseType = object : ParameterizedTypeReference<NoPageResponse<Membership>>() {},
-            method = HttpMethod.GET, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}?type=RIGHTS&status=INVITED,APPLIED")
+            method = HttpMethod.GET, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}?status=INVITED,APPLIED")
         assertPageResponse(exchange, 2)
     }
 
@@ -135,13 +136,14 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
             method = HttpMethod.GET, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}${MembershipController.USERS_ENDPOINT}/${baseUserId}08")
         assertPageResponse(exchange, 1)
         val membership = exchange.body!!.content.first()
-        Assertions.assertNull(membership.userId)
-        Assertions.assertNull(membership.username)
-        Assertions.assertEquals("${baseGroupId}08", membership.groupId)
-        Assertions.assertEquals("Group 08", membership.group)
-        Assertions.assertEquals(MembershipRole.REGULAR, membership.role)
-        Assertions.assertEquals(MembershipStatus.INVITED, membership.status)
-        Assertions.assertEquals(GroupType.RIGHTS, membership.groupType)
+        assertNull(membership.userId)
+        assertNull(membership.username)
+        assertEquals("${baseGroupId}08", membership.groupId)
+        assertEquals("Group 08", membership.group)
+        assertEquals(MembershipRole.REGULAR, membership.role)
+        assertEquals(MembershipStatus.INVITED, membership.status)
+        assertEquals(GroupType.SYSTEM, membership.groupType)
+        assertTrue(membership.rights!!)
     }
 
     @Test
@@ -153,13 +155,13 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
             method = HttpMethod.GET, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}${MembershipController.GROUPS_ENDPOINT}/${baseGroupId}01")
         assertPageResponse(exchange, 1)
         val membership = exchange.body!!.content.first()
-        Assertions.assertNull(membership.group)
-        Assertions.assertNull(membership.groupType)
-        Assertions.assertNull(membership.groupId)
-        Assertions.assertEquals("${baseUserId}01", membership.userId)
-        Assertions.assertEquals("User 01", membership.username)
-        Assertions.assertEquals(MembershipStatus.ACTIVE, membership.status)
-        Assertions.assertEquals(MembershipRole.OWNER, membership.role)
+        assertNull(membership.group)
+        assertNull(membership.groupType)
+        assertNull(membership.groupId)
+        assertEquals("${baseUserId}01", membership.userId)
+        assertEquals("User 01", membership.username)
+        assertEquals(MembershipStatus.ACTIVE, membership.status)
+        assertEquals(MembershipRole.OWNER, membership.role)
     }
 
     @Test
@@ -171,12 +173,12 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
             entity = HttpEntity(users, testHeaders()),
             responseType = object : ParameterizedTypeReference<List<GroupMembershipChanges>>() {},
             method = HttpMethod.PUT, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}${MembershipController.GROUPS_ENDPOINT}/${baseGroupId}01")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(1, exchange.body!!.size)
-        Assertions.assertEquals(2, exchange.body!!.first().memberships.size)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(1, exchange.body!!.size)
+        assertEquals(2, exchange.body!!.first().memberships.size)
         for (change in exchange.body!!.first().memberships) {
-            Assertions.assertNull(change.oldStatus)
-            Assertions.assertEquals(MembershipStatus.ACTIVE, change.newStatus)
+            assertNull(change.oldStatus)
+            assertEquals(MembershipStatus.ACTIVE, change.newStatus)
         }
         val groupMembers = exchange(
             entity = HttpEntity<Unit>(testHeaders()),
@@ -194,12 +196,12 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
             entity = HttpEntity(groups, testHeaders()),
             responseType = object : ParameterizedTypeReference<List<GroupMembershipChanges>>() {},
             method = HttpMethod.PUT, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}${MembershipController.USERS_ENDPOINT}/${baseUserId}01")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(3, exchange.body!!.size)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(3, exchange.body!!.size)
         for (groupChange in exchange.body!!) {
-            Assertions.assertEquals(1, groupChange.memberships.size)
-            Assertions.assertNull(groupChange.memberships.first().oldStatus)
-            Assertions.assertEquals(MembershipStatus.ACTIVE, groupChange.memberships.first().newStatus)
+            assertEquals(1, groupChange.memberships.size)
+            assertNull(groupChange.memberships.first().oldStatus)
+            assertEquals(MembershipStatus.ACTIVE, groupChange.memberships.first().newStatus)
         }
         val userMemberships = exchange(
             entity = HttpEntity<Unit>(testHeaders()),
@@ -212,18 +214,18 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
     fun `Remove user from group`() {
         mockPermissions(entityPermissions = hashMapOf(Pair(NoEntity.GROUP, hashMapOf(Pair(PolicyAction.READ, true), Pair(PolicyAction.EDIT, true))),
             Pair(NoEntity.USER, hashMapOf(Pair(PolicyAction.READ, true), Pair(PolicyAction.EDIT, true)))))
-        val users = setOf("${baseUserId}06")
+        val users = setOf("${baseUserId}07")
         val exchange = exchange(
             entity = HttpEntity(users, testHeaders()),
             responseType = object : ParameterizedTypeReference<List<GroupMembershipChanges>>() {},
-            method = HttpMethod.DELETE, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}${MembershipController.GROUPS_ENDPOINT}/${baseGroupId}06")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(1, exchange.body!!.size)
-        Assertions.assertEquals(1, exchange.body!!.first().memberships.size)
+            method = HttpMethod.DELETE, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}${MembershipController.GROUPS_ENDPOINT}/${baseGroupId}07")
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(1, exchange.body!!.size)
+        assertEquals(1, exchange.body!!.first().memberships.size)
         for (change in exchange.body!!.first().memberships) {
-            Assertions.assertTrue(change.changed)
-            Assertions.assertEquals(MembershipStatus.ACTIVE, change.oldStatus)
-            Assertions.assertNull(change.newStatus)
+            assertTrue(change.changed)
+            assertEquals(MembershipStatus.ACTIVE, change.oldStatus)
+            assertNull(change.newStatus)
         }
         val groupMembers = exchange(
             entity = HttpEntity<Unit>(testHeaders()),
@@ -241,11 +243,11 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
             entity = HttpEntity(users, testHeaders()),
             responseType = object : ParameterizedTypeReference<List<GroupMembershipChanges>>() {},
             method = HttpMethod.DELETE, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}${MembershipController.GROUPS_ENDPOINT}/${baseGroupId}01")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(1, exchange.body!!.size)
-        Assertions.assertEquals(2, exchange.body!!.first().memberships.size)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(1, exchange.body!!.size)
+        assertEquals(2, exchange.body!!.first().memberships.size)
         for (change in exchange.body!!.first().memberships) {
-            Assertions.assertFalse(change.changed)
+            assertFalse(change.changed)
             Assertions.assertNotNull(change.failReason)
         }
     }
@@ -259,14 +261,14 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
             entity = HttpEntity(groups, testHeaders()),
             responseType = object : ParameterizedTypeReference<List<GroupMembershipChanges>>() {},
             method = HttpMethod.DELETE, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}${MembershipController.USERS_ENDPOINT}/${baseUserId}07")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
-        Assertions.assertEquals(1, exchange.body!!.size)
-        Assertions.assertEquals(1, exchange.body!!.first().memberships.size)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(1, exchange.body!!.size)
+        assertEquals(1, exchange.body!!.first().memberships.size)
         for (change in exchange.body!!.first().memberships) {
-            Assertions.assertTrue(change.changed)
-            Assertions.assertEquals("${baseUserId}07", change.userId)
-            Assertions.assertEquals(MembershipStatus.ACTIVE, change.oldStatus)
-            Assertions.assertNull(change.newStatus)
+            assertTrue(change.changed)
+            assertEquals("${baseUserId}07", change.userId)
+            assertEquals(MembershipStatus.ACTIVE, change.oldStatus)
+            assertNull(change.newStatus)
         }
         val groupMembers = exchange(
             entity = HttpEntity<Unit>(testHeaders()),
@@ -285,10 +287,10 @@ class MembershipControllerTest(@Autowired dbLoader: DatabaseLoader): BaseControl
             responseType = object : ParameterizedTypeReference<Membership>() {},
             method = HttpMethod.PUT, url = "$baseApiUrl${MembershipController.MEMBERS_ENDPOINT}${MembershipController.GROUPS_ENDPOINT}/${baseGroupId}09" +
                     "${MembershipController.USERS_ENDPOINT}/${baseUserId}09")
-        Assertions.assertEquals(HttpStatus.OK, exchange.statusCode)
+        assertEquals(HttpStatus.OK, exchange.statusCode)
         val updated = exchange.body!!
-        Assertions.assertEquals(MembershipStatus.ACTIVE, updated.status)
-        Assertions.assertEquals(MembershipRole.OWNER, updated.role)
+        assertEquals(MembershipStatus.ACTIVE, updated.status)
+        assertEquals(MembershipRole.OWNER, updated.role)
     }
 
 }

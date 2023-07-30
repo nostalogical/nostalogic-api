@@ -11,12 +11,11 @@ import net.nostalogic.entities.EntityReference
 import net.nostalogic.entities.EntitySignature
 import net.nostalogic.entities.NoEntity
 import net.nostalogic.excomm.ExcommApplication
+import net.nostalogic.excomm.config.TestExcommDbContainer
 import net.nostalogic.excomm.persistence.repositories.EmailRepository
 import net.nostalogic.utils.EntityUtils
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import org.junit.ClassRule
+import org.junit.jupiter.api.*
 import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
@@ -32,13 +31,26 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.web.client.DefaultResponseErrorHandler
 import org.springframework.web.client.RestTemplate
+import org.testcontainers.containers.PostgreSQLContainer
 import java.io.IOException
 
 @Suppress("FunctionName")
-@ActiveProfiles(profiles = ["integration-test"])
+@ActiveProfiles(profiles = ["integration-test", "test"])
 @ExtendWith(SpringExtension::class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, classes = [ExcommApplication::class])
 class ExcommControllerTest(@Autowired val dbLoader: DatabaseLoader, @Autowired val emailRepository: EmailRepository) {
+
+    companion object {
+        @JvmField
+        @ClassRule
+        var postgreSQLContainer: PostgreSQLContainer<*> = TestExcommDbContainer.getInstance()
+
+        @JvmStatic
+        @BeforeAll
+        fun beforeAll() {
+            postgreSQLContainer.start()
+        }
+    }
 
     private val localhost = "http://localhost:"
 

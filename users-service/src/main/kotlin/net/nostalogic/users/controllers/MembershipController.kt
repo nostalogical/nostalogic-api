@@ -30,10 +30,18 @@ class MembershipController(@Autowired private val membershipService: MembershipS
                        @RequestParam userId: Set<String>?,
                        @RequestParam groupId: Set<String>?,
                        @RequestParam type: Set<GroupType>?,
+                       @RequestParam rights: Boolean?,
                        @RequestParam status: Set<MembershipStatus>?): NoPageResponse<Membership> {
         val pageable = NoPageable<Membership>(page, size, *MembershipSearchCriteria.BULK_SORT_FIELDS)
         val result = membershipService.getMemberships(
-                MembershipSearchCriteria(userIds = userId, groupIds = groupId, type = type, status = status, page = pageable))
+                MembershipSearchCriteria(
+                    rights = rights,
+                    userIds = userId,
+                    groupIds = groupId,
+                    type = type,
+                    status = status,
+                    page = pageable
+                ))
         return pageable.toResponse(result)
     }
 

@@ -8,14 +8,14 @@ VALUES ('06cd7155-576e-465d-8722-3eb8373351b7', 'Admin') ON CONFLICT DO NOTHING;
 INSERT INTO "group" (id, name, type)
 VALUES ('77c52c87-f46e-4c12-8eb0-b6a701f0ba36', 'Content Admin', 'RIGHTS') ON CONFLICT DO NOTHING;
 
-INSERT INTO "group" (id, name, type)
-VALUES ('817ab8e6-c1ce-435a-86e1-69a4c07bafb3', 'Content Creator', 'RIGHTS') ON CONFLICT DO NOTHING;
+INSERT INTO "group" (id, name)
+VALUES ('817ab8e6-c1ce-435a-86e1-69a4c07bafb3', 'Content Creator') ON CONFLICT DO NOTHING;
 
-INSERT INTO "group" (id, name, type)
-VALUES ('a6a5c68e-13d0-4dfa-a688-b41c4255b3c2', 'User Admin', 'RIGHTS') ON CONFLICT DO NOTHING;
+INSERT INTO "group" (id, name)
+VALUES ('a6a5c68e-13d0-4dfa-a688-b41c4255b3c2', 'User Admin') ON CONFLICT DO NOTHING;
 
-INSERT INTO "group" (id, name, type)
-VALUES ('c9253a33-4936-4c59-ab85-e358d4460bc6', 'Group Admin', 'RIGHTS') ON CONFLICT DO NOTHING;
+INSERT INTO "group" (id, name)
+VALUES ('c9253a33-4936-4c59-ab85-e358d4460bc6', 'Group Admin') ON CONFLICT DO NOTHING;
 
 INSERT INTO "user" (id, username, email, status)
 VALUES ('09acf630-1a15-49a0-bddf-cc1c0794c2f9', 'Owner', 'admin@nostalogic.net', 'ACTIVE') ON CONFLICT DO NOTHING;

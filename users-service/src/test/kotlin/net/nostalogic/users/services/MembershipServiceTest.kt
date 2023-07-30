@@ -40,9 +40,20 @@ class MembershipServiceTest(
         return GroupMembershipChanges(groupId)
     }
 
-    private fun membership(groupType: GroupType = GroupType.USER, status: MembershipStatus = MembershipStatus.ACTIVE): MembershipEntity {
-        return MembershipEntity(userId = userId, groupId = groupId, groupType = groupType,
-            status = status, role = MembershipRole.REGULAR, creatorId = EntityUtils.uuid())
+    private fun membership(
+        groupType: GroupType = GroupType.USER,
+        status: MembershipStatus = MembershipStatus.ACTIVE,
+        rightsGroup: Boolean = false,
+    ): MembershipEntity {
+        return MembershipEntity(
+            userId = userId,
+            groupId = groupId,
+            groupType = groupType,
+            rightsGroup = rightsGroup,
+            status = status,
+            role = MembershipRole.REGULAR,
+            creatorId = EntityUtils.uuid()
+        )
     }
 
     @Test
@@ -70,7 +81,13 @@ class MembershipServiceTest(
     @Test
     fun `Remove membership with no edit right`() {
         val changes = changes()
-        membershipService.processMembershipRemoval(changes, membership(), userId, manageGroup = false, editUser = false)
+        membershipService.processMembershipRemoval(
+            changes = changes,
+            existingMembership = membership(),
+            userId = userId,
+            manageGroup = false,
+            editUser = false
+        )
         Assertions.assertEquals(1, changes.memberships.size)
         Assertions.assertFalse(changes.memberships.first().changed)
         Assertions.assertEquals(MembershipStatus.ACTIVE, changes.memberships.first().oldStatus)
@@ -81,7 +98,15 @@ class MembershipServiceTest(
     @Test
     fun `Remove membership from rights group with edit group rights`() {
         val changes = changes()
-        membershipService.processMembershipRemoval(changes, membership(groupType = GroupType.RIGHTS), userId, manageGroup = true, editUser = false)
+        membershipService.processMembershipRemoval(
+            changes = changes,
+            existingMembership = membership(
+                rightsGroup = true
+            ),
+            userId = userId,
+            manageGroup = true,
+            editUser = false
+        )
         Assertions.assertEquals(1, changes.memberships.size)
         Assertions.assertTrue(changes.memberships.first().changed)
         Assertions.assertEquals(MembershipStatus.ACTIVE, changes.memberships.first().oldStatus)
@@ -92,7 +117,13 @@ class MembershipServiceTest(
     @Test
     fun `Remove membership from rights group with edit user rights`() {
         val changes = changes()
-        membershipService.processMembershipRemoval(changes, membership(groupType = GroupType.RIGHTS), userId, manageGroup = false, editUser = true)
+        membershipService.processMembershipRemoval(
+            changes = changes,
+            existingMembership = membership(rightsGroup = true),
+            userId = userId,
+            manageGroup = false,
+            editUser = true
+        )
         Assertions.assertEquals(1, changes.memberships.size)
         Assertions.assertFalse(changes.memberships.first().changed)
         Assertions.assertEquals(MembershipStatus.ACTIVE, changes.memberships.first().oldStatus)

@@ -15,6 +15,7 @@ object MembershipMapper {
                 role = entity.role,
                 status = entity.status,
                 groupType = entity.groupType,
+                rights = entity.rightsGroup,
                 created = NoDate(entity.created)
         )
     }
@@ -36,6 +37,7 @@ object MembershipMapper {
                 role = entity.role,
                 status = entity.status,
                 groupType = entity.groupType,
+                rights = entity.rightsGroup,
                 created = NoDate(entity.created)
         )
     }
